@@ -11,6 +11,9 @@ load_dotenv()
 
 from src.data_loader import load_golden_set
 from src.agent import CSAgent
+from src.admin_api import AdminAPIClient
+from src.refund_engine import RefundEngine, RefundInput
+from datetime import date, datetime
 
 DATA_DIR = os.getenv("DATA_DIR", "/Users/gygygygy/Documents/ai/letter-post-weekly-report/data/channel_io")
 
@@ -232,8 +235,89 @@ def main():
 
     st.divider()
 
-    # 사이드바 — 카테고리 필터
+    # 사이드바
     with st.sidebar:
+        # ── 관리자센터 API 연동 ──
+        st.header("관리자센터 API")
+        admin_token = st.text_input(
+            "인증 토큰",
+            value=os.getenv("ADMIN_API_TOKEN", ""),
+            type="password",
+            help="브라우저 개발자도구 > Network > 아무 API 요청 > Authorization 헤더 값 복사",
+        )
+        admin_base = st.text_input(
+            "Base URL",
+            value=os.getenv("ADMIN_API_BASE_URL", "https://dev-admin.us-insight.com"),
+        )
+
+        if admin_token:
+            os.environ["ADMIN_API_TOKEN"] = admin_token
+            os.environ["ADMIN_API_BASE_URL"] = admin_base
+
+        st.divider()
+
+        # ── 실시간 유저 조회 테스트 ──
+        st.header("유저 조회 테스트")
+        test_phone = st.text_input("전화번호", placeholder="01012345678")
+        test_user_id = st.text_input("또는 userId", placeholder="12345")
+
+        if st.button("조회", use_container_width=True):
+            if admin_token:
+                client = AdminAPIClient(base_url=admin_base, token=admin_token)
+                with st.spinner("조회 중..."):
+                    if test_user_id:
+                        lookup = client.lookup_all(test_user_id)
+                    elif test_phone:
+                        lookup = client.lookup_by_phone(test_phone)
+                    else:
+                        lookup = None
+
+                if lookup:
+                    st.success("조회 성공")
+                    st.session_state["last_lookup"] = lookup
+                else:
+                    st.error("유저를 찾을 수 없습니다")
+            else:
+                st.warning("토큰을 입력해주세요")
+
+        # 조회 결과 표시
+        if "last_lookup" in st.session_state:
+            lookup = st.session_state["last_lookup"]
+            st.markdown(lookup.to_display())
+
+            # 환불 시뮬레이션
+            if lookup.payments:
+                st.divider()
+                st.header("환불 시뮬레이션")
+                pay = lookup.payments[0]
+                st.caption(f"상품: {pay.product_name}")
+                st.caption(f"결제금액: {pay.amount:,}원 / 결제일: {pay.payment_date}")
+
+                monthly = st.number_input("1개월 정가", value=pay.monthly_price or pay.amount)
+                accessed = st.checkbox("콘텐츠 열람 여부", value=lookup.usage.has_accessed if lookup.usage else False)
+
+                if st.button("환불 계산", use_container_width=True):
+                    engine = RefundEngine()
+                    try:
+                        pdate = datetime.strptime(pay.payment_date[:10], "%Y-%m-%d").date()
+                    except (ValueError, TypeError):
+                        pdate = date.today()
+                    inp = RefundInput(
+                        total_paid=pay.amount,
+                        monthly_price=monthly,
+                        payment_date=pdate,
+                        payment_cycle_days=pay.payment_cycle_days,
+                        content_accessed=accessed,
+                    )
+                    result = engine.calculate(inp)
+                    if result.refundable:
+                        st.success(result.to_display())
+                    else:
+                        st.error(result.to_display())
+
+        st.divider()
+
+        # ── 카테고리 필터 ──
         st.header("카테고리 필터")
         categories = sorted(set(p["category"] for p in DEMO_PATTERNS))
         selected_cat = st.radio("카테고리", ["전체"] + categories)
