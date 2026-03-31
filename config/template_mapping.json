@@ -1,0 +1,230 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-03-31",
+  "templates": [
+    {
+      "id": "refund_full",
+      "name": "전액환불 안내",
+      "category": "환불",
+      "match_keywords": ["환불", "취소", "돈 돌려", "결제 취소", "결제취소"],
+      "match_conditions": {
+        "intent": "refund",
+        "sub_intent": "full_refund"
+      },
+      "required_apis": ["search_user", "get_user", "get_refund_info", "get_usage"],
+      "required_fields": ["user_name", "product_name", "payment_amount", "payment_date", "content_accessed", "refund_amount"],
+      "template": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n확인 결과 결제일({payment_date})로부터 7일 이내이며, 콘텐츠 열람 이력이 없어\n전액 환불 가능하십니다.\n\n■ 상품: {product_name}\n■ 결제 금액: {payment_amount}원\n■ 환불 금액: {refund_amount}원 (전액)\n\n환불 접수 진행 도와드릴까요?",
+      "needs_refund_calc": true
+    },
+    {
+      "id": "refund_partial",
+      "name": "부분환불 안내",
+      "category": "환불",
+      "match_keywords": ["환불", "취소"],
+      "match_conditions": {
+        "intent": "refund",
+        "sub_intent": "partial_refund"
+      },
+      "required_apis": ["search_user", "get_user", "get_refund_info", "get_usage"],
+      "required_fields": ["user_name", "product_name", "payment_amount", "deduction", "fee", "refund_amount"],
+      "template": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n확인 결과 아래와 같이 부분 환불이 가능하십니다.\n\n■ 상품: {product_name}\n■ 결제 금액: {payment_amount}원\n■ 이용 차감금: {deduction}원 (1개월 정가 금액의 1/3)\n■ 수수료: {fee}원 (잔여 금액의 10%)\n■ 환불 금액: {refund_amount}원\n\n환불 접수 진행 도와드릴까요?",
+      "needs_refund_calc": true
+    },
+    {
+      "id": "refund_rejected",
+      "name": "환불 불가 안내",
+      "category": "환불",
+      "match_keywords": ["환불"],
+      "match_conditions": {
+        "intent": "refund",
+        "sub_intent": "rejected"
+      },
+      "required_apis": ["search_user", "get_user", "get_refund_info"],
+      "required_fields": ["user_name", "product_name", "payment_amount", "rejection_reason"],
+      "template": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n확인 결과 현재 환불 규정상 환불이 어려운 점 안내드립니다.\n\n■ 상품: {product_name}\n■ 결제 금액: {payment_amount}원\n■ 사유: {rejection_reason}\n\n추가 문의사항이 있으시면 말씀해 주세요.",
+      "needs_refund_calc": true
+    },
+    {
+      "id": "refund_confirm",
+      "name": "환불 접수완료/확정 안내",
+      "category": "환불",
+      "match_keywords": [],
+      "match_conditions": {
+        "intent": "refund",
+        "sub_intent": "confirm"
+      },
+      "required_apis": [],
+      "required_fields": ["refund_amount"],
+      "template": "회원님, 환불 접수가 완료되었습니다.\n\n■ 환불 금액: {refund_amount}원\n■ 환불은 카드사에 따라 3~5영업일 소요될 수 있습니다.\n\n추가 문의사항이 있으시면 말씀해 주세요.\n감사합니다.",
+      "needs_refund_calc": false,
+      "notes": "매니저 승인 후 사용하는 템플릿. 에이전트가 자동 전송하지 않음."
+    },
+    {
+      "id": "unsubscribe_guide",
+      "name": "구독해지 방법 안내",
+      "category": "구독관리",
+      "match_keywords": ["해지", "취소", "구독해지", "구독취소", "정기결제 취소", "정기결제 해지"],
+      "match_conditions": {
+        "intent": "unsubscribe"
+      },
+      "required_apis": ["search_user", "get_products"],
+      "required_fields": ["product_name", "next_payment_date"],
+      "template": "안녕하세요 회원님,\n다음 정기결제 구독해지 방법 안내드립니다.\n\n■ 정기결제 구독해지 방법\n① 어스플러스 앱 접속\n② 우측 상단 my(사람모양 아이콘) 클릭 → 멤버십 관리 클릭\n③ 회색글씨로 된 <내역보기> 클릭\n④ 구독해지 클릭\n\n❗주의사항\n구독해지 신청은 다음 결제({next_payment_date})부터 해지됩니다.\n현재 구독 기간까지는 정상 이용 가능합니다.",
+      "needs_refund_calc": false
+    },
+    {
+      "id": "card_change",
+      "name": "결제카드 변경 안내",
+      "category": "구독관리",
+      "match_keywords": ["카드 변경", "카드변경", "카드 분실", "카드 만료", "카드 교체", "결제카드"],
+      "match_conditions": {
+        "intent": "card_change"
+      },
+      "required_apis": ["search_user", "get_refund_info"],
+      "required_fields": ["next_payment_date"],
+      "template": "안녕하세요 회원님,\n결제 등록 카드 변경 방법 안내드립니다.\n\n✅ 변경 방법\n▶ 결제카드 변경: https://us-insight.com/\n1. 어스 앱이 아닌 웹페이지로 접속\n2. 구독 결제 해주신 계정으로 로그인\n3. 우측상단 사람모양 → 멤버십관리 → 결제변경\n\n※ 프로모션 가격으로 구독 중이신 경우, 카드 변경 후에도 동일 가격이 유지됩니다.\n※ 다음 결제일({next_payment_date}) 전에 변경 부탁드립니다.",
+      "needs_refund_calc": false
+    },
+    {
+      "id": "product_change",
+      "name": "상품변경 안내",
+      "category": "구독관리",
+      "match_keywords": ["상품 변경", "상품변경", "업그레이드", "다운그레이드", "다른 마스터", "변경하고"],
+      "match_conditions": {
+        "intent": "product_change"
+      },
+      "required_apis": ["search_user", "get_products"],
+      "required_fields": ["current_product", "user_name"],
+      "template": "안녕하세요 회원님,\n구독상품 변경의 경우 기존 상품 환불 진행 후 재결제를 진행해주셔야 합니다.\n\n현재 이용 중이신 상품: {current_product}\n\n변경을 원하시면 환불 후 재결제를 도와드리겠습니다.\n희망하시는 상품을 말씀해 주세요.",
+      "needs_refund_calc": false
+    },
+    {
+      "id": "product_link",
+      "name": "상품링크 안내",
+      "category": "온보딩",
+      "match_keywords": ["가입", "신청", "구독 신청", "수강 신청", "듣고 싶"],
+      "match_conditions": {
+        "intent": "signup"
+      },
+      "required_apis": [],
+      "required_fields": ["master_name"],
+      "template": "안녕하세요 회원님,\n{master_name} 마스터 상품 신청 링크 안내드립니다.\n\nhttps://us-insight.com/ 에서 해당 마스터 상품 페이지로 이동하시어 신청해 주세요.\n\n추가 문의사항이 있으시면 말씀해 주세요.",
+      "needs_refund_calc": false
+    },
+    {
+      "id": "login_guide",
+      "name": "로그인 방법 안내",
+      "category": "온보딩",
+      "match_keywords": ["로그인", "비밀번호", "비번", "접속", "로그인 안", "로그인이 안"],
+      "match_conditions": {
+        "intent": "login"
+      },
+      "required_apis": ["search_user", "get_user"],
+      "required_fields": ["signup_method"],
+      "template_by_method": {
+        "direct": "회원님께서는 휴대폰 번호로 가입하셨습니다.\n앱 접속 후 [휴대폰 번호로 시작하기]를 눌러주신 후,\n회원님의 휴대전화 번호와 설정해주신 비밀번호를 입력하시면 됩니다.\n\n비밀번호가 기억나지 않으시면 [비밀번호 찾기]를 이용해 주세요.",
+        "naver": "회원님께서는 네이버 계정으로 가입하셨습니다.\n앱 접속 후 [네이버로 시작하기] 버튼을 눌러 로그인해 주세요.",
+        "kakao": "회원님께서는 카카오 계정으로 가입하셨습니다.\n앱 접속 후 [카카오로 시작하기] 버튼을 눌러 로그인해 주세요.",
+        "google": "회원님께서는 구글 계정으로 가입하셨습니다.\n앱 접속 후 [구글로 시작하기] 버튼을 눌러 로그인해 주세요.",
+        "apple": "회원님께서는 Apple 계정으로 가입하셨습니다.\n앱 접속 후 [Apple로 시작하기] 버튼을 눌러 로그인해 주세요.",
+        "default": "회원님의 가입 방법을 확인 중입니다.\n잠시만 기다려 주세요."
+      },
+      "template": "안녕하세요 회원님,\n로그인 방법 안내드립니다.\n\n{login_guide}\n\nPC에서도 이용 가능합니다: https://us-insight.com/\n동일 계정으로 로그인해 주세요.",
+      "needs_refund_calc": false
+    },
+    {
+      "id": "password_reset",
+      "name": "비밀번호 재설정 안내",
+      "category": "온보딩",
+      "match_keywords": ["비밀번호", "비번", "패스워드", "비밀번호 찾기"],
+      "match_conditions": {
+        "intent": "password_reset"
+      },
+      "required_apis": [],
+      "required_fields": [],
+      "template": "안녕하세요 회원님,\n비밀번호 재설정 방법 안내드립니다.\n\n① 로그인 화면에서 [비밀번호 찾기] 클릭\n② 가입하신 휴대폰 번호 입력\n③ 인증 후 새 비밀번호 설정\n\n추가 문의사항이 있으시면 말씀해 주세요.",
+      "needs_refund_calc": false
+    },
+    {
+      "id": "pc_usage",
+      "name": "PC 이용 안내",
+      "category": "온보딩",
+      "match_keywords": ["PC에서", "컴퓨터", "PC로", "웹에서", "PC 이용"],
+      "match_conditions": {
+        "intent": "pc_usage"
+      },
+      "required_apis": [],
+      "required_fields": [],
+      "template": "안녕하세요 회원님,\nPC에서도 기존 계정과 동일하게 로그인하시면\n모바일 앱과 같이 콘텐츠를 열람하실 수 있습니다.\n\n💻 PC 이용 방법\n① 구글 또는 네이버에서 <어스 인사이트> 검색 후 홈페이지 접속\n② 우측 상단 로그인 후 MY 멤버십에서 이용하시는 콘텐츠 열람\n\n※ PC에서 로그인 시, 반드시 구독 권한을 보유한 계정으로 로그인해 주세요.",
+      "needs_refund_calc": false
+    },
+    {
+      "id": "tech_error",
+      "name": "기술오류 체크리스트",
+      "category": "기술",
+      "match_keywords": ["오류", "안 돼", "안돼", "재생", "멈춤", "버그", "작동", "에러"],
+      "match_conditions": {
+        "intent": "tech_error"
+      },
+      "required_apis": [],
+      "required_fields": [],
+      "template": "안녕하세요 회원님, 이용에 불편을 드려 죄송합니다.\n\n우선 아래 방법을 시도해 주세요.\n① 앱 최신 버전 확인 → 업데이트\n② 앱 삭제 후 재설치\n③ 기기 재부팅\n④ Wi-Fi ↔ 데이터 전환\n\n위 방법으로도 해결되지 않으시면 아래 정보를 알려주세요.\n1. 휴대폰 기종\n2. 증상 상세 (영상 멈춤/끊김/로딩 등)\n3. 배속 설정 여부\n4. 접속 경로 (알림/피드/직접)\n5. 네트워크 환경 (Wi-Fi/데이터)",
+      "needs_refund_calc": false
+    },
+    {
+      "id": "platform_confusion",
+      "name": "플랫폼 혼동 안내",
+      "category": "안내",
+      "match_keywords": ["어스캠퍼스", "어스플러스", "어디서 봐", "안 보여", "나의 스터디"],
+      "match_conditions": {
+        "intent": "platform_confusion"
+      },
+      "required_apis": ["search_user", "get_products"],
+      "required_fields": ["product_name", "platform"],
+      "template": "안녕하세요 회원님,\n어스 서비스는 두 가지 앱으로 나뉘어 있습니다.\n\n[어스캠퍼스] 수업을 듣는 메인 홈페이지입니다.\n줌 라이브 수업, VOD 동영상 강의, 녹화본 모두 어스캠퍼스 앱 또는 홈페이지에서 수강 가능합니다.\n\n[어스플러스] 수강생 대상 긴급 뉴스, 레포트 등을 열람하실 수 있는 뉴스용 앱입니다.\n\n회원님의 상품({product_name})은 {platform}에서 이용해 주세요.",
+      "needs_refund_calc": false
+    },
+    {
+      "id": "course_info",
+      "name": "수강/강의 안내",
+      "category": "안내",
+      "match_keywords": ["강의", "수업", "녹화본", "수강", "일정", "커리큘럼", "VOD"],
+      "match_conditions": {
+        "intent": "course_info"
+      },
+      "required_apis": ["search_user", "get_products"],
+      "required_fields": ["product_name", "master_name"],
+      "template": null,
+      "needs_refund_calc": false,
+      "notes": "수강 관련은 마스터/상품별로 다양해서 고정 템플릿 불가. LLM 생성 필요."
+    },
+    {
+      "id": "identity_check",
+      "name": "본인확인 요청",
+      "category": "공통",
+      "match_keywords": [],
+      "match_conditions": {
+        "intent": "identity_check"
+      },
+      "required_apis": [],
+      "required_fields": [],
+      "template": "안녕하세요 회원님,\n정확한 안내를 위해 아래 정보를 확인 부탁드립니다.\n\n• 가입하신 연락처 (휴대폰 번호)\n• 성함",
+      "needs_refund_calc": false,
+      "notes": "유저 식별이 안 된 경우 사용. 채널톡 userId 주입이 되면 필요 없어짐."
+    },
+    {
+      "id": "closing",
+      "name": "종료인사",
+      "category": "공통",
+      "match_keywords": [],
+      "match_conditions": {
+        "intent": "closing"
+      },
+      "required_apis": [],
+      "required_fields": [],
+      "template": "채팅으로 전하는 내용이라 다소 답답하고 딱딱하게 느껴지셨을 수 있지만\n너그러운 마음으로 양해해주신 점 감사드립니다.\n혹시 추가적으로 문의사항 없으실까요?\n없으시다면 상담 종료 도와드리도록 하겠습니다.",
+      "needs_refund_calc": false,
+      "notes": "대화 종료 시 매니저가 수동 사용. 에이전트 자동 전송 대상 아님."
+    }
+  ]
+}
