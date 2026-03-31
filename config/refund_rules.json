@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-04-01",
+  "notes": "데이터 탐색에서 검증된 규칙. CS팀 확인 후 EP-003, EP-004 신뢰도 업데이트 필요",
+  "rules": [
+    {
+      "id": "EP-001",
+      "label": "전액 환불 (7일 이내 미열람)",
+      "confidence": "high",
+      "type": "subscription",
+      "conditions": {
+        "days_from_payment": {"max": 7},
+        "content_accessed": false
+      },
+      "refund": {
+        "method": "full"
+      }
+    },
+    {
+      "id": "EP-002",
+      "label": "부분 환불 (1/3 기간 이내)",
+      "confidence": "high",
+      "type": "subscription",
+      "conditions": {
+        "period_fraction": {"max": 0.333},
+        "content_accessed": true
+      },
+      "refund": {
+        "method": "fraction_deduct",
+        "deduct_fraction": 0.333,
+        "fee_rate": 0.10
+      }
+    },
+    {
+      "id": "EP-003",
+      "label": "부분 환불 (1/3~1/2 기간)",
+      "confidence": "medium",
+      "type": "subscription",
+      "conditions": {
+        "period_fraction": {"min": 0.333, "max": 0.5}
+      },
+      "refund": {
+        "method": "fraction_deduct",
+        "deduct_fraction": 0.5,
+        "fee_rate": 0.10
+      }
+    },
+    {
+      "id": "EP-004",
+      "label": "환불 불가 (1/2 기간 경과)",
+      "confidence": "low",
+      "type": "subscription",
+      "conditions": {
+        "period_fraction": {"min": 0.5}
+      },
+      "refund": {
+        "method": "none"
+      }
+    },
+    {
+      "id": "EP-005",
+      "label": "N개월 경과 환불 (장기 구독)",
+      "confidence": "high",
+      "type": "subscription",
+      "conditions": {
+        "months_elapsed": {"min": 1}
+      },
+      "refund": {
+        "method": "months_deduct",
+        "fee_rate": 0.10
+      }
+    }
+  ]
+}
