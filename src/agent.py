@@ -289,8 +289,10 @@ class CSAgent:
             action = "refund_calculated"
             total_paid = refund_result.refund_amount + refund_result.deduction + refund_result.fee if refund_result.refundable else 0
             # total_paid 복원
-            if admin_lookup and admin_lookup.payments:
-                total_paid = admin_lookup.payments[0].amount
+            if admin_lookup and admin_lookup.transactions:
+                total_paid = admin_lookup.transactions[0].amount
+            elif admin_lookup and admin_lookup.products:
+                total_paid = admin_lookup.products[0].price
             elif lookup and lookup.payment:
                 total_paid = lookup.payment.amount
             draft = self.generate_refund_answer(refund_result, total_paid)
@@ -322,17 +324,21 @@ class CSAgent:
     def _calculate_refund(self, admin_lookup: AdminLookupResult | None, mock_lookup: LookupResult | None) -> RefundResult | None:
         """조회 결과에서 환불 계산"""
         try:
-            if admin_lookup and admin_lookup.payments:
-                pay = admin_lookup.payments[0]
-                payment_date = self._parse_date(pay.payment_date)
+            if admin_lookup and admin_lookup.transactions:
+                # 최신 purchased_success 거래 찾기
+                success_txs = [t for t in admin_lookup.transactions if t.state == "purchased_success"]
+                tx = success_txs[-1] if success_txs else admin_lookup.transactions[0]
+                payment_date = self._parse_date(tx.created_at)
                 if not payment_date:
                     return None
                 has_accessed = admin_lookup.usage.has_accessed if admin_lookup.usage else False
+                # 상품 가격 참조
+                product_price = admin_lookup.products[0].price if admin_lookup.products else tx.amount
                 inp = RefundInput(
-                    total_paid=pay.amount,
-                    monthly_price=pay.monthly_price or pay.amount,
+                    total_paid=tx.amount,
+                    monthly_price=product_price,
                     payment_date=payment_date,
-                    payment_cycle_days=pay.payment_cycle_days,
+                    payment_cycle_days=30,
                     content_accessed=has_accessed,
                 )
                 return self.refund_engine.calculate(inp)

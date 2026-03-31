@@ -1,9 +1,17 @@
-"""관리자센터 API 클라이언트 — 유저 정보 조회"""
+"""관리자센터 API 클라이언트 — 유저 정보 조회
+
+API 스키마 (Apidog 기준):
+- GET /v3/users → {users: UserDto[]}
+- GET /v1/users/{id} → {profile: UserProfileDto, memo, masters, blockedUsers}
+- GET /users/{id}/my-products → {myProducts: MyProductDto[], pagination}
+  - 필수 params: limit (string), status ("active"|"inactive")
+- GET /cs/refund-user/{userId}/products → {_id, owner, product, transactions: TransactionHistoryResponse[]}
+- GET /users/{id}/contents → {} (스키마 비어있음, 실제 응답 확인 필요)
+"""
 from __future__ import annotations
 import os
 import logging
 from dataclasses import dataclass, field
-from typing import Optional
 
 import httpx
 
@@ -16,12 +24,14 @@ ADMIN_TOKEN = os.getenv("ADMIN_API_TOKEN", "")
 @dataclass
 class UserInfo:
     user_id: str = ""
-    name: str = ""
-    phone: str = ""
+    name: str = ""          # nickName
+    phone: str = ""         # phoneNumber
     email: str = ""
-    signup_method: str = ""
-    signup_date: str = ""
-    memo: str = ""
+    signup_method: str = "" # direct/google/apple/naver/kakao
+    signup_state: str = ""  # ACTIVE/DORMANT/SUSPENDED/SUBSCRIBE
+    signup_date: str = ""   # createdAt
+    last_accessed: str = "" # lastAccessedAt
+    content_view: int = 0   # contentView
 
 
 @dataclass
@@ -29,79 +39,76 @@ class ProductInfo:
     my_product_id: str = ""
     master_name: str = ""
     product_name: str = ""
-    grade: str = ""
-    status: str = ""  # 활성/해지예정/만료
-    platform: str = ""  # 어스캠퍼스/어스플러스
-    start_date: str = ""
-    next_payment_date: str = ""
+    product_type: str = ""   # SUBSCRIPTION / ONE_TIME_PURCHASE / INTEGRATION
+    status: str = ""         # active / inactive
+    price: int = 0           # 구매 당시 가격
+    purchased_count: int = 0 # 결제 성공 횟수
+    activated_at: str = ""
+    expired_at: str = ""
 
 
 @dataclass
-class PaymentInfo:
-    payment_id: str = ""
-    product_name: str = ""
-    amount: int = 0
-    monthly_price: int = 0  # 1개월 정가 (환불 계산용)
-    card_name: str = ""
-    card_last4: str = ""
-    payment_date: str = ""
-    payment_cycle_days: int = 30
-    is_promotion: bool = False
-    promotion_price: int = 0
+class TransactionInfo:
+    transaction_id: str = ""
+    round: int = 0           # 결제 회차
+    provider: str = ""       # toss/hecto/google/apple 등
+    state: str = ""          # purchased_success/purchased_refund 등
+    method: str = ""         # 결제 방법
+    method_info: str = ""    # 카드사 등
+    amount: int = 0          # 금액
+    created_at: str = ""
 
 
 @dataclass
 class UsageInfo:
     has_accessed: bool = False
+    content_view_count: int = 0
     last_access_date: str = ""
-    content_viewed_count: int = 0
 
 
 @dataclass
 class LookupResult:
     user: UserInfo | None = None
     products: list[ProductInfo] = field(default_factory=list)
-    payments: list[PaymentInfo] = field(default_factory=list)
+    transactions: list[TransactionInfo] = field(default_factory=list)
     usage: UsageInfo | None = None
-    raw_responses: dict = field(default_factory=dict)
 
     def to_display(self) -> str:
         lines = ["📋 **조회 결과**", ""]
         if self.user:
             lines.append("**[회원 정보]**")
-            lines.append(f"  이름: {self.user.name}")
+            lines.append(f"  닉네임: {self.user.name}")
             lines.append(f"  연락처: {self.user.phone}")
             lines.append(f"  가입방법: {self.user.signup_method}")
+            lines.append(f"  상태: {self.user.signup_state}")
             lines.append(f"  가입일: {self.user.signup_date}")
+            lines.append(f"  최근접속: {self.user.last_accessed}")
+            lines.append(f"  콘텐츠열람: {self.user.content_view}건")
             lines.append("")
         if self.products:
             lines.append("**[보유 상품]**")
             for p in self.products:
-                lines.append(f"  - {p.master_name} / {p.product_name} ({p.grade}) — {p.status}")
-                lines.append(f"    플랫폼: {p.platform}, 다음결제: {p.next_payment_date}")
+                lines.append(f"  - {p.master_name} / {p.product_name}")
+                lines.append(f"    유형: {p.product_type}, 상태: {p.status}, 가격: {p.price:,}원")
+                lines.append(f"    결제횟수: {p.purchased_count}회, 만료: {p.expired_at}")
             lines.append("")
-        if self.payments:
-            lines.append("**[결제 내역]**")
-            for pay in self.payments:
-                lines.append(f"  - {pay.product_name}: {pay.amount:,}원 ({pay.payment_date})")
-                lines.append(f"    카드: {pay.card_name} ({pay.card_last4})")
-                if pay.is_promotion:
-                    lines.append(f"    ⚠️ 프로모션 가격 적용 중 ({pay.promotion_price:,}원)")
+        if self.transactions:
+            lines.append("**[거래 내역]**")
+            for t in self.transactions:
+                lines.append(f"  - [{t.round}회차] {t.state} / {t.amount:,}원 ({t.created_at})")
+                lines.append(f"    결제: {t.method} {t.method_info} ({t.provider})")
             lines.append("")
         if self.usage:
             lines.append("**[이용 현황]**")
-            lines.append(f"  콘텐츠 열람: {'있음' if self.usage.has_accessed else '없음'}")
-            if self.usage.has_accessed:
+            lines.append(f"  콘텐츠 열람: {'있음' if self.usage.has_accessed else '없음'} ({self.usage.content_view_count}건)")
+            if self.usage.last_access_date:
                 lines.append(f"  최근 접속: {self.usage.last_access_date}")
-                lines.append(f"  열람 콘텐츠: {self.usage.content_viewed_count}건")
             lines.append("")
         return "\n".join(lines)
 
 
 class AdminAPIClient:
-    """관리자센터 API 클라이언트.
-    데모: ADMIN_API_TOKEN을 브라우저에서 복사해 .env에 설정.
-    프로덕션: 서비스 계정 토큰으로 교체."""
+    """관리자센터 API 클라이언트."""
 
     def __init__(self, base_url: str = "", token: str = ""):
         self.base_url = (base_url or ADMIN_BASE_URL).rstrip("/")
@@ -112,13 +119,14 @@ class AdminAPIClient:
             timeout=10.0,
         )
 
-    def _get(self, path: str, params: dict = None) -> dict:
+    def _get(self, path: str, params: dict = None) -> dict | list:
         try:
             resp = self.client.get(path, params=params)
+            logger.info(f"Admin API {resp.status_code}: {path}")
             resp.raise_for_status()
             return resp.json()
         except httpx.HTTPStatusError as e:
-            logger.error(f"Admin API {e.response.status_code}: {path}")
+            logger.error(f"Admin API {e.response.status_code}: {path} — {e.response.text[:300]}")
             return {}
         except Exception as e:
             logger.error(f"Admin API error: {path} — {e}")
@@ -127,104 +135,135 @@ class AdminAPIClient:
     # ── 유저 검색 ──
 
     def search_user_by_phone(self, phone: str) -> str | None:
-        """전화번호로 유저 검색 → userId 반환"""
-        data = self._get("/v3/users", params={"phoneNumber": phone})
-        users = data.get("data", data.get("items", []))
+        """GET /v3/users — 전화번호로 유저 검색 → userId 반환"""
+        data = self._get("/v3/users", params={
+            "phoneNumber": phone,
+            "offset": 0,
+            "limit": 10,
+        })
+        users = data.get("users", [])
         if isinstance(users, list) and users:
-            return str(users[0].get("id", ""))
+            active = [u for u in users if not u.get("deleted", False)]
+            target = active[0] if active else users[0]
+            return str(target.get("id", ""))
         return None
 
     # ── 개별 조회 ──
 
     def get_user(self, user_id: str) -> UserInfo:
-        """GET /v1/users/{id} — 기본정보"""
+        """GET /v1/users/{id} → {profile: UserProfileDto, memo, masters}"""
         data = self._get(f"/v1/users/{user_id}")
         if not data:
             return UserInfo(user_id=user_id)
-        d = data.get("data", data)
+
+        profile = data.get("profile", {})
         return UserInfo(
             user_id=user_id,
-            name=d.get("name", d.get("nickname", "")),
-            phone=d.get("phoneNumber", d.get("phone", "")),
-            email=d.get("email", ""),
-            signup_method=d.get("signupMethod", d.get("provider", "")),
-            signup_date=d.get("createdAt", d.get("signupDate", "")),
-            memo=d.get("memo", ""),
+            name=profile.get("nickName", ""),
+            phone=profile.get("phoneNumber", ""),
+            email=profile.get("email", ""),
+            signup_method=profile.get("signUpMethod", ""),
+            signup_state=profile.get("signUpState", ""),
+            signup_date=profile.get("createdAt", ""),
+            last_accessed=profile.get("lastAccessedAt", ""),
+            content_view=profile.get("contentView", 0),
         )
 
     def get_products(self, user_id: str) -> list[ProductInfo]:
-        """GET /users/{id}/my-products — 보유 상품"""
-        data = self._get(f"/users/{user_id}/my-products")
-        items = data.get("data", data.get("items", []))
-        if not isinstance(items, list):
-            items = []
+        """GET /users/{id}/my-products → {myProducts: MyProductDto[]}
+        필수 params: limit (string), status"""
         products = []
-        for item in items:
-            products.append(ProductInfo(
-                my_product_id=str(item.get("id", item.get("myProductId", ""))),
-                master_name=item.get("masterName", item.get("master", {}).get("name", "")),
-                product_name=item.get("productName", item.get("product", {}).get("name", "")),
-                grade=item.get("grade", item.get("tier", "")),
-                status=item.get("status", ""),
-                platform=item.get("platform", ""),
-                start_date=item.get("startDate", item.get("createdAt", "")),
-                next_payment_date=item.get("nextPaymentDate", ""),
-            ))
+        for status in ("active", "inactive"):
+            data = self._get(f"/users/{user_id}/my-products", params={
+                "limit": "50",
+                "status": status,
+            })
+            items = data.get("myProducts", [])
+            if not isinstance(items, list):
+                continue
+            for item in items:
+                product = item.get("product", {})
+                products.append(ProductInfo(
+                    my_product_id=str(item.get("id", "")),
+                    master_name=product.get("masterName", ""),
+                    product_name=product.get("name", ""),
+                    product_type=item.get("type", ""),
+                    status=item.get("status", status),
+                    price=item.get("price", 0),
+                    purchased_count=item.get("purchasedSuccessCount", 0),
+                    activated_at=item.get("activatedAt", ""),
+                    expired_at=item.get("expiredAt", ""),
+                ))
         return products
 
-    def get_payments(self, user_id: str) -> list[PaymentInfo]:
-        """GET /cs/refund-user/{userId}/products — 멤버십 결제 정보"""
+    def get_refund_info(self, user_id: str) -> tuple[list[ProductInfo], list[TransactionInfo]]:
+        """GET /cs/refund-user/{userId}/products → 멤버십 + 거래내역"""
         data = self._get(f"/cs/refund-user/{user_id}/products")
-        items = data.get("data", data.get("items", []))
-        if not isinstance(items, list):
-            items = []
-        payments = []
-        for item in items:
-            payments.append(PaymentInfo(
-                payment_id=str(item.get("paymentId", item.get("id", ""))),
-                product_name=item.get("productName", item.get("product", {}).get("name", "")),
-                amount=item.get("amount", item.get("price", 0)),
-                monthly_price=item.get("monthlyPrice", item.get("originalMonthlyPrice", 0)),
-                card_name=item.get("cardName", item.get("card", {}).get("name", "")),
-                card_last4=item.get("cardLast4", item.get("card", {}).get("last4", "")),
-                payment_date=item.get("paymentDate", item.get("paidAt", "")),
-                payment_cycle_days=item.get("paymentCycleDays", item.get("cycleDays", 30)),
-                is_promotion=item.get("isPromotion", False),
-                promotion_price=item.get("promotionPrice", 0),
-            ))
-        return payments
+        if not data or isinstance(data, list):
+            # 응답이 배열일 수 있음
+            items = data if isinstance(data, list) else []
+        else:
+            items = [data] if data.get("_id") else []
 
-    def get_shop_payments(self, user_id: str) -> list[PaymentInfo]:
-        """GET /cs/refund-user/{userId}/shop-product — 샵 결제 내역"""
-        data = self._get(f"/cs/refund-user/{user_id}/shop-product")
-        items = data.get("data", data.get("items", []))
-        if not isinstance(items, list):
-            items = []
-        payments = []
+        products = []
+        transactions = []
+
         for item in items:
-            payments.append(PaymentInfo(
-                payment_id=str(item.get("paymentId", item.get("id", ""))),
-                product_name=item.get("productName", ""),
-                amount=item.get("amount", item.get("price", 0)),
-                payment_date=item.get("paymentDate", item.get("paidAt", "")),
-                card_name=item.get("cardName", ""),
-                card_last4=item.get("cardLast4", ""),
+            product_data = item.get("product", {})
+            products.append(ProductInfo(
+                my_product_id=str(item.get("_id", "")),
+                product_name=product_data.get("name", "") if isinstance(product_data, dict) else "",
+                status=item.get("status", ""),
+                activated_at=item.get("createdAt", ""),
+                expired_at=item.get("expiredAt", ""),
             ))
-        return payments
+
+            for tx in item.get("transactions", []):
+                amount_raw = tx.get("amount", "0")
+                try:
+                    amount = int(amount_raw)
+                except (ValueError, TypeError):
+                    amount = 0
+                transactions.append(TransactionInfo(
+                    transaction_id=str(tx.get("_id", "")),
+                    round=tx.get("round", 0),
+                    provider=tx.get("provider", ""),
+                    state=tx.get("state", ""),
+                    method=tx.get("method", ""),
+                    method_info=tx.get("methodInfo", ""),
+                    amount=amount,
+                    created_at=tx.get("createdAt", ""),
+                ))
+
+        return products, transactions
 
     def get_usage(self, user_id: str) -> UsageInfo:
-        """GET /users/{id}/contents — 콘텐츠 열람 이력"""
+        """GET /users/{id}/contents — 콘텐츠 열람 이력
+        스키마가 비어있으므로 실제 응답에 유연하게 대응"""
         data = self._get(f"/users/{user_id}/contents")
-        items = data.get("data", data.get("items", []))
-        if not isinstance(items, list):
-            items = []
-        if not items:
+        if not data:
             return UsageInfo(has_accessed=False)
-        return UsageInfo(
-            has_accessed=True,
-            last_access_date=items[0].get("accessedAt", items[0].get("lastViewedAt", "")),
-            content_viewed_count=len(items),
-        )
+
+        # 응답 구조에 따라 파싱
+        if isinstance(data, list):
+            return UsageInfo(
+                has_accessed=len(data) > 0,
+                content_view_count=len(data),
+            )
+        if isinstance(data, dict):
+            items = data.get("contents", data.get("data", data.get("items", [])))
+            if isinstance(items, list):
+                return UsageInfo(
+                    has_accessed=len(items) > 0,
+                    content_view_count=len(items),
+                )
+            # contentView count만 있는 경우
+            count = data.get("contentView", data.get("count", 0))
+            return UsageInfo(
+                has_accessed=count > 0,
+                content_view_count=count,
+            )
+        return UsageInfo(has_accessed=False)
 
     # ── 통합 조회 ──
 
@@ -232,13 +271,27 @@ class AdminAPIClient:
         """유저 ID로 전체 정보 조회"""
         user = self.get_user(user_id)
         products = self.get_products(user_id)
-        payments = self.get_payments(user_id)
-        shop_payments = self.get_shop_payments(user_id)
+        refund_products, transactions = self.get_refund_info(user_id)
         usage = self.get_usage(user_id)
+
+        # profile의 contentView로 usage 보충
+        if user.content_view > 0 and not usage.has_accessed:
+            usage = UsageInfo(
+                has_accessed=True,
+                content_view_count=user.content_view,
+                last_access_date=user.last_accessed,
+            )
+
+        # refund_products에서 products 보충 (중복 제거)
+        existing_ids = {p.my_product_id for p in products}
+        for rp in refund_products:
+            if rp.my_product_id not in existing_ids:
+                products.append(rp)
+
         return LookupResult(
             user=user,
             products=products,
-            payments=payments + shop_payments,
+            transactions=transactions,
             usage=usage,
         )
 
