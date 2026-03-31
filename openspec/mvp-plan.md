@@ -320,14 +320,85 @@ cs-agent-demo/
 
 ---
 
-## 7. 로드맵
+## 7. 구현 진행 상황 (2026-03-31)
+
+### 완료
+
+| Task | 상태 | 파일 | 비고 |
+|------|:----:|------|------|
+| Task 0: 데이터 탐색 | ✅ | `openspec/data-exploration-results.md` | 이탈 패턴 5유형, 템플릿 16종, 환불 공식 검증 |
+| Task 0: API 탐색 | ✅ | `openspec/admin-api-exploration-results.md` | 7개 핵심 API + Apidog 스키마 확인 |
+| Task 1: webhook 수신 | ✅ | `src/webhook_handler.py` | POST /webhook/channeltalk, E2E 테스트 통과 |
+| Task 2: API 클라이언트 | ✅ | `src/admin_api.py` | Apidog 스키마 기반, 실제 유저 검색 확인 |
+| Task 3: 환불 계산 | ✅ | `src/refund_engine.py`, `config/refund_rules.json` | 5개 규칙, 역산 검증 통과 |
+| Task 4: 봇 이탈 감지 | ✅ | `src/dropout_detector.py` | Type A/B/C/D, HTTP 테스트 통과 |
+| Task 6: 벡터 템플릿 매칭 | ✅ | `src/template_matcher.py`, `config/template_mapping.json` | 82% 정확도 (80건) |
+
+### 추가 검토 / 작업 필요
+
+#### P0 — 정확도 개선 (다음 작업)
+
+1. **플랫폼혼동 매칭 정확도 20%** — 테스트 케이스 품질 확인 필요
+   - [ ] 플랫폼혼동 5건의 유저 메시지가 실제로 다른 유형과 겹치는지 확인
+   - [ ] 겹치면: 테스트 케이스 교체 (더 명확한 문의 추출)
+   - [ ] 안 겹치면: 플랫폼혼동 대표 문의 추가 (현재 5건 → 10~15건)
+
+2. **수강안내/기술오류 매칭 60%** — 동일한 방식으로 확인
+   - [ ] 오매칭된 케이스의 유저 메시지 수동 검토
+   - [ ] 필요 시 해당 유형 테스트 케이스 보강
+
+3. **테스트 케이스 leave-one-out 검증**
+   - [ ] 현재는 학습=테스트 동일 데이터 (80건으로 인덱스 + 80건으로 테스트)
+   - [ ] 각 유형별 1건씩 빼고 인덱스 → 뺀 건으로 테스트 = 실제 일반화 성능 측정
+   - [ ] 추가 데이터 확보 시 train/test 분리 (인덱스용 80건 + 별도 테스트 40건)
+
+#### P1 — webhook ↔ template_matcher 연결
+
+4. **webhook_handler에 template_matcher 연결**
+   - [ ] 현재 agent.py 경유 (키워드 기반) → template_matcher (벡터 기반)로 교체
+   - [ ] 환불 분류 시 refund_engine 자동 연결
+   - [ ] threshold 이하 시 LLM fallback
+
+5. **관리자센터 API 실제 연동 테스트**
+   - [ ] 토큰 넣고 실제 유저 조회 → 환불 계산 → 답변 생성 E2E
+   - [ ] API 응답 필드 파싱 검증 (get_products, get_refund_info 등)
+   - [ ] `GET /users/{id}/contents` 실제 응답 구조 확인 (Apidog 스키마 비어있음)
+
+#### P2 — 데모 품질
+
+6. **답변 품질 CS팀 검수**
+   - [ ] 16종 템플릿별 생성된 답변을 CS팀에게 보여주고 "이대로 보낼 수 있는지" 평가
+   - [ ] 피드백 반영하여 템플릿 문구 수정
+
+7. **환불 규정 CS팀 확인**
+   - [ ] EP-003 (1/3~1/2 기간, 신뢰도 medium) — 실제 규정 확인
+   - [ ] EP-004 (1/2 경과 후 환불불가, 신뢰도 low) — 실제 규정 확인
+   - [ ] 어스캠퍼스 환불 규정 (평생교육법 기준, 데이터 불충분)
+
+8. **상품별 정가 테이블**
+   - [ ] 환불 계산에 1개월 정가 필요 — API에서 가져올 수 있는지, 별도 config 필요한지
+   - [ ] `GET /cs/refund-user/{userId}/products`의 product 필드에 정가 포함 여부 확인
+
+#### P3 — 프로덕션 준비
+
+9. **채널톡 유저 매칭**
+   - [ ] 프론트엔드에서 채널톡 초기화 시 userId 주입 확인 + 배포
+   - [ ] memberId = userId 직접 매칭 가능 여부
+
+10. **API 인증 서비스 계정**
+    - [ ] 관리자센터 팀에 read-only 서비스 계정 토큰 발급 요청
+    - [ ] 토큰 자동 갱신 로직 (만료 시)
+
+---
+
+## 8. 로드맵
 
 ```
-[2026-04-01] MVP 데모: webhook → 유저 식별 → 환불 계산 → 답변 생성
+[2026-03-31] ✅ MVP 코어: webhook + API + 환불계산 + 벡터매칭 (82%)
      │
-[Phase 2] 템플릿 매칭 답변 + 피드백 루프
+[2026-04-01] 정확도 개선 + webhook↔matcher 연결 + CS팀 공유
      │
-[Phase 3] 지식 베이스 RAG (상세페이지, FAQ, UI/UX)
+[Phase 2] 피드백 루프 + 지식베이스 RAG
      │
-[Phase 4] 프로덕션 배포 (userId 주입, 서비스 토큰, 실시간 처리)
+[Phase 3] 프로덕션 배포 (userId 주입, 서비스 토큰, 실시간)
 ```

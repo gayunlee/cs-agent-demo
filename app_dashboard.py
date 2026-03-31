@@ -263,17 +263,78 @@ def main():
 
         if st.button("조회", use_container_width=True):
             if admin_token:
+                import httpx
                 client = AdminAPIClient(base_url=admin_base, token=admin_token)
                 with st.spinner("조회 중..."):
-                    if test_user_id:
-                        lookup = client.lookup_all(test_user_id)
-                    elif test_phone:
-                        lookup = client.lookup_by_phone(test_phone)
-                    else:
+                    try:
+                        if test_user_id or test_phone:
+                            import httpx as _httpx
+                            headers = {"Authorization": f"Bearer {admin_token}"}
+                            base = admin_base.rstrip("/")
+                            uid = test_user_id
+
+                            # 전화번호면 먼저 userId 찾기
+                            if not uid and test_phone:
+                                r = _httpx.get(f"{base}/v3/users", params={"phoneNumber": test_phone, "offset": 0, "limit": 10}, headers=headers, timeout=10.0)
+                                st.caption(f"GET /v3/users?phoneNumber={test_phone} → {r.status_code}")
+                                st.code(r.text[:1500], language="json")
+                                if r.status_code == 200:
+                                    users = r.json().get("users", [])
+                                    active = [u for u in users if not u.get("deleted", False)]
+                                    if active:
+                                        uid = active[0].get("id", "")
+                                        st.success(f"userId: {uid}")
+
+                            if uid:
+                                # 모든 API raw 응답 출력
+                                api_endpoints = [
+                                    ("GET", f"/v1/users/{uid}", None),
+                                    ("GET", f"/users/{uid}/my-products", None),
+                                    ("GET", f"/cs/refund-user/{uid}/products", None),
+                                    ("GET", f"/users/{uid}/contents", None),
+                                    ("GET", f"/v1/users/{uid}/membership-history", None),
+                                ]
+                                for method, path, params in api_endpoints:
+                                    try:
+                                        r = _httpx.get(f"{base}{path}", params=params, headers=headers, timeout=10.0)
+                                        st.caption(f"{method} {path} → {r.status_code}")
+                                        st.code(r.text[:1500], language="json")
+                                    except Exception as e:
+                                        st.caption(f"{method} {path} → ERROR: {e}")
+
+                            lookup = None  # raw 모드에서는 파싱 스킵
+                        elif test_phone:
+                            # 여러 엔드포인트 시도
+                            import httpx as _httpx
+                            endpoints = [
+                                ("/v3/users", {"phoneNumber": test_phone, "offset": 0, "limit": 10}),
+                                ("/v2/users", {"phoneNumber": test_phone, "limit": "10"}),
+                            ]
+                            for ep, params in endpoints:
+                                raw = _httpx.get(
+                                    f"{admin_base.rstrip('/')}{ep}",
+                                    params=params,
+                                    headers={"Authorization": f"Bearer {admin_token}"},
+                                    timeout=10.0,
+                                )
+                                st.caption(f"GET {ep} {params} → {raw.status_code}")
+                                if raw.status_code == 200 and raw.text.strip() not in ("{}", "[]", ""):
+                                    st.code(raw.text[:1000], language="json")
+                                    break
+                                else:
+                                    st.code(raw.text[:500], language="json")
+                            lookup = client.lookup_by_phone(test_phone)
+                        else:
+                            lookup = None
+                    except Exception as e:
+                        st.error(f"API 오류: {e}")
                         lookup = None
 
-                if lookup:
+                if lookup and lookup.user and lookup.user.name:
                     st.success("조회 성공")
+                    st.session_state["last_lookup"] = lookup
+                elif lookup:
+                    st.warning("유저 ID는 찾았지만 상세 정보가 없습니다")
                     st.session_state["last_lookup"] = lookup
                 else:
                     st.error("유저를 찾을 수 없습니다")
