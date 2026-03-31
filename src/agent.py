@@ -3,11 +3,14 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
+from datetime import date, datetime
 
 import boto3
 
 from src.tools import simulate_lookup, LookupResult
 from src.rag import AnswerRAG
+from src.admin_api import AdminAPIClient, LookupResult as AdminLookupResult
+from src.refund_engine import RefundEngine, RefundInput, RefundResult
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +71,35 @@ TEMPLATES = {
     },
 }
 
+# 환불 계산 결과 포함 답변 템플릿
+REFUND_ANSWER_TEMPLATES = {
+    "full": (
+        "안녕하세요 회원님, 문의 주셔서 감사합니다.\n"
+        "확인 결과 결제일로부터 {days_elapsed}일 경과, 콘텐츠 열람 이력이 없어 "
+        "전액 환불 가능하십니다.\n\n"
+        "■ 결제 금액: {total_paid:,}원\n"
+        "■ 환불 금액: {refund_amount:,}원 (전액)\n\n"
+        "환불 진행 도와드릴까요?"
+    ),
+    "partial": (
+        "안녕하세요 회원님, 문의 주셔서 감사합니다.\n"
+        "확인 결과 아래와 같이 부분 환불이 가능하십니다.\n\n"
+        "■ 결제 금액: {total_paid:,}원\n"
+        "■ 차감금: {deduction:,}원\n"
+        "■ 수수료: {fee:,}원\n"
+        "■ 환불 금액: {refund_amount:,}원\n\n"
+        "({explanation})\n\n"
+        "환불 진행 도와드릴까요?"
+    ),
+    "rejected": (
+        "안녕하세요 회원님, 문의 주셔서 감사합니다.\n"
+        "확인 결과 현재 환불 규정상 환불이 어려운 점 안내드립니다.\n\n"
+        "■ 결제 금액: {total_paid:,}원\n"
+        "■ 사유: {explanation}\n\n"
+        "추가 문의사항이 있으시면 말씀해 주세요."
+    ),
+}
+
 CLASSIFY_PROMPT = """\
 당신은 금융 교육 플랫폼 CS 상담 분류 전문가입니다.
 고객의 채널톡 문의를 읽고 아래 4가지 중 하나로 분류하세요.
@@ -117,6 +149,8 @@ class AgentResponse:
     template_matched: str | None
     action: str
     lookup: LookupResult | None = None
+    admin_lookup: AdminLookupResult | None = None
+    refund_result: RefundResult | None = None
     rag_matches: list = None  # RAG 검색 결과
 
 
@@ -129,6 +163,8 @@ class CSAgent:
         else:
             self.bedrock = None
         self.rag = None  # lazy init
+        self.refund_engine = RefundEngine()
+        self.admin_client = AdminAPIClient() if not mock else None
 
     def _get_rag(self) -> AnswerRAG | None:
         if self.rag is None:
@@ -190,8 +226,29 @@ class CSAgent:
             logger.warning(f"답변 생성 API 실패, mock fallback: {e}")
             return self._mock_draft(text)
 
-    def process(self, chat_id: str, text: str) -> AgentResponse:
-        """전체 파이프라인: 분류 → RAG 검색 → 정보 조회 → 초안 생성"""
+    def generate_refund_answer(self, refund_result: RefundResult, total_paid: int) -> str:
+        """환불 계산 결과로 답변 생성"""
+        if not refund_result.refundable:
+            return REFUND_ANSWER_TEMPLATES["rejected"].format(
+                total_paid=total_paid,
+                explanation=refund_result.explanation,
+            )
+        if refund_result.deduction == 0:
+            return REFUND_ANSWER_TEMPLATES["full"].format(
+                total_paid=total_paid,
+                refund_amount=refund_result.refund_amount,
+                days_elapsed=refund_result.explanation.split("일")[0].split("부터 ")[-1] if "일" in refund_result.explanation else "?",
+            )
+        return REFUND_ANSWER_TEMPLATES["partial"].format(
+            total_paid=total_paid,
+            deduction=refund_result.deduction,
+            fee=refund_result.fee,
+            refund_amount=refund_result.refund_amount,
+            explanation=refund_result.explanation,
+        )
+
+    def process(self, chat_id: str, text: str, user_id: str = "") -> AgentResponse:
+        """전체 파이프라인: 분류 → 정보 조회 → 환불 계산 → 초안 생성"""
         # 1. 분류
         classification = self.classify(text)
         category = classification.get("category", "미분류")
@@ -204,15 +261,41 @@ class CSAgent:
             rag_matches = rag.search(text[:500], n_results=3)
             ref_text = rag.format_for_prompt(rag_matches)
 
-        # 3. 고객 정보 조회 (시뮬레이션)
-        lookup = simulate_lookup(text, category)
-        lookup_info = lookup.to_display()
+        # 3. 고객 정보 조회
+        admin_lookup = None
+        lookup = None
+        lookup_info = ""
 
-        # 4. 템플릿 매칭
+        if user_id and self.admin_client:
+            # 실제 관리자센터 API 조회
+            admin_lookup = self.admin_client.lookup_all(user_id)
+            lookup_info = admin_lookup.to_display()
+        else:
+            # mock 조회 (데모/테스트용)
+            lookup = simulate_lookup(text, category)
+            lookup_info = lookup.to_display()
+
+        # 4. 환불 분류인 경우 → 환불 계산 엔진
+        refund_result = None
+        if category == "결제·환불" and any(kw in text for kw in ["환불", "취소하고", "돈 돌려"]):
+            refund_result = self._calculate_refund(admin_lookup, lookup)
+
+        # 5. 템플릿 매칭
         tmpl_key, tmpl_content = self.match_template(text)
 
-        # 5. 행동 결정 + 답변 생성
-        if tmpl_content and classification.get("confidence") == "높음":
+        # 6. 행동 결정 + 답변 생성
+        if refund_result:
+            # 환불: 계산 결과 기반 답변
+            action = "refund_calculated"
+            total_paid = refund_result.refund_amount + refund_result.deduction + refund_result.fee if refund_result.refundable else 0
+            # total_paid 복원
+            if admin_lookup and admin_lookup.payments:
+                total_paid = admin_lookup.payments[0].amount
+            elif lookup and lookup.payment:
+                total_paid = lookup.payment.amount
+            draft = self.generate_refund_answer(refund_result, total_paid)
+            tmpl_key = "환불_자동계산"
+        elif tmpl_content and classification.get("confidence") == "높음":
             action = "auto_template"
             draft = tmpl_content
         elif classification.get("confidence") == "낮음":
@@ -231,8 +314,56 @@ class CSAgent:
             template_matched=tmpl_key,
             action=action,
             lookup=lookup,
+            admin_lookup=admin_lookup,
+            refund_result=refund_result,
             rag_matches=rag_matches,
         )
+
+    def _calculate_refund(self, admin_lookup: AdminLookupResult | None, mock_lookup: LookupResult | None) -> RefundResult | None:
+        """조회 결과에서 환불 계산"""
+        try:
+            if admin_lookup and admin_lookup.payments:
+                pay = admin_lookup.payments[0]
+                payment_date = self._parse_date(pay.payment_date)
+                if not payment_date:
+                    return None
+                has_accessed = admin_lookup.usage.has_accessed if admin_lookup.usage else False
+                inp = RefundInput(
+                    total_paid=pay.amount,
+                    monthly_price=pay.monthly_price or pay.amount,
+                    payment_date=payment_date,
+                    payment_cycle_days=pay.payment_cycle_days,
+                    content_accessed=has_accessed,
+                )
+                return self.refund_engine.calculate(inp)
+            elif mock_lookup and mock_lookup.payment:
+                pay = mock_lookup.payment
+                payment_date = self._parse_date(pay.last_payment_date)
+                if not payment_date:
+                    return None
+                has_accessed = mock_lookup.usage.has_accessed if mock_lookup.usage else False
+                inp = RefundInput(
+                    total_paid=pay.amount,
+                    monthly_price=pay.amount,  # mock에선 정가=결제액
+                    payment_date=payment_date,
+                    payment_cycle_days=30,
+                    content_accessed=has_accessed,
+                )
+                return self.refund_engine.calculate(inp)
+        except Exception as e:
+            logger.error(f"환불 계산 실패: {e}")
+        return None
+
+    @staticmethod
+    def _parse_date(date_str: str) -> date | None:
+        if not date_str:
+            return None
+        for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"):
+            try:
+                return datetime.strptime(date_str, fmt).date()
+            except ValueError:
+                continue
+        return None
 
     def _mock_classify(self, text: str) -> dict:
         text_lower = text.lower()

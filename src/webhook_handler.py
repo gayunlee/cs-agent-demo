@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from src.admin_api import AdminAPIClient, LookupResult
 from src.dropout_detector import DropoutDetector, DropoutType
+from src.agent import CSAgent
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ WEBHOOK_SECRET = os.getenv("CHANNELTALK_WEBHOOK_SECRET", "")
 # 싱글턴
 _admin_client: AdminAPIClient | None = None
 _dropout_detector: DropoutDetector | None = None
+_agent: CSAgent | None = None
 
 
 def get_admin_client() -> AdminAPIClient:
@@ -36,6 +38,13 @@ def get_dropout_detector() -> DropoutDetector:
     if _dropout_detector is None:
         _dropout_detector = DropoutDetector()
     return _dropout_detector
+
+
+def get_agent() -> CSAgent:
+    global _agent
+    if _agent is None:
+        _agent = CSAgent(mock=True)  # 데모: mock 모드 (Bedrock 없이)
+    return _agent
 
 
 # ── Webhook 검증 ──
@@ -160,16 +169,21 @@ async def handle_webhook(request: Request):
         logger.info(f"[dropout] type={dropout.type.value} chat={event.chat_id}")
         return result
 
-    # 3. 유저 정보 조회
-    lookup = None
-    if user_id:
-        client = get_admin_client()
-        lookup = client.lookup_all(user_id)
-        result.lookup_summary = lookup.to_display() if lookup else ""
+    # 3. 에이전트 파이프라인: 분류 → 조회 → 환불 계산 → 답변 생성
+    agent = get_agent()
+    agent_response = agent.process(
+        chat_id=event.chat_id,
+        text=event.message,
+        user_id=user_id or "",
+    )
 
-    # 4. 의도 분류 + 답변 생성 (TODO: Task 3에서 연결)
-    result.action = "pending"
-    result.draft_answer = "(답변 생성 대기 — Task 3에서 구현)"
+    result.category = agent_response.category
+    result.draft_answer = agent_response.draft_answer
+    result.action = agent_response.action
+    if agent_response.admin_lookup:
+        result.lookup_summary = agent_response.admin_lookup.to_display()
+    elif agent_response.lookup:
+        result.lookup_summary = agent_response.lookup.to_display()
 
     return result
 
