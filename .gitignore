@@ -5,3 +5,4 @@ __pycache__/
 .DS_Store
 data/rag_pairs.json
 data/demo_results.json
+accountKey.json

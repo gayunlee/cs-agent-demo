@@ -17,6 +17,11 @@ python app_chat.py
 - 원본 대화: `letter-post-weekly-report/data/channel_io/` (참조, 복사하지 않음)
 - RAG 벡터 DB: `./chroma_db/`
 
+### /note 기본 설정
+- **category**: `채널톡 어시스턴트`
+- **trigger**: `채널톡 CS 에이전트`
+- 이 프로젝트에서 `/note` 실행 시 위 category를 기본값으로 사용한다 (F.F.md 추론 생략)
+
 ## 구조
 ```
 src/

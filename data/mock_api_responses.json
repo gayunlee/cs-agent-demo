@@ -1,0 +1,123 @@
+{
+  "mock_no_user": {
+    "description": "유저 검색 실패 → 본인확인 요청",
+    "expected_template": "T6_본인확인_요청",
+    "us_user_id": "",
+    "products": [],
+    "transactions": [],
+    "usage": {"accessed": false, "count": 0},
+    "memberships": [],
+    "refunds": []
+  },
+  "mock_no_payment": {
+    "description": "유저 있음 + 결제 이력 없음 → 해지 방법",
+    "expected_template": "T1_구독해지_방법_앱",
+    "us_user_id": "mock_usr_001",
+    "products": [
+      {"master": "박두환 Official club", "name": "투자동행반(1개월)", "status": "active", "price": 100000, "activated": "2025-07-01T00:00:00.000Z", "expired": "2025-08-01T00:00:00.000Z"}
+    ],
+    "transactions": [],
+    "usage": {"accessed": false, "count": 0},
+    "memberships": [],
+    "refunds": []
+  },
+  "mock_full_refund": {
+    "description": "미환불 1건 + 7일 이내 + 미열람 → 전액 환불",
+    "expected_template": "T2_환불_규정_금액",
+    "expected_refund_type": "full",
+    "us_user_id": "mock_usr_002",
+    "products": [
+      {"master": "박두환 Official club", "name": "투자동행반(6개월)", "status": "active", "price": 500000, "activated": "RECENT_3DAYS", "expired": "RECENT_3DAYS_PLUS_6M"}
+    ],
+    "transactions": [
+      {"round": 1, "state": "purchased_success", "amount": 500000, "method": "CA", "info": "542879******4021", "date": "RECENT_3DAYS"}
+    ],
+    "usage": {"accessed": false, "count": 0},
+    "memberships": [
+      {"productName": "박두환 Official club 투자동행반(6개월)", "paymentCycle": 6, "expiration": false, "membershipType": "subscription", "transactionHistories": [{"createdAt": "RECENT_3DAYS", "state": "purchased_success", "method": "CA"}]}
+    ],
+    "refunds": []
+  },
+  "mock_partial_accessed": {
+    "description": "미환불 1건 + 7일 이내 + 열람 있음 → 부분 환불",
+    "expected_template": "T2_환불_규정_금액",
+    "expected_refund_type": "partial",
+    "us_user_id": "mock_usr_003",
+    "products": [
+      {"master": "박두환 Official club", "name": "투자동행반(6개월)", "status": "active", "price": 500000, "activated": "RECENT_5DAYS", "expired": "RECENT_5DAYS_PLUS_6M"}
+    ],
+    "transactions": [
+      {"round": 1, "state": "purchased_success", "amount": 500000, "method": "CA", "info": "376211******1234", "date": "RECENT_5DAYS"}
+    ],
+    "usage": {"accessed": true, "count": 12},
+    "memberships": [
+      {"productName": "박두환 Official club 투자동행반(6개월)", "paymentCycle": 6, "expiration": false, "membershipType": "subscription", "transactionHistories": [{"createdAt": "RECENT_5DAYS", "state": "purchased_success", "method": "CA"}]}
+    ],
+    "refunds": []
+  },
+  "mock_partial_expired": {
+    "description": "미환불 1건 + 7일 경과 → 부분 환불",
+    "expected_template": "T2_환불_규정_금액",
+    "expected_refund_type": "partial",
+    "us_user_id": "mock_usr_004",
+    "products": [
+      {"master": "서재형 Official club", "name": "투자교실(1개월)", "status": "active", "price": 100000, "activated": "RECENT_20DAYS", "expired": "RECENT_20DAYS_PLUS_1M"}
+    ],
+    "transactions": [
+      {"round": 1, "state": "purchased_success", "amount": 100000, "method": "CA", "info": "123456******7890", "date": "RECENT_20DAYS"}
+    ],
+    "usage": {"accessed": true, "count": 5},
+    "memberships": [
+      {"productName": "서재형 Official club 투자교실(1개월)", "paymentCycle": 1, "expiration": false, "membershipType": "subscription", "transactionHistories": [{"createdAt": "RECENT_20DAYS", "state": "purchased_success", "method": "CA"}]}
+    ],
+    "refunds": []
+  },
+  "mock_all_refunded": {
+    "description": "전부 환불됨 → 접수 완료",
+    "expected_template": "T3_환불_접수_완료",
+    "us_user_id": "mock_usr_005",
+    "products": [
+      {"master": "박두환 Official club", "name": "투자동행반(6개월)", "status": "inactive", "price": 500000, "activated": "2025-07-01T07:35:28.514Z", "expired": "2025-07-15T10:00:00.000Z"}
+    ],
+    "transactions": [
+      {"round": 1, "state": "purchased_success", "amount": 500000, "method": "CA", "info": "542879******4021", "date": "2025-07-01T07:35:28.527Z"},
+      {"round": 1, "state": "purchased_refund", "amount": 360000, "method": "CA", "info": "542879******4021", "date": "2025-07-15T10:00:00.000Z"}
+    ],
+    "usage": {"accessed": true, "count": 3},
+    "memberships": [],
+    "refunds": [
+      {"productName": "박두환 Official club 투자동행반(6개월)", "createdAt": "2025-07-01T07:35:28.515Z", "paymentHistory": {"amount": 500000, "cardType": null, "cardNo": "542879******4021", "createdAt": "2025-07-01T07:35:28.515Z"}, "refundHistory": {"refundAmount": 360000, "refundAt": "2025-07-15T10:00:00.000Z"}}
+    ]
+  },
+  "mock_multi_payment": {
+    "description": "미환불 3건 (정기결제) → 환불 규정",
+    "expected_template": "T2_환불_규정_금액",
+    "expected_refund_type": "partial",
+    "us_user_id": "mock_usr_006",
+    "products": [
+      {"master": "박두환 Official club", "name": "투자동행반(1개월)", "status": "active", "price": 100000, "activated": "2025-06-01T00:00:00.000Z", "expired": "RECENT_5DAYS_PLUS_1M"}
+    ],
+    "transactions": [
+      {"round": 1, "state": "purchased_success", "amount": 100000, "method": "CA", "info": "111111******2222", "date": "2025-06-01T00:00:00.000Z"},
+      {"round": 2, "state": "purchased_success", "amount": 100000, "method": "CA", "info": "111111******2222", "date": "2025-07-01T00:00:00.000Z"},
+      {"round": 3, "state": "purchased_success", "amount": 100000, "method": "CA", "info": "111111******2222", "date": "RECENT_5DAYS"}
+    ],
+    "usage": {"accessed": true, "count": 30},
+    "memberships": [],
+    "refunds": []
+  },
+  "mock_card_issue": {
+    "description": "카드 문의 → 카드변경 안내 (데이터와 무관)",
+    "expected_template": "T8_카드변경_안내",
+    "us_user_id": "mock_usr_007",
+    "products": [
+      {"master": "박두환 Official club", "name": "투자동행반(1개월)", "status": "active", "price": 100000, "activated": "2025-07-01T00:00:00.000Z", "expired": "2025-08-01T00:00:00.000Z"}
+    ],
+    "transactions": [
+      {"round": 1, "state": "purchased_success", "amount": 100000, "method": "CA", "info": "999999******0000", "date": "2025-07-01T00:00:00.000Z"}
+    ],
+    "usage": {"accessed": true, "count": 10},
+    "memberships": [],
+    "refunds": []
+  }
+}

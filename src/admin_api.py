@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 ADMIN_BASE_URL = os.getenv("ADMIN_API_BASE_URL", "")
 ADMIN_TOKEN = os.getenv("ADMIN_API_TOKEN", "")
+REFRESH_TOKEN = os.getenv("REFRESH_TOKEN", "")
 
 
 @dataclass
@@ -108,20 +109,21 @@ class LookupResult:
 
 
 class AdminAPIClient:
-    """관리자센터 API 클라이언트."""
+    """관리자센터 API 클라이언트. 401 시 refresh token으로 자동 갱신."""
 
-    def __init__(self, base_url: str = "", token: str = ""):
+    def __init__(self, base_url: str = "", token: str = "", refresh_token: str = ""):
         self.base_url = (base_url or ADMIN_BASE_URL).rstrip("/")
         self.token = token or ADMIN_TOKEN
-        self.client = httpx.Client(
-            base_url=self.base_url,
-            headers={"Authorization": f"Bearer {self.token}"},
-            timeout=10.0,
-        )
+        self.refresh_token = refresh_token or REFRESH_TOKEN
+        self.client = httpx.Client(base_url=self.base_url, timeout=10.0)
 
     def _get(self, path: str, params: dict = None) -> dict | list:
         try:
-            resp = self.client.get(path, params=params)
+            resp = self.client.get(path, params=params, headers=self._headers())
+            if resp.status_code == 401 and self.refresh_token:
+                logger.info("401 → refresh token으로 갱신 시도")
+                if self._refresh():
+                    resp = self.client.get(path, params=params, headers=self._headers())
             logger.info(f"Admin API {resp.status_code}: {path}")
             resp.raise_for_status()
             return resp.json()
@@ -131,6 +133,33 @@ class AdminAPIClient:
         except Exception as e:
             logger.error(f"Admin API error: {path} — {e}")
             return {}
+
+    def _headers(self) -> dict:
+        return {"Authorization": f"Bearer {self.token}"}
+
+    def _refresh(self) -> bool:
+        """POST /v2/auth/refresh → 새 accessToken 획득"""
+        try:
+            resp = self.client.post(
+                "/v2/auth/refresh",
+                headers={"Authorization": f"Bearer {self.refresh_token}"},
+            )
+            if resp.status_code == 200 or resp.status_code == 201:
+                data = resp.json()
+                new_token = data.get("accessToken", "")
+                new_refresh = data.get("refreshToken", "")
+                if new_token:
+                    self.token = new_token
+                    logger.info("토큰 갱신 성공")
+                if new_refresh:
+                    self.refresh_token = new_refresh
+                return bool(new_token)
+            else:
+                logger.error(f"토큰 갱신 실패: {resp.status_code} {resp.text[:200]}")
+                return False
+        except Exception as e:
+            logger.error(f"토큰 갱신 오류: {e}")
+            return False
 
     # ── 유저 검색 ──
 
@@ -237,33 +266,51 @@ class AdminAPIClient:
 
         return products, transactions
 
-    def get_usage(self, user_id: str) -> UsageInfo:
-        """GET /users/{id}/contents — 콘텐츠 열람 이력
-        스키마가 비어있으므로 실제 응답에 유연하게 대응"""
-        data = self._get(f"/users/{user_id}/contents")
-        if not data:
-            return UsageInfo(has_accessed=False)
+    def get_membership_history(self, user_id: str) -> tuple[UsageInfo, list[dict]]:
+        """GET /v1/users/{id}/membership-history — 멤버십 이용 이력
 
-        # 응답 구조에 따라 파싱
-        if isinstance(data, list):
-            return UsageInfo(
-                has_accessed=len(data) > 0,
-                content_view_count=len(data),
-            )
+        Response: { memberships: [{ productName, paymentCycle, expiration,
+                     memberShipType, transactionHistories: [{createdAt, state, ...}] }] }
+        """
+        data = self._get(f"/v1/users/{user_id}/membership-history")
+        if not data:
+            return UsageInfo(has_accessed=False), []
+
+        memberships = data.get("memberships", [])
+        if not isinstance(memberships, list):
+            memberships = []
+
+        # 거래 이력이 있으면 이용한 것으로 판단
+        total_tx = 0
+        latest_date = ""
+        for m in memberships:
+            txs = m.get("transactionHistories", [])
+            total_tx += len(txs)
+            for tx in txs:
+                dt = tx.get("createdAt", "")
+                if dt > latest_date:
+                    latest_date = dt
+
+        return UsageInfo(
+            has_accessed=total_tx > 0,
+            content_view_count=total_tx,
+            last_access_date=latest_date,
+        ), memberships
+
+    def get_refund_history(self, user_id: str) -> list[dict]:
+        """GET /v1/users/{id}/membership-refund-history — 기존 환불 이력
+
+        Response: { refunds: [{ productName, createdAt,
+                     paymentHistory: {amount, cardType, cardNo, key, createdAt},
+                     refundHistory: {refundAmount, refundAt} }] }
+        """
+        data = self._get(f"/v1/users/{user_id}/membership-refund-history",
+                         params={"offset": 0, "limit": 20})
+        if not data:
+            return []
         if isinstance(data, dict):
-            items = data.get("contents", data.get("data", data.get("items", [])))
-            if isinstance(items, list):
-                return UsageInfo(
-                    has_accessed=len(items) > 0,
-                    content_view_count=len(items),
-                )
-            # contentView count만 있는 경우
-            count = data.get("contentView", data.get("count", 0))
-            return UsageInfo(
-                has_accessed=count > 0,
-                content_view_count=count,
-            )
-        return UsageInfo(has_accessed=False)
+            return data.get("refunds", [])
+        return []
 
     # ── 통합 조회 ──
 
@@ -272,7 +319,7 @@ class AdminAPIClient:
         user = self.get_user(user_id)
         products = self.get_products(user_id)
         refund_products, transactions = self.get_refund_info(user_id)
-        usage = self.get_usage(user_id)
+        usage, _ = self.get_membership_history(user_id)
 
         # profile의 contentView로 usage 보충
         if user.content_view > 0 and not usage.has_accessed:
