@@ -53,23 +53,23 @@ def run_workflow(ctx: WorkflowContext) -> str:
       이전턴 T2 → T3
     """
 
-    # ── Node 0: 이전 대화 맥락 ──
+    # ── Node 0: 카드 문의 (유저 식별/데이터 무관) ──
+    user_text = " ".join(ctx.user_messages).lower()
+    if any(kw in user_text for kw in ["카드 변경", "카드변경", "카드 분실", "카드 만료", "카드 재발급"]):
+        ctx.path.append("카드_문의 → T8")
+        return "T8_카드변경_안내"
+
+    # ── Node 1: 이전 대화 맥락 ──
     _analyze_prev_turns(ctx)
 
     if ctx.prev_had_t2 and ctx.prev_manager_count >= 1:
         ctx.path.append("이전턴_T2 → T3")
         return "T3_환불_접수_완료"
 
-    # ── Node 1: 유저 식별 ──
+    # ── Node 2: 유저 식별 ──
     if not ctx.us_user_id:
         ctx.path.append("유저_식별_불가")
         return "T6_본인확인_요청"
-
-    # ── Node 2: 카드 문의 ──
-    user_text = " ".join(ctx.user_messages).lower()
-    if any(kw in user_text for kw in ["카드 변경", "카드변경", "카드 분실", "카드 만료", "카드 재발급"]):
-        ctx.path.append("카드_문의 → T8")
-        return "T8_카드변경_안내"
 
     # ── Node 3: 데이터 계산 ──
     _compute_derived(ctx)
