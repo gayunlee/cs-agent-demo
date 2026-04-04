@@ -30,10 +30,12 @@ class WorkflowContext:
     intent: str = ""
     prev_had_t2: bool = False
     prev_had_t4: bool = False
+    prev_had_t6: bool = False
     prev_manager_count: int = 0
     refund_amount: int = 0
     deduction: int = 0
     fee: int = 0
+    new_product_price: int = 0  # 상품변경 시 신규 상품 가격 (메시지 파싱 또는 외부 주입)
     refund_explanation: str = ""
     refundable: bool = False
     path: list[str] = field(default_factory=list)
@@ -68,8 +70,36 @@ def run_workflow(ctx: WorkflowContext) -> str:
 
     # ── Node 2: 유저 식별 ──
     if not ctx.us_user_id:
+        # Branch D: 이전에 T6 안내했는데도 여전히 식별 실패 → 재질문
+        if ctx.prev_had_t6:
+            ctx.path.append("T6_재질문")
+            return "T6b_본인확인_재질문"
         ctx.path.append("유저_식별_불가")
         return "T6_본인확인_요청"
+
+    # Branch D: 본인 아님 시그널 (가족/타인 번호 언급)
+    if any(kw in user_text for kw in [
+        "가족 번호", "가족번호", "엄마 번호", "아빠 번호", "남편 번호", "아내 번호",
+        "제 번호 아니", "제 명의 아니", "다른 사람 번호", "본인 번호 아니"
+    ]):
+        ctx.path.append("타인번호_시그널 → T6b")
+        return "T6b_본인확인_재질문"
+
+    # ── Branch C: 환불 지연/미처리 재촉 ──
+    # 진행 중 환불 건이 있고 + 유저가 재촉/상태확인 의도
+    if ctx.refunds and _is_urging_refund(user_text):
+        pending = _find_pending_refund(ctx.refunds)
+        if pending:
+            ctx.path.append("환불지연_재촉 → T12")
+            ctx.template_variables["환불접수일"] = _format_date(pending.get("createdAt", ""))
+            refund_history = pending.get("refundHistory") or {}
+            amt = refund_history.get("refundAmount", 0)
+            try:
+                ctx.template_variables["환불예정금액"] = f"{int(amt):,}"
+            except (ValueError, TypeError):
+                ctx.template_variables["환불예정금액"] = str(amt)
+            ctx.template_variables["상품명"] = pending.get("productName", "구독 상품")
+            return "T12_환불진행_상태안내"
 
     # ── Node 3: 데이터 계산 ──
     _compute_derived(ctx)
@@ -81,11 +111,42 @@ def run_workflow(ctx: WorkflowContext) -> str:
 
     # ── Node 5: 전부 환불됨 → T3 ──
     if ctx.all_refunded:
+        # Fallback 분기: 전부 환불된 상태에서 유저가 새 질문(재결제/재가입/예외) 제기
+        if _is_post_refund_question(user_text):
+            ctx.path.append("전부환불후_추가질문 → LLM_FALLBACK")
+            return "T_LLM_FALLBACK"
         ctx.path.append("전부_환불됨 → T3")
         return "T3_환불_접수_완료"
 
+    # ── Fallback 분기: 환불 철회/예외 요청 등 ──
+    if _is_refund_withdrawal_intent(user_text) or _is_exception_request(user_text):
+        ctx.path.append("환불철회/예외 → LLM_FALLBACK")
+        return "T_LLM_FALLBACK"
+
+    # ── Branch A: 상품 변경 + 차액 환불 ──
+    if _is_product_change_intent(user_text):
+        _calculate_exchange(ctx, user_text)
+        ctx.path.append("상품변경 → T10")
+        return "T10_상품변경_차액환불"
+
+    # ── Branch B: 중복/이중 결제 환불 선택 ──
+    # 미환불 결제가 2건 이상이고, 유저 메시지에 중복 의도가 있거나 금액 불일치 언급
+    unrefunded = [t for t in ctx.success_txs if not any(
+        (r.get("round") == t.get("round") or r.get("amount") == t.get("amount"))
+        for r in ctx.refund_txs
+    )]
+    if len(unrefunded) >= 2 and _is_duplicate_payment_intent(user_text):
+        ctx.template_variables["미환불건수"] = str(len(unrefunded))
+        ctx.template_variables["결제목록"] = _format_payment_list(unrefunded)
+        ctx.path.append(f"중복결제_{len(unrefunded)}건 → T11")
+        return "T11_중복결제_환불선택"
+
     # ── Node 6: 미환불 결제 있음 → T2 (RefundEngine) ──
     _calculate_refund(ctx)
+    # Fallback: 환불 규정에 매칭 안 되거나 계산 실패(차감금 > 총액) → LLM
+    if not ctx.refundable and ctx.success_txs:
+        ctx.path.append("T2_계산실패 → LLM_FALLBACK")
+        return "T_LLM_FALLBACK"
     return "T2_환불_규정_금액"
 
 
@@ -114,6 +175,10 @@ def _analyze_prev_turns(ctx: WorkflowContext):
     )
     ctx.prev_had_t4 = any(
         "구독형 스터디" in m or "정기적으로 제공되는" in m
+        for m in prev_mgr
+    )
+    ctx.prev_had_t6 = any(
+        "성함" in m and ("휴대전화" in m or "번호" in m)
         for m in prev_mgr
     )
 
@@ -210,6 +275,155 @@ def _calculate_refund(ctx: WorkflowContext):
 def _set_t4_variables(ctx: WorkflowContext):
     """T4 템플릿 변수 설정 (폐기됐지만 하위 호환)"""
     pass
+
+
+def _is_refund_withdrawal_intent(text: str) -> bool:
+    """환불 철회 — '환불 안 할래', '환불 취소', '다시 이용할게' """
+    kws = ["환불 취소", "환불취소", "환불 안 할", "환불 안할", "환불 안 받",
+           "다시 이용", "계속 이용", "환불 철회", "철회할게", "철회하고"]
+    return any(kw in text for kw in kws)
+
+
+def _is_exception_request(text: str) -> bool:
+    """예외 전액환불 요청 — '전액', '예외', '특별' 등"""
+    kws = ["전액 환불", "전액환불", "특별 환불", "예외 환불", "100% 환불",
+           "다 돌려", "전부 돌려", "규정 예외"]
+    return any(kw in text for kw in kws)
+
+
+def _is_post_refund_question(text: str) -> bool:
+    """전부 환불된 상태에서 새 질문 — 재결제/재가입/추가 환불/기타 문의"""
+    kws = ["재결제", "다시 결제", "재가입", "다시 가입", "새 카드",
+           "추가 환불", "또 환불", "다른 건", "보안카드"]
+    return any(kw in text for kw in kws)
+
+
+def _is_duplicate_payment_intent(text: str) -> bool:
+    """중복/이중 결제 의도 감지"""
+    kws = ["중복", "이중", "두 번", "두번", "2번 결제", "두 개", "두개",
+           "여러 번", "여러번", "또 결제", "또 빠져", "또 빠졌"]
+    return any(kw in text for kw in kws)
+
+
+def _format_payment_list(txs: list[dict]) -> str:
+    """결제 내역을 유저에게 보여줄 목록 형식으로"""
+    lines = []
+    for i, t in enumerate(txs, 1):
+        amount = t.get("amount", 0)
+        if isinstance(amount, str):
+            try:
+                amount = int(amount)
+            except ValueError:
+                amount = 0
+        tx_date = (t.get("date") or t.get("created_at") or "")[:10]
+        round_no = t.get("round", "?")
+        lines.append(f"  {i}. {tx_date} / {round_no}회차 / {amount:,}원")
+    return "\n".join(lines)
+
+
+def _is_product_change_intent(text: str) -> bool:
+    """상품 변경 의도 감지"""
+    # "변경" 단독은 너무 광범위 — 맥락 키워드 결합
+    strong = ["상품 변경", "상품변경", "다른 상품", "다른상품", "상품 바꿔",
+              "차액", "바꿔서", "바꾸고 싶", "으로 변경", "로 변경"]
+    return any(kw in text for kw in strong)
+
+
+def _extract_price_hint(text: str) -> int | None:
+    """유저 메시지에서 '10만원', '100,000원', '10만' 같은 금액 추출"""
+    import re
+    # 만원 단위: "10만원", "10만"
+    m = re.search(r"(\d+)\s*만\s*원?", text)
+    if m:
+        return int(m.group(1)) * 10000
+    # 원 단위: "100,000원", "100000원"
+    m = re.search(r"([\d,]+)\s*원", text)
+    if m:
+        try:
+            return int(m.group(1).replace(",", ""))
+        except ValueError:
+            pass
+    return None
+
+
+def _calculate_exchange(ctx: WorkflowContext, user_text: str):
+    """상품 변경 차액 계산 — Branch A"""
+    from datetime import datetime
+    from src.refund_engine import RefundEngine, RefundInput
+
+    # 신규 상품 가격: 외부 주입이 우선, 없으면 메시지에서 파싱
+    new_price = ctx.new_product_price or _extract_price_hint(user_text) or 0
+
+    latest = ctx.latest_tx or (ctx.success_txs[-1] if ctx.success_txs else {})
+    tx_amount = latest.get("amount", 0)
+    if isinstance(tx_amount, str):
+        try:
+            tx_amount = int(tx_amount)
+        except ValueError:
+            tx_amount = 0
+    tx_date = (latest.get("date") or latest.get("created_at") or "")[:10]
+
+    pay_date = None
+    if tx_date:
+        try:
+            pay_date = datetime.strptime(tx_date, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+
+    ctx.template_variables["기존결제금액"] = f"{tx_amount:,}"
+    ctx.template_variables["신규상품가격"] = f"{new_price:,}" if new_price else "(확인 필요)"
+
+    if pay_date and tx_amount and new_price:
+        engine = RefundEngine()
+        inp = RefundInput(
+            total_paid=tx_amount,
+            monthly_price=tx_amount,  # 정가 추정 — 단건 기준
+            payment_date=pay_date,
+            payment_cycle_days=30,
+            content_accessed=ctx.has_accessed,
+        )
+        result = engine.calculate_exchange(inp, new_price)
+        ctx.template_variables["기존환불가능액"] = f"{(result.refund_amount + new_price if result.refundable else 0):,}"
+        ctx.template_variables["차액환불금액"] = f"{result.refund_amount:,}"
+        ctx.refund_amount = result.refund_amount
+        ctx.refund_explanation = result.explanation
+    else:
+        # 신규 가격 파싱 실패 — 템플릿 변수만 placeholder로 두고 상담사/LLM에 맡김
+        ctx.template_variables["기존환불가능액"] = "(계산 필요)"
+        ctx.template_variables["차액환불금액"] = "(계산 필요)"
+
+
+def _is_urging_refund(text: str) -> bool:
+    """재촉/상태확인 의도 감지"""
+    urging_kws = [
+        "왜 아직", "언제 환불", "언제쯤", "처리 안", "처리 안돼", "처리안",
+        "아직도", "아직 환불", "환불 언제", "환불언제",
+        "며칠 됐", "몇일 됐", "1달", "한달", "한 달", "일주일 지",
+        "소식이 없", "답변이 없", "연락이 없",
+    ]
+    return any(kw in text for kw in urging_kws)
+
+
+def _find_pending_refund(refunds: list[dict]) -> dict | None:
+    """진행 중(refundHistory 비어있거나 refundAt 없음)인 환불 건 찾기"""
+    for r in refunds:
+        history = r.get("refundHistory") or {}
+        # refundAt이 있으면 처리 완료, 없으면 접수만 된 상태
+        if not history.get("refundAt"):
+            return r
+    # 진행 중 없으면 가장 최근 건 반환 (상태 재확인 용도)
+    return refunds[0] if refunds else None
+
+
+def _format_date(iso: str) -> str:
+    """ISO 날짜 → '1월 15일' 형식"""
+    if not iso or len(iso) < 10:
+        return iso
+    try:
+        parts = iso[:10].split("-")
+        return f"{int(parts[1])}월 {int(parts[2])}일"
+    except (ValueError, IndexError):
+        return iso[:10]
 
 
 def _format_month(ym: str) -> str:

@@ -145,6 +145,56 @@ class RefundEngine:
             explanation=f"알 수 없는 계산 방식: {method}",
         )
 
+    def calculate_exchange(self, inp: RefundInput, new_product_price: int) -> RefundResult:
+        """상품 변경: 기존 환불 가능액에서 신규 상품 가격을 차감한 차액 환불
+
+        계산:
+          기존_환불가능액 = calculate(inp).refund_amount
+          차액 = 기존_환불가능액 - 신규_상품_가격
+          차액 > 0 → 차액 환불
+          차액 ≤ 0 → 추가 결제 필요
+        """
+        base = self.calculate(inp)
+        if not base.refundable:
+            return RefundResult(
+                rule_id=base.rule_id,
+                label="상품변경 불가 (기존 환불 불가)",
+                refundable=False,
+                explanation=base.explanation,
+            )
+
+        difference = base.refund_amount - new_product_price
+        if difference > 0:
+            return RefundResult(
+                rule_id=f"{base.rule_id}_EXCHANGE",
+                label="상품 변경 차액 환불",
+                refundable=True,
+                refund_amount=difference,
+                deduction=base.deduction,
+                fee=base.fee,
+                confidence=base.confidence,
+                explanation=(
+                    f"기존 환불가능액 {base.refund_amount:,}원 - "
+                    f"신규 상품 {new_product_price:,}원 = "
+                    f"차액 환불 {difference:,}원"
+                ),
+            )
+        else:
+            return RefundResult(
+                rule_id=f"{base.rule_id}_EXCHANGE_UPGRADE",
+                label="상품 변경 추가 결제",
+                refundable=False,
+                refund_amount=0,
+                deduction=base.deduction,
+                fee=base.fee,
+                confidence=base.confidence,
+                explanation=(
+                    f"기존 환불가능액 {base.refund_amount:,}원 - "
+                    f"신규 상품 {new_product_price:,}원 = "
+                    f"추가 결제 필요 {abs(difference):,}원"
+                ),
+            )
+
     def _match_rule(self, inp: RefundInput) -> dict | None:
         """입력값에 맞는 규칙 찾기 (순서대로, 첫 매칭)"""
         for rule in self.rules:
