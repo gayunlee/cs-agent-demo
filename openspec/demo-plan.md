@@ -60,13 +60,25 @@ BQ 배치 테스트            [코드] 워크플로우 분기
 > 에이전트 구현 전에 **검증 체계**부터 만든다.
 > 수정 → 전수 테스트 → 엣지케이스 발견 → 수정 루프.
 
-### 1-1. 테스트 데이터 준비
+### 1-1. 테스트 데이터 준비 ✅ 완료
 
-- BQ `channel_io.messages` + `channel_io.chats` + `channel_io.users`
-- enriched 데이터 343건 (실제 API 응답 포함)
-- 유저 메시지 27개 패턴 × mock API 8종 시나리오
+- BQ 2026년 1월 환불/해지 대화 100건 분석 완료
+- **normal 84건** (워크플로우 커버 가능)
+- **edge 13건** (특별 대응 필요)
+- 데이터: `data/test_cases/refund_convos_jan.json`, `data/test_cases/refund_pattern_analysis.json`
 
-### 1-2. AgentCore Evaluation 연동
+### 1-2. Evaluation 설계
+
+**normal eval (rule-based)** — 84건:
+- 에이전트 → 템플릿 + 금액 맞는지 자동 체크
+- 기준: template_id 일치, 환불금액 정확, API 호출 완전성
+
+**edge eval (LLM-as-judge)** — 13건:
+- 실제 매니저 답변에서 필수 요소 추출
+- 에이전트 답변에 필수 요소 포함 여부 LLM 판단
+- 필수 요소: 공감 표현, 규정 근거, 금액 제시, 열람 여부 언급 등
+
+### 1-3. AgentCore Evaluation 연동
 
 4개 평가자:
 
@@ -137,12 +149,33 @@ AgentCore Evaluation 4개 평가자 실행
 | 환불 권한 밖 답변 | 출력 범위 제한 |
 | 프롬프트 인젝션 | 입력 필터 |
 
-### 2-3. AgentCore Memory
+### 2-3. AgentCore Memory — 웹훅 메시지 처리
+
+**웹훅 메시지가 올 때마다 전체를 다시 읽지 않고, Memory로 맥락 유지:**
+
+```
+새 메시지 웹훅 수신 → chat_id로 Memory 조회
+  ├─ Memory 없음 (첫 메시지):
+  │   1. 유저 조회 (전화번호 → API)
+  │   2. 데이터 조회 (구독/결제/열람)
+  │   3. 워크플로우 분기 → 답변 생성
+  │   4. Memory에 저장: {chat_id, user_data, 답변, 상태}
+  │   5. 내부대화로 전송
+  │
+  └─ Memory 있음 (후속 메시지):
+      1. Memory에서 이전 맥락 로드
+      2. 새 메시지만 추가
+      3. 상태 판단 (유저 동의? 추가 질문? 새 요청?)
+      4. 재조회 불필요 — Memory의 user_data 재사용
+      5. 답변 생성 → Memory 업데이트
+```
 
 ```python
-# chat_id별 대화 상태 유지
+# chat_id별 대화 상태
 memory = {
     "chat_id": "abc123",
+    "state": "T2_안내됨",  # 현재 상태
+    "user_data": { ... },   # 조회 결과 캐시 (재조회 불필요)
     "turns": [
         {"role": "user", "content": "환불해주세요"},
         {"role": "agent", "template": "T2", "refund_amount": 360000}
