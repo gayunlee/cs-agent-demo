@@ -172,6 +172,17 @@ class RefundAgentV2:
         result.template_id = template_id
         result.template_name = tmpl.get("name", "")
 
+        # ── LLM Fallback: 규정 외 edge 케이스 → Bedrock Haiku로 자유 답변 ──
+        if template_id == "T_LLM_FALLBACK":
+            result.final_answer = self._llm_fallback(
+                user_messages=user_messages,
+                conversation_turns=conversation_turns or [],
+                collected_data=collected_data,
+                wf_ctx=wf_ctx,
+                result=result,
+            )
+            return result
+
         # 환불 계산 필요 시
         if template_id == "T2_환불_규정_금액" and "calculate_refund" not in collected_data:
             refund_input = self._prepare_refund_input(collected_data)
@@ -181,8 +192,17 @@ class RefundAgentV2:
 
         # ── Step 4: 템플릿 + 변수 → 초안 완성 ──
         if not tmpl.get("required_tools") and not collected_data:
-            result.final_answer = tmpl["template"]
-            result.steps.append(AgentStepV2(step="final", content=f"고정 템플릿: {template_id}"))
+            # T10/T11/T12/T6b 등 workflow에서 변수를 이미 채운 경우 간단 포맷
+            if wf_ctx.template_variables:
+                result.final_answer = self._format_template(tmpl, wf_ctx.template_variables)
+                result.steps.append(AgentStepV2(
+                    step="final",
+                    content=f"{template_id} (workflow 변수 주입)",
+                    detail={"variables": wf_ctx.template_variables},
+                ))
+            else:
+                result.final_answer = tmpl["template"]
+                result.steps.append(AgentStepV2(step="final", content=f"고정 템플릿: {template_id}"))
         elif collected_data:
             result.final_answer = self._compose(tmpl, collected_data, user_messages, result)
         else:
@@ -190,6 +210,57 @@ class RefundAgentV2:
             result.steps.append(AgentStepV2(step="final", content="유저 식별 불가 → 본인확인 요청"))
 
         return result
+
+    def _llm_fallback(
+        self,
+        user_messages: list[str],
+        conversation_turns: list[dict],
+        collected_data: dict,
+        wf_ctx,
+        result: AgentResultV2,
+    ) -> str:
+        """정책 외 edge 케이스에 LLM 자유 답변 생성 + confidence 태그"""
+        if self.mock:
+            result.steps.append(AgentStepV2(step="final", content="LLM fallback (mock)"))
+            return "⚠️ 정책 밖 패턴 — 상담사 확인 필요\n(mock 모드: 실제 LLM 호출 생략)"
+
+        from src.llm_fallback import LLMFallback
+
+        context_data = {
+            "success_txs": wf_ctx.success_txs,
+            "refund_txs": wf_ctx.refund_txs,
+            "refunds": wf_ctx.refunds,
+            "memberships": wf_ctx.memberships,
+            "has_accessed": wf_ctx.has_accessed,
+        }
+
+        result.steps.append(AgentStepV2(
+            step="tool_call",
+            content="llm_fallback.generate",
+            detail={"trigger": wf_ctx.path[-1] if wf_ctx.path else ""},
+        ))
+
+        fb = LLMFallback(model_id=self.model_id)
+        fb_result = fb.generate(user_messages, conversation_turns, context_data)
+
+        draft = fb_result.draft or "⚠️ 초안 생성 실패 — 상담사 직접 확인 요망"
+        if fb_result.confidence != "high":
+            if not draft.startswith("⚠️"):
+                draft = f"⚠️ 정책 밖 패턴 — 상담사 확인 필요\n\n{draft}"
+
+        result.steps.append(AgentStepV2(
+            step="final",
+            content=f"LLM fallback ({fb_result.confidence})",
+            detail={"reason": fb_result.reason, "confidence": fb_result.confidence},
+        ))
+        return draft
+
+    def _format_template(self, tmpl: dict, variables: dict) -> str:
+        """템플릿의 {변수}를 workflow가 채운 변수로 간단 치환"""
+        text = tmpl.get("template", "")
+        for key, value in variables.items():
+            text = text.replace("{" + key + "}", str(value))
+        return text
 
     def _search_user(self, phone: str, result: AgentResultV2) -> str:
         """전화번호로 어스 유저 검색"""
