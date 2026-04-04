@@ -11,6 +11,7 @@ from src.tools import simulate_lookup, LookupResult
 from src.rag import AnswerRAG
 from src.admin_api import AdminAPIClient, LookupResult as AdminLookupResult
 from src.refund_engine import RefundEngine, RefundInput, RefundResult
+from src.ambiguous_workflow import AmbiguousContext, run_ambiguous_workflow
 
 logger = logging.getLogger(__name__)
 
@@ -247,11 +248,37 @@ class CSAgent:
             explanation=refund_result.explanation,
         )
 
-    def process(self, chat_id: str, text: str, user_id: str = "") -> AgentResponse:
-        """전체 파이프라인: 분류 → 정보 조회 → 환불 계산 → 초안 생성"""
+    def process(self, chat_id: str, text: str, user_id: str = "",
+                conversation_turns: list = None, active_products: list = None) -> AgentResponse:
+        """전체 파이프라인: 분류 → 모호 체크 → 정보 조회 → 환불 계산 → 초안 생성"""
         # 1. 분류
         classification = self.classify(text)
         category = classification.get("category", "미분류")
+
+        # 1.5 모호한 문의 워크플로우 — 정보 부족 시 follow-up 질문
+        tmpl_key_early, _ = self.match_template(text)
+        skip_ambiguous = (
+            (tmpl_key_early and classification.get("confidence") == "높음")
+            or any(kw in text.lower() for kw in ["카드 변경", "카드변경", "카드 분실"])
+        )
+        if not skip_ambiguous:
+            amb_ctx = AmbiguousContext(
+                user_messages=[text],
+                us_user_id=user_id,
+                active_products=active_products or [],
+                conversation_turns=conversation_turns or [],
+            )
+            amb_result = run_ambiguous_workflow(amb_ctx)
+            if amb_result != "NOT_AMBIGUOUS":
+                return AgentResponse(
+                    chat_id=chat_id,
+                    category=category,
+                    confidence=classification.get("confidence", "낮음"),
+                    reasoning=classification.get("reasoning", ""),
+                    draft_answer=amb_ctx.follow_up_response,
+                    template_matched=amb_result,
+                    action="follow_up_question",
+                )
 
         # 2. RAG — 유사 과거 대화에서 매니저 답변 검색
         rag = self._get_rag()

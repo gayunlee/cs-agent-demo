@@ -1,0 +1,86 @@
+[
+  {
+    "timestamp": "2026-04-02T13:55:40.591354",
+    "accuracy": 0.0,
+    "non_t99_accuracy": 0.0,
+    "total": 316,
+    "correct": 0
+  },
+  {
+    "timestamp": "2026-04-02T13:56:02.868998",
+    "accuracy": 11.7,
+    "non_t99_accuracy": 11.7,
+    "total": 316,
+    "correct": 37
+  },
+  {
+    "timestamp": "2026-04-02T13:56:22.444837",
+    "accuracy": 13.9,
+    "non_t99_accuracy": 13.9,
+    "total": 316,
+    "correct": 44
+  },
+  {
+    "timestamp": "2026-04-02T13:56:49.944869",
+    "accuracy": 14.2,
+    "non_t99_accuracy": 14.2,
+    "total": 316,
+    "correct": 45
+  },
+  {
+    "timestamp": "2026-04-02T14:00:21.121004",
+    "accuracy": 10.1,
+    "non_t99_accuracy": 10.1,
+    "total": 316,
+    "correct": 32
+  },
+  {
+    "timestamp": "2026-04-02T14:00:35.738459",
+    "accuracy": 12.3,
+    "non_t99_accuracy": 12.3,
+    "total": 316,
+    "correct": 39
+  },
+  {
+    "timestamp": "2026-04-02T14:00:51.525200",
+    "accuracy": 13.9,
+    "non_t99_accuracy": 13.9,
+    "total": 316,
+    "correct": 44
+  },
+  {
+    "timestamp": "2026-04-02T14:07:50.550778",
+    "accuracy": 13.3,
+    "non_t99_accuracy": 13.3,
+    "total": 316,
+    "correct": 42
+  },
+  {
+    "timestamp": "2026-04-02T14:10:15.884955",
+    "accuracy": 14.2,
+    "non_t99_accuracy": 14.2,
+    "total": 316,
+    "correct": 45
+  },
+  {
+    "timestamp": "2026-04-02T14:14:32.106594",
+    "accuracy": 11.7,
+    "non_t99_accuracy": 11.7,
+    "total": 316,
+    "correct": 37
+  },
+  {
+    "timestamp": "2026-04-02T14:14:52.049315",
+    "accuracy": 12.3,
+    "non_t99_accuracy": 12.3,
+    "total": 316,
+    "correct": 39
+  },
+  {
+    "timestamp": "2026-04-02T14:15:05.691845",
+    "accuracy": 14.2,
+    "non_t99_accuracy": 14.2,
+    "total": 316,
+    "correct": 45
+  }
+]

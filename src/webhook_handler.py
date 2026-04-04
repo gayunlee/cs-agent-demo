@@ -75,7 +75,13 @@ class ParsedEvent:
         # 유저 정보
         user = self.refers.get("user", raw.get("entity", {}).get("user", {}))
         self.member_id = str(user.get("memberId", user.get("id", "")))
-        self.phone = user.get("mobileNumber", user.get("phoneNumber", ""))
+        # 전화번호: profile.mobileNumber 또는 user.mobileNumber (국가코드 포함 +82xxx)
+        raw_phone = (
+            user.get("profile", {}).get("mobileNumber", "")
+            or user.get("mobileNumber", "")
+            or user.get("phoneNumber", "")
+        )
+        self.phone = self._normalize_phone(raw_phone)
         self.user_name = user.get("name", user.get("profile", {}).get("name", ""))
 
         # 메시지 내용
@@ -103,6 +109,19 @@ class ParsedEvent:
         if submit:
             buttons.extend(str(v) for v in submit.values())
         return [b for b in buttons if b]
+
+    @staticmethod
+    def _normalize_phone(raw: str) -> str:
+        """국가코드 포함 전화번호 → 0으로 시작하는 형태로 변환
+        +821012345678 → 01012345678"""
+        if not raw:
+            return ""
+        raw = raw.strip().replace("-", "").replace(" ", "")
+        if raw.startswith("+82"):
+            return "0" + raw[3:]
+        if raw.startswith("82"):
+            return "0" + raw[2:]
+        return raw
 
     @property
     def has_meaningful_message(self) -> bool:
@@ -133,6 +152,11 @@ class ProcessResult(BaseModel):
 
 # ── API 엔드포인트 ──
 
+# webhook 수신 기록 (최근 N건)
+_webhook_log: list[dict] = []
+MAX_LOG = 50
+
+
 @app.post("/webhook/channeltalk")
 async def handle_webhook(request: Request):
     """채널톡 webhook 이벤트 수신"""
@@ -144,6 +168,12 @@ async def handle_webhook(request: Request):
         raise HTTPException(status_code=401, detail="Invalid signature")
 
     raw = json.loads(body)
+
+    # raw 데이터 로그 저장
+    _webhook_log.append({"timestamp": datetime.now().isoformat(), "raw": raw})
+    if len(_webhook_log) > MAX_LOG:
+        _webhook_log.pop(0)
+
     event = ParsedEvent(raw)
 
     logger.info(f"[webhook] event={event.event_type} chat={event.chat_id} member={event.member_id}")
@@ -192,16 +222,19 @@ async def identify_user(event: ParsedEvent) -> str | None:
     """채널톡 이벤트에서 유저 식별 → 관리자센터 userId"""
     client = get_admin_client()
 
-    # 방법 1: memberId가 곧 userId인 경우 (프론트엔드에서 주입한 경우)
-    if event.member_id and event.member_id.isdigit():
+    # 방법 1: memberId가 mongo ObjectId 형태면 (프론트엔드에서 관리자센터 userId 주입)
+    # mongo ObjectId = 24자리 hex
+    if event.member_id and len(event.member_id) == 24 and all(c in "0123456789abcdef" for c in event.member_id):
         user = client.get_user(event.member_id)
         if user.name:
+            logger.info(f"[identify] memberId={event.member_id} → 관리자센터 직접 매칭")
             return event.member_id
 
     # 방법 2: 전화번호로 검색
     if event.phone:
         user_id = client.search_user_by_phone(event.phone)
         if user_id:
+            logger.info(f"[identify] phone={event.phone} → userId={user_id}")
             return user_id
 
     logger.warning(f"유저 식별 실패: member={event.member_id} phone={event.phone}")
@@ -232,6 +265,20 @@ async def test_process(phone: str = "", user_id: str = "", message: str = ""):
     result.action = "lookup_complete"
 
     return result
+
+
+@app.get("/webhook/log")
+async def get_webhook_log(limit: int = 10):
+    """최근 webhook 수신 기록 조회"""
+    return {"count": len(_webhook_log), "logs": _webhook_log[-limit:]}
+
+
+@app.get("/webhook/log/latest")
+async def get_latest_webhook():
+    """가장 최근 webhook raw 데이터"""
+    if not _webhook_log:
+        return {"message": "아직 수신된 webhook이 없습니다"}
+    return _webhook_log[-1]
 
 
 @app.get("/health")

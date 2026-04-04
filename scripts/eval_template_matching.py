@@ -41,7 +41,7 @@ def classify_manager_response(mgr_text: str) -> str:
     return 'T99_기타'
 
 
-def run_eval(data_path: str = "data/refund_test_cases.json", use_llm: bool = False):
+def run_eval(data_path: str = "data/test_cases/refund_test_cases.json", use_llm: bool = False):
     with open(data_path) as f:
         cases = json.load(f)
 
@@ -134,14 +134,14 @@ def run_eval(data_path: str = "data/refund_test_cases.json", use_llm: bool = Fal
         "pred_distribution": dict(template_counts),
         "mismatches": mismatches,
     }
-    with open("data/eval_template_matching.json", "w") as f:
+    with open("data/eval_results/eval_template_matching.json", "w") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
-    print(f"\n결과 저장: data/eval_template_matching.json")
+    print(f"\n결과 저장: data/eval_results/eval_template_matching.json")
 
 
 if __name__ == "__main__":
     use_llm = "--llm" in sys.argv
-    data_path = "data/refund_test_cases.json"
+    data_path = "data/test_cases/refund_test_cases.json"
     for arg in sys.argv[1:]:
         if not arg.startswith("-"):
             data_path = arg

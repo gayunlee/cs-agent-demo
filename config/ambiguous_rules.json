@@ -1,0 +1,116 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-04-03",
+  "notes": "모호한 문의 패턴 분류 규칙. 순서대로 first-match. 조건은 AND 로직.",
+  "rules": [
+    {
+      "id": "AMB-001",
+      "label": "환불/해지 — 본인확인 필요",
+      "pattern": "환불_해지_정보부족",
+      "response_strategy": "A",
+      "conditions": {
+        "intent_keywords_any": ["환불", "해지", "취소", "탈퇴", "자동결제", "자동결재", "구독취소", "구독해지"],
+        "has_user_id": false
+      },
+      "template_id": "AMB_T1_본인확인_환불",
+      "missing_info": ["본인 확인 (성함/전화번호)"]
+    },
+    {
+      "id": "AMB-002",
+      "label": "환불/해지 — 상품 특정 필요",
+      "pattern": "환불_해지_정보부족",
+      "response_strategy": "B",
+      "conditions": {
+        "intent_keywords_any": ["환불", "해지", "취소", "탈퇴", "구독취소", "구독해지"],
+        "has_user_id": true,
+        "has_product_specified": false,
+        "active_products_count_min": 2
+      },
+      "template_id": "AMB_T2_상품특정_환불",
+      "missing_info": ["상품 특정 (어떤 과정)"]
+    },
+    {
+      "id": "AMB-003",
+      "label": "결제 문의 — 본인확인 필요",
+      "pattern": "결제_맥락불명",
+      "response_strategy": "A",
+      "conditions": {
+        "intent_keywords_any": ["결제", "결재", "금액", "할부", "결제일", "빠져나갔", "이중결제"],
+        "has_user_id": false
+      },
+      "template_id": "AMB_T3_본인확인_결제",
+      "missing_info": ["본인 확인 (성함/전화번호)"]
+    },
+    {
+      "id": "AMB-004",
+      "label": "결제 문의 — 맥락 부족",
+      "pattern": "결제_맥락불명",
+      "response_strategy": "B",
+      "conditions": {
+        "intent_keywords_any": ["결제", "결재", "금액", "할부", "결제일", "빠져나갔"],
+        "has_user_id": true,
+        "has_product_specified": false
+      },
+      "template_id": "AMB_T4_맥락확인_결제",
+      "missing_info": ["어떤 결제인지 특정"]
+    },
+    {
+      "id": "AMB-005",
+      "label": "기능/이용 — 증상 추상적",
+      "pattern": "기능_이용_추상적",
+      "response_strategy": "C",
+      "conditions": {
+        "intent_keywords_any": ["안돼", "안됩니다", "안 돼", "안되", "못해", "열리지", "끊겨", "오류", "에러", "멈춤", "안 열", "안열", "재생이 안", "접속이 안"],
+        "has_symptom_detail": false
+      },
+      "template_id": "AMB_T5_증상구체화",
+      "missing_info": ["증상 구체화 (어떤 화면/상황)", "기기/환경 정보"]
+    },
+    {
+      "id": "AMB-006",
+      "label": "CS 범위 밖",
+      "pattern": "CS범위밖",
+      "response_strategy": "D",
+      "conditions": {
+        "intent_keywords_any": ["종목", "추천", "투자 조언", "주가", "매수", "매도", "수익률", "목표가", "팔아야"]
+      },
+      "template_id": "AMB_T8_범위밖",
+      "missing_info": []
+    },
+    {
+      "id": "AMB-007",
+      "label": "맥락 없음 — 이전 대화 연속 추정",
+      "pattern": "맥락없음",
+      "response_strategy": "D",
+      "conditions": {
+        "continuation_keywords_any": ["네", "예", "맞아요", "진행해주세요", "그거요", "아까", "저번", "말씀드렸던"],
+        "has_prev_context": false,
+        "no_clear_intent": true
+      },
+      "template_id": "AMB_T7_맥락확인",
+      "missing_info": ["이전 문의 내용"]
+    },
+    {
+      "id": "AMB-008",
+      "label": "맥락 없음 — 짧은 메시지",
+      "pattern": "맥락없음",
+      "response_strategy": "D",
+      "conditions": {
+        "message_length_max": 15,
+        "no_clear_intent": true
+      },
+      "template_id": "AMB_T6_오픈질문",
+      "missing_info": ["문의 목적"]
+    }
+  ],
+  "templates": {
+    "AMB_T1_본인확인_환불": "안녕하세요, 어스입니다.\n{intent_label} 문의 주셔서 감사합니다.\n정확한 확인을 위해 성함과 가입하신 휴대전화 번호를 말씀해 주시겠어요?\n빠르게 확인 도와드리겠습니다.",
+    "AMB_T2_상품특정_환불": "안녕하세요, 어스입니다.\n{intent_label} 문의 주셔서 감사합니다.\n현재 {product_list} 과정을 이용 중이신 것으로 확인되는데요,\n어떤 과정에 대한 문의이신지 말씀해 주시겠어요?",
+    "AMB_T3_본인확인_결제": "안녕하세요, 어스입니다.\n결제 관련 문의 주셔서 감사합니다.\n확인을 위해 성함과 가입하신 휴대전화 번호를 말씀해 주시겠어요?",
+    "AMB_T4_맥락확인_결제": "안녕하세요, 어스입니다.\n결제 관련 문의 주셔서 감사합니다.\n어떤 상품의 결제 건에 대한 문의이신지 말씀해 주시겠어요?",
+    "AMB_T5_증상구체화": "안녕하세요, 어스입니다.\n불편을 드려 죄송합니다.\n정확한 확인을 위해 아래 내용을 알려주시겠어요?\n1. 어떤 화면에서 발생하는지\n2. 어떤 증상인지 (멈춤/로딩/에러 등)\n3. 사용 중인 기기 (아이폰/안드로이드/PC)",
+    "AMB_T6_오픈질문": "안녕하세요, 어스입니다.\n네 회원님, 무엇을 도와드릴까요?\n문의 내용을 말씀해 주시면 빠르게 안내드리겠습니다.",
+    "AMB_T7_맥락확인": "안녕하세요, 어스입니다.\n이전 문의와 관련된 내용이실까요?\n어떤 건으로 문의 주셨는지 말씀해 주시면 확인 도와드리겠습니다.",
+    "AMB_T8_범위밖": "안녕하세요, 어스입니다.\n해당 내용은 CS 상담 범위에 해당하지 않아 안내가 어려운 점 양해 부탁드립니다.\n어스 서비스 이용 관련 문의는 도움드릴 수 있으니 말씀해 주세요."
+  }
+}

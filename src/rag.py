@@ -9,7 +9,7 @@ from chromadb.utils import embedding_functions
 class AnswerRAG:
     def __init__(self, db_path: str = "./chroma_db", data_path: str = None):
         self.db_path = db_path
-        self.data_path = data_path or os.path.join(os.path.dirname(__file__), "../data/rag_pairs.json")
+        self.data_path = data_path or os.path.join(os.path.dirname(__file__), "../data/raw/rag_pairs.json")
         self.client = chromadb.PersistentClient(path=db_path)
         self.ef = embedding_functions.SentenceTransformerEmbeddingFunction(
             model_name="intfloat/multilingual-e5-small"

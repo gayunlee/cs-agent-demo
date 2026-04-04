@@ -39,7 +39,7 @@ def classify_manager_response(mgr_text: str) -> str:
     return 'T99_기타'
 
 
-def run_eval(data_path: str = "data/refund_test_cases_enriched.json"):
+def run_eval(data_path: str = "data/test_cases/refund_test_cases_enriched.json"):
     with open(data_path) as f:
         cases = json.load(f)
 
@@ -149,11 +149,11 @@ def run_eval(data_path: str = "data/refund_test_cases_enriched.json"):
         "confusion": {f"{p}→{g}": c for (p, g), c in confusion.most_common()},
         "mismatches_count": len(mismatches),
     }
-    with open("data/eval_v2_results.json", "w") as f:
+    with open("data/eval_results/eval_v2_results.json", "w") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
-    print(f"\n결과 저장: data/eval_v2_results.json")
+    print(f"\n결과 저장: data/eval_results/eval_v2_results.json")
 
 
 if __name__ == "__main__":
-    data_path = sys.argv[1] if len(sys.argv) > 1 else "data/refund_test_cases_enriched.json"
+    data_path = sys.argv[1] if len(sys.argv) > 1 else "data/test_cases/refund_test_cases_enriched.json"
     run_eval(data_path)

@@ -16,8 +16,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.refund_agent_v2 import RefundAgentV2
 
-ENRICHED_PATH = "data/refund_test_cases_enriched.json"
-HISTORY_PATH = "data/eval_history.json"
+ENRICHED_PATH = "data/test_cases/refund_test_cases_enriched.json"
+HISTORY_PATH = "data/eval_results/eval_history.json"
 
 
 def classify_manager_response(mgr_text: str) -> str:
@@ -280,13 +280,13 @@ def main():
                 print(f"      예시: {ex['user']}")
 
     # 상세 결과 저장
-    with open("data/eval_loop_latest.json", "w") as f:
+    with open("data/eval_results/eval_loop_latest.json", "w") as f:
         json.dump({
             "analysis": analysis,
             "suggestions": suggest_improvements(results, analysis) if show_suggest else [],
             "results": results,
         }, f, ensure_ascii=False, indent=2)
-    print(f"\n상세 결과: data/eval_loop_latest.json")
+    print(f"\n상세 결과: data/eval_results/eval_loop_latest.json")
 
 
 if __name__ == "__main__":

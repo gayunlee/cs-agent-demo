@@ -21,7 +21,7 @@ def days_ago(n):
 
 
 def load_mocks():
-    with open("data/mock_api_responses.json") as f:
+    with open("data/mock_scenarios/mock_api_responses.json") as f:
         mocks = json.load(f)
     # 날짜 플레이스홀더 치환
     raw = json.dumps(mocks)

@@ -18,9 +18,9 @@ def days_ago(n):
 
 
 def load_test_data():
-    with open("data/test_messages.json") as f:
+    with open("data/test_cases/test_messages.json") as f:
         messages = json.load(f)
-    with open("data/mock_api_responses.json") as f:
+    with open("data/mock_scenarios/mock_api_responses.json") as f:
         mocks = json.load(f)
     return messages, mocks
 

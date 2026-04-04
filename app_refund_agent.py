@@ -121,7 +121,7 @@ def main():
     cases = load_test_cases()
 
     if not cases:
-        st.error("테스트 케이스 없음. data/refund_test_cases.json 확인")
+        st.error("테스트 케이스 없음. data/test_cases/refund_test_cases.json 확인")
         return
 
     with st.sidebar:

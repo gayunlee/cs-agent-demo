@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.refund_agent import RefundAgent
 
 
-def run_eval(eval_path: str = "data/eval_set_20.json", mock: bool = False):
+def run_eval(eval_path: str = "data/test_cases/eval_set_20.json", mock: bool = False):
     agent = RefundAgent(region="us-west-2", mock=mock)
 
     with open(eval_path) as f:
@@ -65,7 +65,7 @@ def run_eval(eval_path: str = "data/eval_set_20.json", mock: bool = False):
         })
 
     # 저장
-    output_path = "data/eval_results.json"
+    output_path = "data/eval_results/eval_results.json"
     with open(output_path, "w") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
     print(f"\n\n=== 결과 저장: {output_path} ===")
@@ -93,5 +93,5 @@ def run_eval(eval_path: str = "data/eval_set_20.json", mock: bool = False):
 
 if __name__ == "__main__":
     mock = "--mock" in sys.argv
-    eval_path = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("-") else "data/eval_set_20.json"
+    eval_path = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("-") else "data/test_cases/eval_set_20.json"
     run_eval(eval_path, mock=mock)
