@@ -326,3 +326,20 @@ app_agent_demo.py           ← 신규 (가상 채널톡 데모 UI)
 ### Step 4: edge eval 기준
 - [x] 13건 필수 요소 추출 (10/12 성공)
 - [ ] 전체 edge 케이스 eval 기준 확정
+
+---
+
+## 에이전트 구현 시 사용할 패키지
+
+### Strands SDK
+- `strands-agents` — 에이전트 프레임워크 (@tool, Agent 클래스)
+- `strands-agents-evals` — evaluation 프레임워크 (rule-based + LLM evaluator)
+- 설치: `pip install strands-agents strands-agents-evals`
+
+### Eval 통합 계획
+- 현재: `scripts/eval_refund.py` (로컬 커스텀)
+- 변경: `strands-agents-evals`로 마이그레이션
+  - normal eval → rule-based evaluator (템플릿 + 금액 체크)
+  - edge eval → LLM evaluator (필수 요소 포함 체크)
+  - 데이터: `data/test_cases/refund_edge_reclassified.json` (eval 기준 포함)
+- 에이전트 + eval 같이 AgentCore에 배포

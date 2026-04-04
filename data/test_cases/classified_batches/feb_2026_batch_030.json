@@ -1,0 +1,702 @@
+[
+  {
+    "chat_id": "697db1c824a9c6c074dc",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상세, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "697ff44268009e8b58dd",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황 설명, 해지/환불 이유, 구독 상품명 등)"
+  },
+  {
+    "chat_id": "69a01d5574e63455d3b8",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 오류인지, 어떤 구독을 해지하려는지, 환불 사유 등)"
+  },
+  {
+    "chat_id": "69845276c186264ae7a0",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "697f5a7c509fcc53cede",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상세, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "6982c07e48d0dd975d10",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상세, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "699e4d61dc59debb1bf8",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상세, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "697fbcc21dba59f7926c",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류/해지/환불 중 어느 것인지, 상세 증상)"
+  },
+  {
+    "chat_id": "697ea3b8c229c5e05779",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇의 오류인지, 어떤 구독을 해지하려는지, 환불 이유 등)"
+  },
+  {
+    "chat_id": "699d18bd4099cb1f93da",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 구독해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "698c27a3482c1b5234f8",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "699ee382ac2baf8b159c",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 이유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "69a022d4173ec9642cb8",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "699fe088119abe70113c",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상세, 해지 사유, 환불 요청 이유 등)"
+  },
+  {
+    "chat_id": "698975907ca874731295",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 오류인지, 어떤 구독을 해지하려는지, 환불 사유 등)"
+  },
+  {
+    "chat_id": "6982dcc42896d46f5759",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 이유 등)"
+  },
+  {
+    "chat_id": "6996fb8b74e3018524e8",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류의 종류, 해지/환불 사유 등)"
+  },
+  {
+    "chat_id": "699c0dedce2a6d91b22d",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상세, 해지 사유, 환불 요청 이유 등)"
+  },
+  {
+    "chat_id": "697f65338de372ab47cb",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상세, 해지 사유, 환불 대상 등)"
+  },
+  {
+    "chat_id": "69858170f0b136444f05",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 발생 상황, 해지 사유, 환불 이유 등)"
+  },
+  {
+    "chat_id": "699f7911cc556bfc3c90",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇이 문제인지, 어떤 오류가 발생했는지, 정확한 상황 설명)"
+  },
+  {
+    "chat_id": "6989819392798dbc782e",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "699d51e72959dabdce7f",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류, 구독해지, 환불 중 어떤 것인지, 구체적 상황)"
+  },
+  {
+    "chat_id": "69829f3f415b19b0d2bb",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용(오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "699b2d29dcf4ad93b0b4",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상세 설명, 해지 사유, 환불 요청 사유 등)"
+  },
+  {
+    "chat_id": "698a970e07a05f9b5ce7",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "698d28d5eea613890f19",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 이유, 환불 요청 등)"
+  },
+  {
+    "chat_id": "69a1391d90651fbfb682",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류/해지/환불 중 어떤 것인지, 상세 상황)"
+  },
+  {
+    "chat_id": "699d685e2fbbf3cd8e2d",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "698acbc20a1a0bbd538a",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 유형, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "69a0eeb73dc3745eb4f6",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 이유 등)"
+  },
+  {
+    "chat_id": "69836ae267e7b50e9678",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 오류인지, 어떤 구독을 해지하려는지, 환불 사유 등)"
+  },
+  {
+    "chat_id": "698e7aaccb0c90d434fe",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황 설명, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "6996f2bd076753505b72",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 이유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "6982eb1a4ba46d59070c",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "698b051d76f14bcbe826",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "699ec9e65f69691a9938",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상세, 해지 사유, 환불 이유 등)"
+  },
+  {
+    "chat_id": "6996ce3c312496e6f47e",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "69817958dfc9e31f098f",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문제 또는 요청사항"
+  },
+  {
+    "chat_id": "698993de0d6c599fe282",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 요청 사항 등)"
+  },
+  {
+    "chat_id": "69a1175da3a17ddcafac",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 오류인지, 왜 해지/환불을 원하는지 등)"
+  },
+  {
+    "chat_id": "697fe346a0bf9a8e34cc",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 오류인지, 왜 해지/환불을 원하는지 등)"
+  },
+  {
+    "chat_id": "698d8cfc3de220bd933b",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "6986a00b816927295a4b",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 설명, 해지 사유, 환불 대상 등)"
+  },
+  {
+    "chat_id": "699825c057e0803e47cc",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문제 상황 및 증상"
+  },
+  {
+    "chat_id": "6981e1c7145e22dcf195",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 이유, 환불 요청 사유 등)"
+  },
+  {
+    "chat_id": "6982ac4b52dec9d40cb4",
+    "user_text": "그 외 기타 문의(오류/구독해지/환불) | 💬1:1 상담 문의하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (오류 상황, 해지 사유, 환불 사유 등)"
+  },
+  {
+    "chat_id": "699d6194873849bab5d4",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (결제 방법, 상품 선택, 가격, 가입 절차 등)"
+  },
+  {
+    "chat_id": "697eee074e64b0747298",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 문제 등)"
+  },
+  {
+    "chat_id": "69847e6dbe6b9eada8f5",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 방식 등)"
+  },
+  {
+    "chat_id": "69872ec1a4e5db47f15b",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 관련 등)"
+  },
+  {
+    "chat_id": "698541de34ce2bdeb9e1",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 방법 등)"
+  },
+  {
+    "chat_id": "6997f9e0b0ff12bd3d74",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 방법, 상품 정보, 가격 등)"
+  },
+  {
+    "chat_id": "69877803b4eced2df7a4",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 문제 등)"
+  },
+  {
+    "chat_id": "69a100550269d37c703c",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 문제 등)"
+  },
+  {
+    "chat_id": "697f5c37d85b7e51d90f",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (상품 선택, 결제 방법, 가격, 혜택 등)"
+  },
+  {
+    "chat_id": "6985ad0e1f6ef506f209",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 오류 등)"
+  },
+  {
+    "chat_id": "6998fac4c506fe775786",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 설명, 결제 방식, 특정 오류 등)"
+  },
+  {
+    "chat_id": "6997c1f7ba30cf9c0211",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 문제, 상품 정보 등)"
+  },
+  {
+    "chat_id": "698c39ca10a7381d5ed5",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 방식 등)"
+  },
+  {
+    "chat_id": "698d5fe20d578e90ce1c",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용(가입 방법, 상품 선택, 결제 문제 등)"
+  },
+  {
+    "chat_id": "698d6d977e1f83499e08",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 요금제 선택, 결제 오류 등)"
+  },
+  {
+    "chat_id": "699d1354d4624afd0fe3",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 방식, 상품 정보 등)"
+  },
+  {
+    "chat_id": "699998be279c0bb41169",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 가격, 결제 방법 등)"
+  },
+  {
+    "chat_id": "69846a8f4357ffff35db",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (결제 방법, 상품 선택, 가입 절차 등)"
+  },
+  {
+    "chat_id": "6982ee59023b305de162",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 질문 내용 (가입 방법, 상품 선택, 결제 방법 등)"
+  },
+  {
+    "chat_id": "697ed9dfad03d310c080",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 문제 등)"
+  },
+  {
+    "chat_id": "6992dd7667f8ade026f3",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 질문이나 문제점 (예: 결제 오류, 가입 방법 설명 요청, 상품 비교 등)"
+  },
+  {
+    "chat_id": "699fc73c8f70588b8118",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 문제 등)"
+  },
+  {
+    "chat_id": "699c59e4e1c9a5b429ae",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 방식 등)"
+  },
+  {
+    "chat_id": "6989392be1d515975f8c",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구독 신청 시 구체적인 문제점 (가입 방법 불명확, 결제 오류, 상품 선택 등)"
+  },
+  {
+    "chat_id": "698947c6db0c671a694d",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 가격, 결제 관련 등)"
+  },
+  {
+    "chat_id": "69998ca4b02864356b79",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 사항 (가입 방법, 상품 정보, 가격, 결제 문제 등)"
+  },
+  {
+    "chat_id": "699142eaa845397912c4",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구독 신청 시 구체적인 문제점 (가입 방법, 결제 오류, 상품 선택 등)"
+  },
+  {
+    "chat_id": "698427b2a72afc59102d",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 문제, 상품 정보 등)"
+  },
+  {
+    "chat_id": "69847968571f0f48693f",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 사항 (가입 방법, 결제 문제, 상품 선택 등)"
+  },
+  {
+    "chat_id": "6983e220ec4231f37c7f",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 방법, 가격 등)"
+  },
+  {
+    "chat_id": "6999a8109dac235435ba",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용(가입 방법, 상품 선택, 결제 문제 등)"
+  },
+  {
+    "chat_id": "69846f8cd7763370e4b0",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 설명, 결제 문제 등)"
+  },
+  {
+    "chat_id": "697fefea4a6e7237ddbe",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 방식 등)"
+  },
+  {
+    "chat_id": "6986c7e2dc068f59a23b",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 관련 등)"
+  },
+  {
+    "chat_id": "6987778a4caec15d467b",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 방법, 상품 상세 정보 등)"
+  },
+  {
+    "chat_id": "69846b9e868af2f0d359",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 문제 등)"
+  },
+  {
+    "chat_id": "699f9b0eefd772994125",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법 설명 필요? 상품 추천? 결제 문제? 등)"
+  },
+  {
+    "chat_id": "699d3e60995673b10e76",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 방식, 상품 선택, 가격 등)"
+  },
+  {
+    "chat_id": "6982eb5c22fdfb8d9229",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (상품 선택 문제, 결제 방법 문의, 가입 절차 등)"
+  },
+  {
+    "chat_id": "69985fe8103c9559d335",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 오류, 상품 선택 등)"
+  },
+  {
+    "chat_id": "699c02beafbbdc2a262e",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 방법 등)"
+  },
+  {
+    "chat_id": "697f0d7c676dba86df92",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 사항 (가입 방법, 상품 정보, 결제 방식 등)"
+  },
+  {
+    "chat_id": "699fc0b8dca0dca2bdb2",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 질문 내용 (가격, 결제 방법, 상품 선택 등)"
+  },
+  {
+    "chat_id": "699feac9e8b49ac33519",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 방식, 상품 정보, 가격 등)"
+  },
+  {
+    "chat_id": "699e7a44de9291cc5e8e",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용(가입 방법, 결제 오류, 상품 선택 등)"
+  },
+  {
+    "chat_id": "6986a3d84432fed91e0c",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 문제, 가격 확인 등)"
+  },
+  {
+    "chat_id": "699b1f1bd55954696fc8",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 설명, 가격, 결제 방법 등)"
+  },
+  {
+    "chat_id": "69966e6ef1069aac3446",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 방식 등)"
+  },
+  {
+    "chat_id": "6982fca2ec5ebd45d1de",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 사항 (가입 방법, 결제 문제, 상품 비교, 가격 확인 등)"
+  },
+  {
+    "chat_id": "69847864b460619f30d7",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 문제 등)"
+  },
+  {
+    "chat_id": "69a0da79398bac057230",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (상품 선택 도움, 결제 방법, 가격 확인 등)"
+  },
+  {
+    "chat_id": "69987cbd29fc2b547fba",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 종류, 가격, 결제 방법 등)"
+  },
+  {
+    "chat_id": "697ed9dfcf2d330a0f7e",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 문제, 상품 정보 등)"
+  }
+]
