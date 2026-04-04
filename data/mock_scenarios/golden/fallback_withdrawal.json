@@ -1,0 +1,67 @@
+{
+  "scenario": "LLM Fallback — 환불 철회",
+  "description": "어제 환불 신청했는데 마음이 바뀌어 계속 이용하고 싶음. 정책 밖 케이스 → LLM 자유 답변.",
+  "conversation_time": "2026-03-05T09:30:00Z",
+  "user_messages": ["어제 환불 신청했는데 취소하고 계속 이용할게요"],
+  "conversation_turns": [
+    {"role": "user", "ts": 1741130200000, "text": "어제 환불 신청했는데 취소하고 계속 이용할게요"}
+  ],
+  "admin_data": {
+    "us_user_id": "mock_user_withdraw",
+    "phone": "01066667777",
+    "ch_name": "정수빈",
+    "products": [
+      {
+        "master": "서재형",
+        "name": "서재형 official club 투자학교(3개월)",
+        "status": "active",
+        "price": 270000,
+        "activated": "2026-03-01T10:00:00Z",
+        "expired": "2026-06-01T10:00:00Z"
+      }
+    ],
+    "transactions": [
+      {
+        "round": 1,
+        "state": "purchased_success",
+        "amount": 270000,
+        "method": "card",
+        "info": "하나카드",
+        "date": "2026-03-01"
+      }
+    ],
+    "usage": {"accessed": true, "count": 1},
+    "memberships": [
+      {
+        "productName": "서재형 official club 투자학교(3개월)",
+        "paymentCycle": 3,
+        "expiration": false,
+        "memberShipType": "card",
+        "transactionHistories": [
+          {"createdAt": "2026-03-01T10:00:00Z", "state": "purchased_success", "method": "card"}
+        ]
+      }
+    ],
+    "refunds": [
+      {
+        "productName": "서재형 official club 투자학교(3개월)",
+        "createdAt": "2026-03-04T15:00:00Z",
+        "paymentHistory": {
+          "amount": 270000,
+          "cardType": "하나카드",
+          "cardNo": "****-****-****-5678",
+          "key": "pay_withdraw1",
+          "createdAt": "2026-03-01T10:00:00Z"
+        },
+        "refundHistory": {
+          "refundAmount": 200000,
+          "refundAt": ""
+        }
+      }
+    ]
+  },
+  "expected": {
+    "template_id": "T_LLM_FALLBACK",
+    "path_contains": "환불철회"
+  }
+}

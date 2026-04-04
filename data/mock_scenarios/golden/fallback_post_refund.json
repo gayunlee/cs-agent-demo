@@ -1,0 +1,75 @@
+{
+  "scenario": "LLM Fallback — 전부 환불 후 재가입 문의",
+  "description": "환불은 완료됐는데 다시 가입하려는 유저. T3 아닌 LLM fallback으로 안내.",
+  "conversation_time": "2026-03-20T16:00:00Z",
+  "user_messages": ["환불은 받았는데 다시 가입하려면 어떻게 해야 하나요"],
+  "conversation_turns": [
+    {"role": "user", "ts": 1742486400000, "text": "환불은 받았는데 다시 가입하려면 어떻게 해야 하나요"}
+  ],
+  "admin_data": {
+    "us_user_id": "mock_user_repay",
+    "phone": "01077778888",
+    "ch_name": "한지민",
+    "products": [
+      {
+        "master": "박두환",
+        "name": "박두환 Official club 투자동행반(6개월)",
+        "status": "inactive",
+        "price": 500000,
+        "activated": "2026-02-20T10:00:00Z",
+        "expired": "2026-03-15T10:00:00Z"
+      }
+    ],
+    "transactions": [
+      {
+        "round": 1,
+        "state": "purchased_success",
+        "amount": 500000,
+        "method": "card",
+        "info": "국민카드",
+        "date": "2026-02-20"
+      },
+      {
+        "round": 1,
+        "state": "purchased_refund",
+        "amount": 360000,
+        "method": "card",
+        "info": "국민카드",
+        "date": "2026-03-15"
+      }
+    ],
+    "usage": {"accessed": true, "count": 8},
+    "memberships": [
+      {
+        "productName": "박두환 Official club 투자동행반(6개월)",
+        "paymentCycle": 6,
+        "expiration": true,
+        "memberShipType": "card",
+        "transactionHistories": [
+          {"createdAt": "2026-02-20T10:00:00Z", "state": "purchased_success", "method": "card"}
+        ]
+      }
+    ],
+    "refunds": [
+      {
+        "productName": "박두환 Official club 투자동행반(6개월)",
+        "createdAt": "2026-03-14T11:00:00Z",
+        "paymentHistory": {
+          "amount": 500000,
+          "cardType": "국민카드",
+          "cardNo": "****-****-****-9012",
+          "key": "pay_post1",
+          "createdAt": "2026-02-20T10:00:00Z"
+        },
+        "refundHistory": {
+          "refundAmount": 360000,
+          "refundAt": "2026-03-15T14:00:00Z"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "template_id": "T_LLM_FALLBACK",
+    "path_contains": "추가질문"
+  }
+}

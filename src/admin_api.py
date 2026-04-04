@@ -67,6 +67,147 @@ class UsageInfo:
     last_access_date: str = ""
 
 
+# ── Membership history dataclasses (GET /v1/users/{id}/membership-history) ──
+# 스펙: openspec/api-interfaces.md L148~168
+
+
+@dataclass
+class MembershipTransaction:
+    """membership-history 내 개별 거래 이력"""
+    created_at: str = ""
+    state: str = ""
+    method: str = ""
+    purchased_amount: str = ""
+    purchased_method: str = ""
+    card_number: str = ""
+    expired_at: str = ""
+    changed_display_name: str = ""
+    easy_pay_code: str = ""
+
+    @classmethod
+    def from_api(cls, data: dict) -> "MembershipTransaction":
+        return cls(
+            created_at=data.get("createdAt", ""),
+            state=data.get("state", ""),
+            method=data.get("method", ""),
+            purchased_amount=data.get("purchasedAmount", "") or "",
+            purchased_method=data.get("purchasedMethod", "") or "",
+            card_number=data.get("cardNumber", "") or "",
+            expired_at=data.get("expiredAt", "") or "",
+            changed_display_name=data.get("changedDisplayName", "") or "",
+            easy_pay_code=data.get("easyPayCode", "") or "",
+        )
+
+
+@dataclass
+class MembershipItem:
+    """membership-history 내 개별 멤버십"""
+    product_name: str = ""
+    payment_cycle: int = 1         # 결제 주기 (개월)
+    expiration: bool = False
+    membership_type: str = ""      # card/CA/VA/corp/PZ/unknown
+    transaction_histories: list[MembershipTransaction] = field(default_factory=list)
+
+    @classmethod
+    def from_api(cls, data: dict) -> "MembershipItem":
+        cycle_raw = data.get("paymentCycle", 1)
+        # 스펙은 number지만 실제 응답이 string일 수 있음 — 방어적 변환
+        try:
+            cycle = int(cycle_raw) if cycle_raw else 1
+        except (ValueError, TypeError):
+            cycle = 1
+        txs = [
+            MembershipTransaction.from_api(t)
+            for t in (data.get("transactionHistories") or [])
+            if isinstance(t, dict)
+        ]
+        # API 스펙: memberShipType (capital S) / enriched 데이터 호환: membershipType
+        mtype = data.get("memberShipType") or data.get("membershipType") or ""
+        return cls(
+            product_name=data.get("productName", ""),
+            payment_cycle=cycle,
+            expiration=bool(data.get("expiration", False)),
+            membership_type=mtype,
+            transaction_histories=txs,
+        )
+
+
+# ── Refund history dataclasses (GET /v1/users/{id}/membership-refund-history) ──
+# 스펙: openspec/api-interfaces.md L176~195
+
+
+@dataclass
+class PaymentHistoryDetail:
+    """환불 이력 내 원결제 정보"""
+    amount: int = 0
+    card_type: str = ""
+    card_no: str = ""
+    key: str = ""
+    created_at: str = ""
+
+    @classmethod
+    def from_api(cls, data: dict) -> "PaymentHistoryDetail":
+        amount_raw = data.get("amount", 0)
+        try:
+            amount = int(amount_raw) if amount_raw else 0
+        except (ValueError, TypeError):
+            amount = 0
+        return cls(
+            amount=amount,
+            card_type=data.get("cardType", "") or "",
+            card_no=data.get("cardNo", "") or "",
+            key=data.get("key", "") or "",
+            created_at=data.get("createdAt", "") or "",
+        )
+
+
+@dataclass
+class RefundHistoryDetail:
+    """환불 이력 내 환불 상세. refund_at="" 이면 진행중."""
+    refund_amount: int = 0
+    refund_at: str = ""
+
+    @classmethod
+    def from_api(cls, data: dict) -> "RefundHistoryDetail":
+        amount_raw = data.get("refundAmount", 0)
+        try:
+            amount = int(amount_raw) if amount_raw else 0
+        except (ValueError, TypeError):
+            amount = 0
+        # refundAt이 None일 수 있음 → ""로 통일
+        return cls(
+            refund_amount=amount,
+            refund_at=(data.get("refundAt") or ""),
+        )
+
+    @property
+    def is_pending(self) -> bool:
+        """환불 진행 중(아직 refundAt 없음)"""
+        return not self.refund_at
+
+
+@dataclass
+class RefundHistoryItem:
+    """membership-refund-history 단일 아이템"""
+    product_name: str = ""
+    created_at: str = ""
+    payment_history: PaymentHistoryDetail = field(default_factory=PaymentHistoryDetail)
+    refund_history: RefundHistoryDetail = field(default_factory=RefundHistoryDetail)
+
+    @classmethod
+    def from_api(cls, data: dict) -> "RefundHistoryItem":
+        return cls(
+            product_name=data.get("productName", ""),
+            created_at=data.get("createdAt", ""),
+            payment_history=PaymentHistoryDetail.from_api(data.get("paymentHistory") or {}),
+            refund_history=RefundHistoryDetail.from_api(data.get("refundHistory") or {}),
+        )
+
+    @property
+    def is_pending(self) -> bool:
+        return self.refund_history.is_pending
+
+
 @dataclass
 class LookupResult:
     user: UserInfo | None = None
@@ -266,30 +407,31 @@ class AdminAPIClient:
 
         return products, transactions
 
-    def get_membership_history(self, user_id: str) -> tuple[UsageInfo, list[dict]]:
+    def get_membership_history(self, user_id: str) -> tuple[UsageInfo, list[MembershipItem]]:
         """GET /v1/users/{id}/membership-history — 멤버십 이용 이력
 
-        Response: { memberships: [{ productName, paymentCycle, expiration,
-                     memberShipType, transactionHistories: [{createdAt, state, ...}] }] }
+        스펙: openspec/api-interfaces.md L148
+        Response: { memberships: MembershipItem[] }
         """
         data = self._get(f"/v1/users/{user_id}/membership-history")
         if not data:
             return UsageInfo(has_accessed=False), []
 
-        memberships = data.get("memberships", [])
-        if not isinstance(memberships, list):
-            memberships = []
+        raw_memberships = data.get("memberships", [])
+        if not isinstance(raw_memberships, list):
+            raw_memberships = []
+
+        memberships = [
+            MembershipItem.from_api(m) for m in raw_memberships if isinstance(m, dict)
+        ]
 
         # 거래 이력이 있으면 이용한 것으로 판단
-        total_tx = 0
+        total_tx = sum(len(m.transaction_histories) for m in memberships)
         latest_date = ""
         for m in memberships:
-            txs = m.get("transactionHistories", [])
-            total_tx += len(txs)
-            for tx in txs:
-                dt = tx.get("createdAt", "")
-                if dt > latest_date:
-                    latest_date = dt
+            for tx in m.transaction_histories:
+                if tx.created_at and tx.created_at > latest_date:
+                    latest_date = tx.created_at
 
         return UsageInfo(
             has_accessed=total_tx > 0,
@@ -297,20 +439,20 @@ class AdminAPIClient:
             last_access_date=latest_date,
         ), memberships
 
-    def get_refund_history(self, user_id: str) -> list[dict]:
+    def get_refund_history(self, user_id: str) -> list[RefundHistoryItem]:
         """GET /v1/users/{id}/membership-refund-history — 기존 환불 이력
 
-        Response: { refunds: [{ productName, createdAt,
-                     paymentHistory: {amount, cardType, cardNo, key, createdAt},
-                     refundHistory: {refundAmount, refundAt} }] }
+        스펙: openspec/api-interfaces.md L176
+        Response: { refunds: RefundHistoryItem[] }
         """
         data = self._get(f"/v1/users/{user_id}/membership-refund-history",
                          params={"offset": 0, "limit": 20})
         if not data:
             return []
-        if isinstance(data, dict):
-            return data.get("refunds", [])
-        return []
+        raw_refunds = data.get("refunds", []) if isinstance(data, dict) else []
+        if not isinstance(raw_refunds, list):
+            return []
+        return [RefundHistoryItem.from_api(r) for r in raw_refunds if isinstance(r, dict)]
 
     # ── 통합 조회 ──
 

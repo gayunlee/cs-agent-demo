@@ -6,20 +6,27 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 
+from src.admin_api import MembershipItem, RefundHistoryItem
+
 
 @dataclass
 class WorkflowContext:
-    """워크플로우 실행 중 누적되는 컨텍스트"""
+    """워크플로우 실행 중 누적되는 컨텍스트
+
+    memberships, refunds는 dict로 받아도 자동으로 dataclass로 변환됨 (__post_init__).
+    이는 테스트/enriched JSON과의 호환을 유지하면서 workflow 내부에선 타입 안전성 확보.
+    """
     user_messages: list[str] = field(default_factory=list)
     phone: str = ""
     conversation_turns: list[dict] = field(default_factory=list)
+    conversation_time: str = ""  # 대화 시점 (ISO) — RefundEngine 시점 복원용
     us_user_id: str = ""
     user_name: str = ""
     signup_method: str = ""
     products: list[dict] = field(default_factory=list)
     transactions: list[dict] = field(default_factory=list)
-    memberships: list[dict] = field(default_factory=list)
-    refunds: list[dict] = field(default_factory=list)
+    memberships: list = field(default_factory=list)  # list[MembershipItem]
+    refunds: list = field(default_factory=list)  # list[RefundHistoryItem]
     has_accessed: bool = False
     active_products: list[dict] = field(default_factory=list)
     success_txs: list[dict] = field(default_factory=list)
@@ -41,6 +48,17 @@ class WorkflowContext:
     path: list[str] = field(default_factory=list)
     template_id: str = ""
     template_variables: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        # dict → dataclass 자동 변환 (enriched JSON / test dict 호환)
+        self.memberships = [
+            MembershipItem.from_api(m) if isinstance(m, dict) else m
+            for m in self.memberships
+        ]
+        self.refunds = [
+            RefundHistoryItem.from_api(r) if isinstance(r, dict) else r
+            for r in self.refunds
+        ]
 
 
 def run_workflow(ctx: WorkflowContext) -> str:
@@ -91,14 +109,9 @@ def run_workflow(ctx: WorkflowContext) -> str:
         pending = _find_pending_refund(ctx.refunds)
         if pending:
             ctx.path.append("환불지연_재촉 → T12")
-            ctx.template_variables["환불접수일"] = _format_date(pending.get("createdAt", ""))
-            refund_history = pending.get("refundHistory") or {}
-            amt = refund_history.get("refundAmount", 0)
-            try:
-                ctx.template_variables["환불예정금액"] = f"{int(amt):,}"
-            except (ValueError, TypeError):
-                ctx.template_variables["환불예정금액"] = str(amt)
-            ctx.template_variables["상품명"] = pending.get("productName", "구독 상품")
+            ctx.template_variables["환불접수일"] = _format_date(pending.created_at)
+            ctx.template_variables["환불예정금액"] = f"{pending.refund_history.refund_amount:,}"
+            ctx.template_variables["상품명"] = pending.product_name or "구독 상품"
             return "T12_환불진행_상태안내"
 
     # ── Node 3: 데이터 계산 ──
@@ -212,13 +225,16 @@ def _calculate_refund(ctx: WorkflowContext):
             tx_amount = int(tx_amount)
         except ValueError:
             tx_amount = 0
-    tx_date = (latest.get("date") or latest.get("created_at") or "")[:10]
+    # 필드명 통일: API 스펙은 created_at. enriched의 date는 refund_agent_v2._use_enriched_data에서 정규화됨.
+    # 테스트에서는 date로 들어올 수 있어 fallback 유지.
+    tx_date = (latest.get("created_at") or latest.get("date") or "")[:10]
 
     # 1개월 정가 추정
     payment_cycle = 1
     if ctx.memberships:
-        cycle = ctx.memberships[0].get("paymentCycle", 1)
-        if isinstance(cycle, int) and cycle > 0:
+        # memberships는 list[MembershipItem] (__post_init__에서 변환됨)
+        cycle = ctx.memberships[0].payment_cycle
+        if cycle and cycle > 0:
             payment_cycle = cycle
     elif ctx.products:
         name = (ctx.products[0].get("name") or "").lower()
@@ -238,12 +254,20 @@ def _calculate_refund(ctx: WorkflowContext):
 
     if pay_date:
         engine = RefundEngine()
+        # 시점 복원: conv_time이 있으면 그 날짜를 '오늘'로 써서 과거 상태 정확히 계산
+        calc_today = None
+        if ctx.conversation_time:
+            try:
+                calc_today = datetime.strptime(ctx.conversation_time[:10], "%Y-%m-%d").date()
+            except ValueError:
+                calc_today = None
         inp = RefundInput(
             total_paid=tx_amount,
             monthly_price=monthly_price,
             payment_date=pay_date,
             payment_cycle_days=30,
             content_accessed=ctx.has_accessed,
+            today=calc_today,
         )
         calc = engine.calculate(inp)
 
@@ -361,7 +385,8 @@ def _calculate_exchange(ctx: WorkflowContext, user_text: str):
             tx_amount = int(tx_amount)
         except ValueError:
             tx_amount = 0
-    tx_date = (latest.get("date") or latest.get("created_at") or "")[:10]
+    # 필드명 통일: created_at 우선, 테스트 호환 위해 date도 fallback
+    tx_date = (latest.get("created_at") or latest.get("date") or "")[:10]
 
     pay_date = None
     if tx_date:
@@ -404,12 +429,13 @@ def _is_urging_refund(text: str) -> bool:
     return any(kw in text for kw in urging_kws)
 
 
-def _find_pending_refund(refunds: list[dict]) -> dict | None:
-    """진행 중(refundHistory 비어있거나 refundAt 없음)인 환불 건 찾기"""
+def _find_pending_refund(refunds: list) -> "RefundHistoryItem | None":
+    """진행 중(refundAt 없음)인 환불 건 찾기.
+
+    refunds는 list[RefundHistoryItem] (WorkflowContext.__post_init__에서 변환됨).
+    """
     for r in refunds:
-        history = r.get("refundHistory") or {}
-        # refundAt이 있으면 처리 완료, 없으면 접수만 된 상태
-        if not history.get("refundAt"):
+        if r.is_pending:
             return r
     # 진행 중 없으면 가장 최근 건 반환 (상태 재확인 용도)
     return refunds[0] if refunds else None

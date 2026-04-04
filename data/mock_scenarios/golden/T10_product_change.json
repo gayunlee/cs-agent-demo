@@ -1,0 +1,51 @@
+{
+  "scenario": "T10 상품변경 차액환불",
+  "description": "6개월 50만원 결제 후 1개월 10만원 상품으로 변경 요청. 차액 환불 계산 필요.",
+  "conversation_time": "2026-01-20T14:00:00Z",
+  "user_messages": ["안녕하세요 50만원 결제한 거 취소하고 10만원짜리 상품으로 변경 부탁드려요"],
+  "conversation_turns": [
+    {"role": "user", "ts": 1737374400000, "text": "안녕하세요 50만원 결제한 거 취소하고 10만원짜리 상품으로 변경 부탁드려요"}
+  ],
+  "admin_data": {
+    "us_user_id": "mock_user_t10",
+    "phone": "01022223333",
+    "ch_name": "이민영",
+    "products": [
+      {
+        "master": "박두환",
+        "name": "박두환 Official club 투자동행반(6개월)",
+        "status": "active",
+        "price": 500000,
+        "activated": "2026-01-15T09:00:00Z",
+        "expired": "2026-07-15T09:00:00Z"
+      }
+    ],
+    "transactions": [
+      {
+        "round": 1,
+        "state": "purchased_success",
+        "amount": 500000,
+        "method": "card",
+        "info": "삼성카드",
+        "date": "2026-01-15"
+      }
+    ],
+    "usage": {"accessed": true, "count": 5},
+    "memberships": [
+      {
+        "productName": "박두환 Official club 투자동행반(6개월)",
+        "paymentCycle": 6,
+        "expiration": false,
+        "memberShipType": "card",
+        "transactionHistories": [
+          {"createdAt": "2026-01-15T09:00:00Z", "state": "purchased_success", "method": "card"}
+        ]
+      }
+    ],
+    "refunds": []
+  },
+  "expected": {
+    "template_id": "T10_상품변경_차액환불",
+    "path_contains": "상품변경"
+  }
+}

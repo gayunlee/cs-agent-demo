@@ -5,6 +5,7 @@ mock 시나리오 선택 → 유저 메시지 입력 → 조회 결과 + 판단 
 from __future__ import annotations
 import os
 import json
+from pathlib import Path
 import streamlit as st
 from datetime import date, timedelta
 from dotenv import load_dotenv
@@ -14,6 +15,21 @@ load_dotenv()
 from src.refund_agent_v2 import RefundAgentV2, AgentResultV2
 from src.workflow import WorkflowContext, run_workflow
 from src.templates import TEMPLATES
+
+GOLDEN_DIR = Path("data/mock_scenarios/golden")
+
+
+def load_golden_scenarios():
+    """골든셋 시나리오 로드 (api-interfaces.md 스펙 기반 mock)"""
+    scenarios = {}
+    if not GOLDEN_DIR.exists():
+        return scenarios
+    for p in sorted(GOLDEN_DIR.glob("*.json")):
+        with open(p) as f:
+            s = json.load(f)
+            key = p.stem  # 파일명 (확장자 제외)
+            scenarios[key] = s
+    return scenarios
 
 
 def days_ago(n):
@@ -124,10 +140,110 @@ def render_answer(template_id, wf_ctx):
     return template_text
 
 
+def render_golden_scenario(scenario: dict, use_real_llm: bool):
+    """골든셋 시나리오 — RefundAgentV2.process 전체 경로 (T_LLM_FALLBACK 포함)"""
+    agent = RefundAgentV2(mock=not use_real_llm)
+    result = agent.process(
+        user_messages=scenario["user_messages"],
+        chat_id=scenario.get("scenario", "golden"),
+        admin_data=scenario["admin_data"],
+        conversation_time=scenario.get("conversation_time", ""),
+        conversation_turns=scenario.get("conversation_turns") or [],
+    )
+    expected = scenario.get("expected", {}).get("template_id", "")
+
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+
+    with col1:
+        st.markdown("##### 💬 고객 메시지")
+        for msg in scenario["user_messages"]:
+            st.markdown(
+                f"""<div style="background:#e3f2fd; border-radius:12px 12px 12px 0; padding:10px 14px; margin:4px 0; font-size:14px;">{msg}</div>""",
+                unsafe_allow_html=True,
+            )
+        st.divider()
+        st.markdown(f"**시나리오**: {scenario['scenario']}")
+        st.caption(scenario.get("description", ""))
+        if scenario.get("conversation_time"):
+            st.caption(f"대화 시점: {scenario['conversation_time'][:10]}")
+
+    with col2:
+        st.markdown("##### 📋 조회 결과 (mock)")
+        admin = scenario["admin_data"]
+        st.markdown(f"- 유저: **{admin.get('ch_name', '?')}** ({admin.get('phone', '?')})")
+        txs = admin.get("transactions", [])
+        if txs:
+            st.markdown(f"- 결제 {len(txs)}건")
+            for t in txs:
+                state_icon = "💳" if "success" in (t.get("state") or "") else "↩️"
+                st.caption(f"  {state_icon} {t.get('date','')[:10]} · {t.get('amount',0):,}원 · {t.get('info','')}")
+        refunds = admin.get("refunds") or []
+        if refunds:
+            st.markdown(f"- 환불 이력 {len(refunds)}건")
+            for r in refunds:
+                rh = r.get("refundHistory") or {}
+                pending = not rh.get("refundAt")
+                status = "⏳ 진행중" if pending else "✅ 완료"
+                st.caption(f"  {status} · {rh.get('refundAmount', 0):,}원")
+        st.markdown(f"- 열람: {'있음' if admin.get('usage', {}).get('accessed') else '없음'}")
+
+        st.divider()
+        st.markdown("##### 🔀 워크플로우 경로")
+        for step in result.steps:
+            if step.step == "classify":
+                path = step.detail.get("path") or []
+                if path:
+                    st.code(" → ".join(path))
+                break
+
+    with col3:
+        st.markdown(f"##### 📝 답변 초안")
+        st.caption(f"템플릿: {result.template_id}")
+        if result.template_id == expected:
+            st.success(f"✓ 기대 템플릿 일치")
+        elif expected:
+            st.error(f"✗ 기대: {expected}")
+
+        if result.final_answer:
+            st.markdown(
+                f"""<div style="background:#fff8e1; border:2px solid #f9a825; border-radius:8px; padding:14px; font-size:14px; line-height:1.8;">{result.final_answer.replace(chr(10), '<br>')}</div>""",
+                unsafe_allow_html=True,
+            )
+
+
 def main():
     st.set_page_config(page_title="환불 Agent v2", layout="wide")
     st.title("환불/해지 상담 어시스턴트")
     st.caption("mock 시나리오 선택 → 메시지 입력 → 조회 결과 + 판단 근거 + 답변 초안")
+
+    # 데이터셋 선택: Legacy vs Golden
+    dataset = st.radio(
+        "데이터셋",
+        ["🌟 골든셋 (신규, api-interfaces.md 기반)", "📦 Legacy mock"],
+        horizontal=True,
+    )
+
+    if dataset.startswith("🌟"):
+        golden = load_golden_scenarios()
+        if not golden:
+            st.warning("골든셋이 비어있습니다. `data/mock_scenarios/golden/` 확인.")
+            return
+        col_sel, col_llm = st.columns([3, 1])
+        with col_sel:
+            key = st.selectbox(
+                "골든셋 시나리오",
+                list(golden.keys()),
+                format_func=lambda k: f"{golden[k]['scenario']}",
+            )
+        with col_llm:
+            use_real = st.checkbox("LLM fallback 실제 호출", value=False,
+                                    help="체크 시 T_LLM_FALLBACK 케이스에서 실제 Bedrock 호출")
+        with st.expander("시나리오 상세"):
+            st.markdown(f"**설명**: {golden[key].get('description', '')}")
+            st.json(golden[key], expanded=False)
+        if st.button("초안 생성", use_container_width=True, type="primary"):
+            render_golden_scenario(golden[key], use_real_llm=use_real)
+        return
 
     mocks = load_mocks()
 

@@ -148,6 +148,7 @@ class RefundAgentV2:
             user_messages=user_messages,
             phone=phone,
             conversation_turns=conversation_turns or [],
+            conversation_time=conversation_time,
             us_user_id=us_user_id,
             intent=intent,
             products=collected_data.get("get_subscriptions", {}).get("products", []),
@@ -191,18 +192,18 @@ class RefundAgentV2:
                 collected_data["calculate_refund"] = refund_result
 
         # ── Step 4: 템플릿 + 변수 → 초안 완성 ──
-        if not tmpl.get("required_tools") and not collected_data:
-            # T10/T11/T12/T6b 등 workflow에서 변수를 이미 채운 경우 간단 포맷
-            if wf_ctx.template_variables:
-                result.final_answer = self._format_template(tmpl, wf_ctx.template_variables)
-                result.steps.append(AgentStepV2(
-                    step="final",
-                    content=f"{template_id} (workflow 변수 주입)",
-                    detail={"variables": wf_ctx.template_variables},
-                ))
-            else:
-                result.final_answer = tmpl["template"]
-                result.steps.append(AgentStepV2(step="final", content=f"고정 템플릿: {template_id}"))
+        # 우선순위 1: workflow가 template_variables를 이미 채운 경우 (T10/T11/T12/T6b)
+        #   → 단순 치환으로 완성. _compose 우회.
+        if wf_ctx.template_variables:
+            result.final_answer = self._format_template(tmpl, wf_ctx.template_variables)
+            result.steps.append(AgentStepV2(
+                step="final",
+                content=f"{template_id} (workflow 변수 주입)",
+                detail={"variables": wf_ctx.template_variables},
+            ))
+        elif not tmpl.get("required_tools") and not collected_data:
+            result.final_answer = tmpl["template"]
+            result.steps.append(AgentStepV2(step="final", content=f"고정 템플릿: {template_id}"))
         elif collected_data:
             result.final_answer = self._compose(tmpl, collected_data, user_messages, result)
         else:
@@ -290,19 +291,33 @@ class RefundAgentV2:
     # ── 조회 결과 기반 템플릿 선택 ──
 
     def _use_enriched_data(self, admin_data: dict, conv_time: str, result: AgentResultV2) -> dict:
-        """enriched 데이터를 대화 시점 기준으로 필터링 + 상태 복원"""
+        """enriched 데이터를 대화 시점 기준으로 필터링 + 상태 복원.
+
+        입력 정규화: enriched JSON은 `date` 키를 쓰지만 API 스펙은 `createdAt`.
+        여기서 `date` → `created_at`으로 통일 (workflow는 `created_at`만 읽음).
+        """
         products = admin_data.get("products", [])
-        transactions = admin_data.get("transactions", [])
+        raw_transactions = admin_data.get("transactions", [])
         usage = admin_data.get("usage", {})
         memberships = admin_data.get("memberships", [])
         refunds = admin_data.get("refunds", [])
+
+        # ── transaction 필드명 정규화: date → created_at ──
+        transactions = []
+        for t in raw_transactions:
+            if not isinstance(t, dict):
+                continue
+            tc = dict(t)
+            if "created_at" not in tc:
+                tc["created_at"] = tc.get("date") or tc.get("createdAt") or ""
+            transactions.append(tc)
 
         # 대화 시점 기준 필터 — conv_time 이전 거래만
         # 핵심: 대화 당일 처리된 환불은 "아직 안 됐던" 상태로 봐야 함
         # → 거래 날짜가 대화 날짜 **이전**(strictly before)인 것만 포함
         conv_date = conv_time[:10] if conv_time else ""  # YYYY-MM-DD
         if conv_date:
-            transactions = [t for t in transactions if (t.get("date") or "")[:10] <= conv_date]
+            transactions = [t for t in transactions if (t.get("created_at") or "")[:10] <= conv_date]
             # 환불은 대화 당일 건은 제외 (대화 시점에는 아직 환불 전)
             if isinstance(refunds, list):
                 refunds = [r for r in refunds if (r.get("createdAt") or "")[:10] < conv_date]
