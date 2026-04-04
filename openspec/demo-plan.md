@@ -302,3 +302,27 @@ tests/
 ├── test_agent_eval.py      ← 신규 (AgentCore Evaluation)
 app_agent_demo.py           ← 신규 (가상 채널톡 데모 UI)
 ```
+
+---
+
+## 현재 작업: 환불/해지 전수 패턴 분류 + eval 기준
+
+### Step 1: 1~3월 분류 (500건 배치)
+- [x] 1월 BQ 조회 → `jan_2026_raw.json` (3,939건)
+- [x] 1월 LLM 분류 → 배치 1~30 완료 (3,400건)
+- [ ] 1월 나머지 (배치 31~40)
+- [ ] 2월 BQ 조회 + LLM 분류
+- [ ] 3월 BQ 조회 + LLM 분류
+
+### Step 2: 환불/해지 전체 대화 조회 + 워크플로우 매칭
+- [x] 1월 100건 대화 조회 + 패턴 분석 (84% normal, 13% edge)
+- [ ] 1월 나머지 1,114건 대화 조회
+- [ ] LLM으로 워크플로우 매칭 (500건 배치)
+- [ ] 2~3월 동일 처리
+
+### Step 3: 유형별 chat_id 리스트
+- [ ] `refund_cases_by_type.json` 생성
+
+### Step 4: edge eval 기준
+- [x] 13건 필수 요소 추출 (10/12 성공)
+- [ ] 전체 edge 케이스 eval 기준 확정

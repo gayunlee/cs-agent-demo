@@ -1,0 +1,16 @@
+[
+  {
+    "chat_id": "69786b86df5ba4553c3f",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "다음 정기결제 해지 방법 안내 (결제 이력 없음)",
+    "special": ""
+  },
+  {
+    "chat_id": "697bfa598392a05bbcd3",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제 상태에서 환불 규정 확인 후 환불 신청 → 매니저가 전액 환불 처리",
+    "special": ""
+  }
+]

@@ -1,0 +1,702 @@
+[
+  {
+    "chat_id": "695614db36dbea03c01d",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 신청 → 매니저가 전액 환불 접수 완료 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "695619cb921406ac6feb",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 접수 완료 후 카드사 반영 대기 중 - 고객 불만 표현",
+    "special": null
+  },
+  {
+    "chat_id": "69561f055a07c73331b4",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제 상태에서 환불 규정 확인 후 환불 신청 → 본인확인(성명/연락처) → 환불 금액 안내 및 환불 접수 완료",
+    "special": ""
+  },
+  {
+    "chat_id": "69562a15170715dde929",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "자동결제 해지 요청 → 환불 접수 완료 안내",
+    "special": null
+  },
+  {
+    "chat_id": "69564d1f9bdc47bac7ec",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "구독 해지 요청 → 할부 재신청을 위한 해지 처리 안내",
+    "special": null
+  },
+  {
+    "chat_id": "6956f685bf6adf09baed",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "구독 취소 요청 → 매니저 상품변경 제안 → 유저 취소 재확인 → 전액 환불 접수 완료 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "695720e43e5106748618",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 접수 완료 - 전액 환불이 이미 처리됨. 카드 취소 진행 중 (2~3 영업일 반영 예정)",
+    "special": null
+  },
+  {
+    "chat_id": "69572352ec8296d864b0",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "유저가 환불 규정 확인 후 환불을 신청했고, 매니저가 전액 환불 접수 완료 및 카드 취소 일정(영업일 2~3일)을 안내함. 이미 환불 처리된 상태.",
+    "special": ""
+  },
+  {
+    "chat_id": "6957241c926810b6b70e",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 본인확인(T6) → 환불 접수 완료(T3) 진행",
+    "special": null
+  },
+  {
+    "chat_id": "695727fa51865af046b6",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "유저가 3개월치 결제 후 추가 결제 방지를 요청 → 본인확인(계좌번호) 후 환불 접수 완료 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "69573021b5fe5fba399b",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제 있음 → 환불 규정 확인 → 전액 환불 접수 완료",
+    "special": ""
+  },
+  {
+    "chat_id": "695747c73790e9c53137",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "사용자가 해지 신청 → 매니저가 환불 접수 완료 안내 및 카드 취소 처리 예정 통보",
+    "special": ""
+  },
+  {
+    "chat_id": "69574e6049500e34eae0",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제 상태에서 환불 규정 확인 후 환불 신청 → 환불 금액 안내 및 접수 완료",
+    "special": ""
+  },
+  {
+    "chat_id": "6957582df10191da3a80",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "미환불 결제(2회차)에 대해 전액 환불 접수 완료 후 카드 취소 처리로 종료",
+    "special": null
+  },
+  {
+    "chat_id": "69576362dcdaf1c4640d",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 신청 → 환불 접수 완료 → 구독 종료 후 콘텐츠 접근 불가 안내",
+    "special": null
+  },
+  {
+    "chat_id": "69576cb45d902aec0535",
+    "pattern": "에러",
+    "branch": "?",
+    "flow": "Expecting value: line 1 column 1 (char 0)",
+    "special": ""
+  },
+  {
+    "chat_id": "695771ad4d7042138b64",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "자동결제된 수강료에 대해 유저가 환불 요청 → 매니저가 전액 환불 접수 완료 및 카드 취소 절차 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "69577a255fccf9bc7feb",
+    "pattern": "에러",
+    "branch": "?",
+    "flow": "Expecting value: line 1 column 1 (char 0)",
+    "special": ""
+  },
+  {
+    "chat_id": "69577eaae077e4b6f6c8",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "구독 해지 요청 → 해지 처리 완료 (결제 없음 상태에서 단순 해지)",
+    "special": ""
+  },
+  {
+    "chat_id": "6957901b1aa09cb8ffce",
+    "pattern": "튀는",
+    "branch": "없음",
+    "flow": "전화 미응답 + 구독해지 + 미환불 결제 존재",
+    "special": "매니저가 환불 가능성을 검토 중인 상황. 표준 워크플로우(T1-해지방법, T2-환불규정)보다 선제적 보상/환불 검토가 필요한 CS 불만 사례. 고객이 여러 번 연락 시도했으나 미응답으로 인한 불신 해소 및 상황별 맞춤형 환불 판단 필요."
+  },
+  {
+    "chat_id": "695796be993563ef5896",
+    "pattern": "에러",
+    "branch": "?",
+    "flow": "Expecting value: line 1 column 1 (char 0)",
+    "special": ""
+  },
+  {
+    "chat_id": "6957bc0f6e1b0293e311",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 신청 → 환불 접수 완료 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "6958b55a54770514faca",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제 존재 → 환불 규정 안내 및 금액 확인 후 환불 접수",
+    "special": ""
+  },
+  {
+    "chat_id": "6958b63d6498c6b96f79",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제 상태에서 환불 규정 확인 후 환불 신청 → 전액 환불 접수 완료",
+    "special": ""
+  },
+  {
+    "chat_id": "6958b7f678b95170bfd1",
+    "pattern": "튀는",
+    "branch": "없음",
+    "flow": "자동결제 취소 + 환불 요청 + 회원탈퇴 선행 질문",
+    "special": "자동결제 실수/오류로 인한 즉시 취소 요청(T2환불 규정 안내 전) + 회원탈퇴 선행조건 명확화 필요. 매니저가 이용이력 확인 후 개별 판단 필요한 사항이므로, T2(환불규정)와 별도의 상황판단 프로세스 필요"
+  },
+  {
+    "chat_id": "6958bca866ff22903264",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 신청 → 환불 접수 완료 및 카드 취소 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "6958be3cbdbc585dc2b3",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제 있음 - 환불 규정 안내 후 금액 확인 및 환불 접수 진행",
+    "special": ""
+  },
+  {
+    "chat_id": "6958d3c291155d85e583",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "환불 규정 확인 후 환불 신청 → 전액 환불 접수 완료 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "695903c0b03da9017e21",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "환불 규정 확인 후 환불 신청 → 전액 환불 접수 완료 → 구독해지 동시 처리 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "69590e111cd2d4808a6a",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "자동결제 취소 요청 → 환불 접수 완료 안내",
+    "special": null
+  },
+  {
+    "chat_id": "69599c134d0ad33721f9",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 신청 → 환불 접수 완료 안내",
+    "special": null
+  },
+  {
+    "chat_id": "695a1b14057257891c1c",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "환불 규정 확인 후 환불 신청 → 환불 접수 완료 및 카드 취소 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "695a4db48386c67b128b",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 신청 → 환불 접수 완료 (이미 처리됨)",
+    "special": null
+  },
+  {
+    "chat_id": "695b0dfa7c1109868942",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제(420,000원)에 대한 환불 규정 안내 후 환불 접수 처리",
+    "special": null
+  },
+  {
+    "chat_id": "695b0e98754d253f432d",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "구독 해지 후 환불 상태 확인 → 이미 환불 접수 완료 상태 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "695b0efa0e7d0285e9e5",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "중복 결제(5만원)에 대한 환불 접수 완료 + 자동결제 해지 확인",
+    "special": ""
+  },
+  {
+    "chat_id": "695b0f8b8d6f9956a1b0",
+    "pattern": "일반",
+    "branch": "T6",
+    "flow": "본인확인 요청 - 유저가 결제 내역 확인 및 자동결제 취소를 요청했으나, 정보 불일치로 추가 본인확인 필요",
+    "special": ""
+  },
+  {
+    "chat_id": "695b34c42252b57bf46c",
+    "pattern": "에러",
+    "branch": "?",
+    "flow": "Expecting value: line 1 column 1 (char 0)",
+    "special": ""
+  },
+  {
+    "chat_id": "695b36b14d9ddca3d9d5",
+    "pattern": "에러",
+    "branch": "?",
+    "flow": "Expecting value: line 1 column 1 (char 0)",
+    "special": ""
+  },
+  {
+    "chat_id": "695b415f281e1e832802",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 신청 → 매니저가 환불 접수 완료 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "695b556a95adb1509303",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "결제 취소 요청 → 환불 접수 완료 안내 (이미 환불 처리됨)",
+    "special": ""
+  },
+  {
+    "chat_id": "695b590fd8b8ac544df6",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "카드 결제 취소 요청 → 환불 접수 완료 안내 (이미 환불 처리됨)",
+    "special": null
+  },
+  {
+    "chat_id": "695b616a08a7219a04f5",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "미등록 자동결제 → 환불 접수 완료 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "695b628071e4a4a90358",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "구독 자동결제(42만원) 후 해지 요청 → 환불 접수 완료 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "695b6a3089b080c75875",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "해지 후 남은 기간 환급 요청 → 환불 불가 규정 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "695b6b90d9cae8467039",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 접수 완료 - 전액 환불 처리되어 카드사 반영 대기 중",
+    "special": ""
+  },
+  {
+    "chat_id": "695b8ed09575f5fa416b",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제 있음 → 환불 규정 확인 → 환불 접수 완료",
+    "special": ""
+  },
+  {
+    "chat_id": "695bd105a65909c8c681",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "정기결제 구독해지 방법 안내 - 결제 없이 해지 프로세스만 진행",
+    "special": ""
+  },
+  {
+    "chat_id": "695c669cd4b1590cbda5",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "중도해지 문의 → 환불 규정 안내 (환불받으면 즉시 구독권 종료) → 환불 접수 링크 제공",
+    "special": ""
+  },
+  {
+    "chat_id": "695c87d83d12eb6b79d7",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제 있음 → 환불 규정 안내 → 환불 접수 완료",
+    "special": ""
+  },
+  {
+    "chat_id": "695c91342bdf7eed73a1",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "구독 해지 요청 → 해지 사유 확인 → 환불 규정 및 금액 안내 (자동이체 삭제 포함)",
+    "special": ""
+  },
+  {
+    "chat_id": "695c96b44497ef7ae03b",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "구독 해지 요청 → 환불 불가 시점 확인 후 해지 처리 완료",
+    "special": ""
+  },
+  {
+    "chat_id": "695ca48437834f8598ae",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 접수 완료 - 카드 취소 처리 진행",
+    "special": ""
+  },
+  {
+    "chat_id": "695ca689b1d1518febee",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "유저가 환불 규정 확인 후 환불 신청 → 매니저가 본인확인 요청 → 환불 접수 완료 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "695ca6ed4620811f927e",
+    "pattern": "에러",
+    "branch": "?",
+    "flow": "Expecting value: line 1 column 1 (char 0)",
+    "special": ""
+  },
+  {
+    "chat_id": "695cad640e85e62589f4",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미승인 자동결제 발생 → 환불 규정 및 금액 안내 필요",
+    "special": null
+  },
+  {
+    "chat_id": "695d0ff62d9756a9f8ea",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 접수 완료 - 카드 취소 처리 진행 중 (영업일 2~3일 소요)",
+    "special": ""
+  },
+  {
+    "chat_id": "695e00f011fb0c1a3815",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "자동 정기결제 발생 → 환불 규정 안내 → 전액 환불 접수 완료",
+    "special": null
+  },
+  {
+    "chat_id": "695f36907c1fc5bc2e2f",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "중도해지 요청 → 환불 규정 및 손해금액 안내 필요 → 환불 접수 단계",
+    "special": null
+  },
+  {
+    "chat_id": "695f3c831e11a653beeb",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 접수 완료 - 카드 결제 취소로 2~3일 후 반영 예정",
+    "special": ""
+  },
+  {
+    "chat_id": "695f48b34b414bd63640",
+    "pattern": "일반",
+    "branch": "T6",
+    "flow": "해지 요청 고객의 본인확인 정보(성함/연락처) 수집 단계",
+    "special": ""
+  },
+  {
+    "chat_id": "695f62ea199f4e4aec6a",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "사용자가 특정 강의 구독 해지 요청 → 매니저가 정기결제 해지 처리 완료",
+    "special": null
+  },
+  {
+    "chat_id": "695f6dba7a54c1b501a8",
+    "pattern": "튀는",
+    "branch": "없음",
+    "flow": "해지 신청 후 철회 요청 - 워크플로우에 없는 패턴",
+    "special": "해지 철회(구독 복구) 요청. 기존 워크플로우는 해지 방법 안내, 환불 규정, 환불 완료 등을 다루지만, 해지 후 철회는 별도의 구독 복구 프로세스 필요. 매니저가 직접 처리 완료한 특별 대응 사례."
+  },
+  {
+    "chat_id": "69605843159a655edcef",
+    "pattern": "일반",
+    "branch": "T6→T2",
+    "flow": "본인확인(이름/전화) 후 결제취소 요청 → 환불 규정 안내 및 환불 접수 완료",
+    "special": ""
+  },
+  {
+    "chat_id": "69605b879f56abe46037",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "다음 정기결제 해지 방법 안내 - 결제 없는 상태에서 순수 해지 요청",
+    "special": ""
+  },
+  {
+    "chat_id": "6960688bdc930d2257f0",
+    "pattern": "에러",
+    "branch": "?",
+    "flow": "Expecting value: line 1 column 1 (char 0)",
+    "special": ""
+  },
+  {
+    "chat_id": "69607e94c997324de3fd",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "어제 가입 후 즉시 해지 요청 → 전액 환불 접수 완료 안내",
+    "special": null
+  },
+  {
+    "chat_id": "6960a29057fd33c9f3a7",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 신청 → 환불 접수 완료 → 카드사 반영 안내 (이미 환불됨)",
+    "special": null
+  },
+  {
+    "chat_id": "6960d40aecb3a3b22e1a",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "1월 구매 후 남은 기간 환불 요청 → 환불 규정 및 금액 안내 필요",
+    "special": ""
+  },
+  {
+    "chat_id": "6960f09b41340ef71d80",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 접수 완료 - 카드 취소로 2~3일 내 반영 예정",
+    "special": ""
+  },
+  {
+    "chat_id": "6960febaf36e928088cf",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 신청 → 매니저가 환불 접수 완료 안내 및 카드 취소 처리 예정 공지",
+    "special": null
+  },
+  {
+    "chat_id": "69611890dacb2853a7f5",
+    "pattern": "에러",
+    "branch": "?",
+    "flow": "Expecting value: line 1 column 1 (char 0)",
+    "special": ""
+  },
+  {
+    "chat_id": "696126670619a5a90267",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "정기결제 해지 요청 → 해지 방법 안내 및 처리 완료",
+    "special": null
+  },
+  {
+    "chat_id": "6961faa71ad3e61dfe1c",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제 있음 → 환불 규정 안내 → 환불 접수 완료",
+    "special": ""
+  },
+  {
+    "chat_id": "6962370b189864ccc46f",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "유저가 3개월분 결제 취소 요청 → 매니저가 환불 규정 안내 후 환불 접수 완료 처리 → 카드사 반영 2~3일 안내",
+    "special": "없음"
+  },
+  {
+    "chat_id": "69625d5fded3475c4581",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "이미 환불 접수 완료된 상태로 카드사 반영 대기 중",
+    "special": null
+  },
+  {
+    "chat_id": "6963a3cc75bc89069d56",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "구독 해지 요청 → 환불 규정 및 금액 안내 필요",
+    "special": ""
+  },
+  {
+    "chat_id": "69644949713d327787e8",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제 상태에서 환불 규정 및 금액 안내 필요 → 환불 희망 확인 후 추후 진행으로 일단 보류",
+    "special": ""
+  },
+  {
+    "chat_id": "696457360f63cac14a7d",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "1회 구독 후 자동결제 취소 요청 → 해지 방법 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "69645998b6f8f83d8d19",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "환불 규정 확인 후 환불 신청 → 환불 접수 완료 및 카드 취소 안내",
+    "special": null
+  },
+  {
+    "chat_id": "69645f6f200d17065c10",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 접수 완료 - 카드 취소 처리 진행 중, 카드사 반영 2~3영업일 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "6964876e43b7c59b881d",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "회원탈퇴 및 구독 해지 완료 상태 확인 → 해지 방법 안내 (추가 결제 없음)",
+    "special": ""
+  },
+  {
+    "chat_id": "69648b06a35ba7a53973",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "환불 규정 확인 후 본인확인(이름/전화)을 통해 환불 접수 완료 및 카드 취소 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "69648b4596ab3173e8cf",
+    "pattern": "에러",
+    "branch": "?",
+    "flow": "Expecting value: line 1 column 1 (char 0)",
+    "special": ""
+  },
+  {
+    "chat_id": "69648ea2bde5976a7b44",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "구독 해지 방법을 단계별로 안내 (결제 이력 없음)",
+    "special": ""
+  },
+  {
+    "chat_id": "696492b4d2ac26e7daf7",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "미환불 결제(오늘 결제건)에 대한 환불 규정 안내 및 환불 금액 확정",
+    "special": null
+  },
+  {
+    "chat_id": "696496ebd0fc9c0e232c",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "환불 규정 확인 후 환불 접수 완료 - 카드 취소 방식으로 2~3영업일 반영 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "6964a09f75b709169758",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "자동 연장 결제된 서비스 해약 요청 → 환불 접수 완료 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "6964aa06b7fe55c4c8ee",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "사용자가 다음 정기결제 해지 방법을 문의 → 해지 방법 안내 분기 (결제 없음 상태)",
+    "special": ""
+  },
+  {
+    "chat_id": "6964aa3933d1683092c2",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "정기결제 해지 요청 → 해지 방법 안내 및 처리 완료",
+    "special": ""
+  },
+  {
+    "chat_id": "6964bf88479bd3e7ce83",
+    "pattern": "에러",
+    "branch": "?",
+    "flow": "Expecting value: line 1 column 1 (char 0)",
+    "special": ""
+  },
+  {
+    "chat_id": "6964c01b05f7ff331b90",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 신청 접수 완료 - 카드 취소 처리 및 카드사 반영 안내",
+    "special": null
+  },
+  {
+    "chat_id": "6964f9cd93dbbb50cc5f",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 신청 → 환불 접수 완료 및 처리 일정 안내",
+    "special": null
+  },
+  {
+    "chat_id": "69658d686599c3d8fddd",
+    "pattern": "에러",
+    "branch": "?",
+    "flow": "Expecting value: line 1 column 1 (char 0)",
+    "special": ""
+  },
+  {
+    "chat_id": "69659cad6251c4ace5c4",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 접수 완료 및 카드 취소 처리 진행",
+    "special": ""
+  },
+  {
+    "chat_id": "6965a3038d29b0da483e",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "환불 규정 확인 후 환불 신청 → 환불 접수 완료 및 카드 취소 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "6965abf41df43790338f",
+    "pattern": "일반",
+    "branch": "T3",
+    "flow": "구독 해지 신청 후 전액 환불 접수 완료 안내",
+    "special": ""
+  },
+  {
+    "chat_id": "6965dbfba2e1abaa1452",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "환불 규정 안내 (1/2 기준 환불 불가, 변경 불가 정책 설명)",
+    "special": ""
+  },
+  {
+    "chat_id": "6965e21dab194771a4db",
+    "pattern": "일반",
+    "branch": "T1",
+    "flow": "결제 없음 상태에서 구독 해지 안내 및 처리 완료",
+    "special": ""
+  },
+  {
+    "chat_id": "6965faf065ed24ccdeb8",
+    "pattern": "일반",
+    "branch": "T2",
+    "flow": "유저가 환불 규정을 확인하고 환불을 신청했으며, 매니저가 환불 금액과 처리 방식(카드 취소)을 안내하고 완료 확정",
+    "special": null
+  }
+]

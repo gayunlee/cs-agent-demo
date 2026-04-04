@@ -1,0 +1,702 @@
+[
+  {
+    "chat_id": "6965ff4f0765367b689f",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 관련 등)"
+  },
+  {
+    "chat_id": "697c71cd69fe987b47d3",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 질문 내용 (가격 문의, 결제 방법, 상품 설명, 가입 절차 등)"
+  },
+  {
+    "chat_id": "697cc3b33bd2103ed082",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 문제 등)"
+  },
+  {
+    "chat_id": "6966fefeeaa0d2baf8ad",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 비교, 결제 방식 등)"
+  },
+  {
+    "chat_id": "6979ec4b03f847b0341f",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 가격 정보, 결제 관련 등)"
+  },
+  {
+    "chat_id": "695f8e28e044dc5c959d",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 관련 등)"
+  },
+  {
+    "chat_id": "69648a3bdb4f94b09480",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 방식, 가격 문의 등)"
+  },
+  {
+    "chat_id": "697d8e5f6b81382f95d3",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구독 상품 선택, 결제 방법, 결제 시 발생한 오류 또는 구체적 문제점"
+  },
+  {
+    "chat_id": "695644f05c3b94d130fd",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 문제 등)"
+  },
+  {
+    "chat_id": "696c000d211a58dd9fed",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 관련 등)"
+  },
+  {
+    "chat_id": "696db6aee3a01e583f74",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 방식, 가격, 플랜 선택 등)"
+  },
+  {
+    "chat_id": "69661a9890f5f31bcccd",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (결제 방법, 상품 선택, 가입 방법, 문제 상황 등)"
+  },
+  {
+    "chat_id": "6957295e739d59d9f6de",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 문제 등)"
+  },
+  {
+    "chat_id": "695fa322d9ea91976f0e",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 어려움이 있는지, 어느 단계에서 막혔는지)"
+  },
+  {
+    "chat_id": "6958fdbde142d65b7a29",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (결제 방법, 멤버십 종류, 가격, 기술 문제 등)"
+  },
+  {
+    "chat_id": "695f8c74c11c49d61e3e",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 문제 등)"
+  },
+  {
+    "chat_id": "697c0e39119cf5c56a15",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 방식 등)"
+  },
+  {
+    "chat_id": "696b2fd6d074eca90777",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구독 신청 시 구체적인 질문 내용 (가격, 상품 종류, 가입 방법, 결제 오류 등)"
+  },
+  {
+    "chat_id": "696e382fece98c5ecd70",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 문제, 상품 선택 등)"
+  },
+  {
+    "chat_id": "696f08df17ce5e610b4a",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 문제, 상품 선택 등)"
+  },
+  {
+    "chat_id": "697d25a503163f392ff7",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 방법 등)"
+  },
+  {
+    "chat_id": "6960f34e91761915225e",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 방식, 가격 등)"
+  },
+  {
+    "chat_id": "696890873e08fb09640b",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 상품인지, 결제 문제가 있는지, 가입 방법을 모르는지 등)"
+  },
+  {
+    "chat_id": "697c5da58cafef468bab",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구독 신청 또는 결제 과정에서의 구체적인 문제점 (예: 결제 실패, 가입 방법 문의, 상품 선택 등)"
+  },
+  {
+    "chat_id": "696db1ff57c3074b28b5",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 방식, 상품 선택 등)"
+  },
+  {
+    "chat_id": "697c568e272844b6dd21",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 선택, 결제 방법, 가격 등)"
+  },
+  {
+    "chat_id": "696f1e930d5c2f43cff4",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 관련 등)"
+  },
+  {
+    "chat_id": "6958b003c63fb3de6a61",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 사항 (가입 방법, 요금제, 결제 방식 등)"
+  },
+  {
+    "chat_id": "696dd01dd0c4cf4a69e3",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 방식, 상품 정보, 가격 등)"
+  },
+  {
+    "chat_id": "695df61a9f9177f3647b",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구독 상품 선택, 결제 문제 여부, 구독 시작 시기 등 구체적인 상황 설명"
+  },
+  {
+    "chat_id": "69648e76528591136c1d",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 질문 내용 (가입 방법, 상품 정보, 가격, 결제 문제 등)"
+  },
+  {
+    "chat_id": "69646a82a763290e06cd",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 방식, 상품 선택, 가격 등)"
+  },
+  {
+    "chat_id": "69564c4c1f2de3b39890",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가격, 상품 선택, 결제 방법, 가입 오류 등)"
+  },
+  {
+    "chat_id": "696dad1cb23f61352255",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구독 상품 선택, 결제 방법, 구체적인 문의 사항 (가격, 플랜 비교 등)"
+  },
+  {
+    "chat_id": "695e1ed9c28f1a6638bd",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 문제, 상품 선택 등)"
+  },
+  {
+    "chat_id": "695f90359830a3235925",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 요금제, 결제 방식 등)"
+  },
+  {
+    "chat_id": "6955f5d498665d480c1f",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 상품 정보, 결제 문제 등)"
+  },
+  {
+    "chat_id": "6976c9a944b6a2cc452e",
+    "user_text": "어스 구독신청/결제하기 | 💬상담매니저에게 직접 문의",
+    "type": "구독/가입",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (가입 방법, 결제 방식, 상품 정보, 가격 등)"
+  },
+  {
+    "chat_id": "695beab7c0571a1b6801",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴까요?)"
+  },
+  {
+    "chat_id": "69758df4d407eced066b",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용이 없습니다. 무엇을 도와드릴지 알려주세요."
+  },
+  {
+    "chat_id": "6971d6447c5d9e32a085",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴까요?)"
+  },
+  {
+    "chat_id": "696af45aedd208e6df25",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 문제나 질문인지 명시 필요)"
+  },
+  {
+    "chat_id": "6972f7dd713313a7f3f9",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (환불, 로그인, 결제, 기술오류 등 어떤 것인지 명확하지 않음)"
+  },
+  {
+    "chat_id": "69759cbfed1cce0d73ca",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (환불, 결제, 로그인, 기술오류 등)"
+  },
+  {
+    "chat_id": "697713619d04787d0f6a",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (문제점, 요청사항 등)"
+  },
+  {
+    "chat_id": "697c0d841e6aa2d84104",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴까요?)"
+  },
+  {
+    "chat_id": "697184e3b251b6b61611",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "실제 문의 내용 (문제점, 요청사항 등)"
+  },
+  {
+    "chat_id": "697c4e45e8ad6638cfa1",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 문제나 질문인지 명시 필요)"
+  },
+  {
+    "chat_id": "695ca9821e1942f0cbfe",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용"
+  },
+  {
+    "chat_id": "69707c0a4e877de3016a",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용"
+  },
+  {
+    "chat_id": "695fa62f1f3c4194c5b5",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도움받고 싶은지)"
+  },
+  {
+    "chat_id": "697694aeb7cd17f86fb8",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용이 없음. 환불, 결제, 로그인, 기술오류, 강의, 카드, 구독 중 어느 것에 대한 문의인지 명시 필요"
+  },
+  {
+    "chat_id": "697ab6662405cb8c75e3",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용이 필요합니다. (환불, 결제, 로그인, 기술오류, 수강, 카드, 구독 등 어떤 문제인지)"
+  },
+  {
+    "chat_id": "69613bdb4822a2b941cf",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 궁금해하시는지)"
+  },
+  {
+    "chat_id": "697c7b367c00ebc82ef6",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 도움이 필요한지)"
+  },
+  {
+    "chat_id": "696739111ee1b71987cb",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴지 명시 필요)"
+  },
+  {
+    "chat_id": "697ac19c9600a41d825c",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴지 명확하지 않음)"
+  },
+  {
+    "chat_id": "696fda4db3ee17011052",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴지 명확하지 않음)"
+  },
+  {
+    "chat_id": "6968daf700353780a724",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (환불, 결제, 로그인, 기술오류, 강의, 카드, 구독 등 중 어떤 것인지)"
+  },
+  {
+    "chat_id": "697ce10aabaaac6e9e36",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (환불, 결제, 로그인, 기술오류, 강의, 카드, 구독 등)"
+  },
+  {
+    "chat_id": "6976c295efac9cc28b94",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용(무엇을 도와드릴지)"
+  },
+  {
+    "chat_id": "697c4e7577bb5be0751f",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 도움이 필요한지)"
+  },
+  {
+    "chat_id": "69561556aacd137e30ec",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (문제, 질문, 요청사항)"
+  },
+  {
+    "chat_id": "695f75d5e744282a2cb8",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴까요?)"
+  },
+  {
+    "chat_id": "69799a62e572392782be",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 필요 (환불, 결제, 로그인, 기술오류, 강의, 카드, 구독 등 무엇에 대한 문의인지)"
+  },
+  {
+    "chat_id": "6963986b50bf3a3c67fc",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용(문제, 질문, 요청 사항)"
+  },
+  {
+    "chat_id": "69605fb888ef1991e204",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (문제 상황, 필요한 도움이 무엇인지)"
+  },
+  {
+    "chat_id": "6969d3a0a5be2d347f67",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용이 없습니다. 어떤 도움이 필요하신지 알려주세요."
+  },
+  {
+    "chat_id": "69560f99a0e5d14e2edb",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴지 명확하지 않음)"
+  },
+  {
+    "chat_id": "69610682dc185d620cf3",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (환불, 결제, 로그인, 강의 등)"
+  },
+  {
+    "chat_id": "695e5e42934dcb93eac8",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (문제, 질문, 요청사항)"
+  },
+  {
+    "chat_id": "6959b49278b1e18bfd81",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (환불, 결제, 로그인, 기술오류, 강의, 카드, 구독 등 어떤 문제인지)"
+  },
+  {
+    "chat_id": "6960ae53c52d5b7c4ed7",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (예: 환불, 결제, 로그인, 기술오류, 강의 관련 등)"
+  },
+  {
+    "chat_id": "695e1102e653039c2fcc",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용이 없습니다. 어떤 문제가 있는지 설명해주세요."
+  },
+  {
+    "chat_id": "69578c1fa24d544defbe",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용"
+  },
+  {
+    "chat_id": "69717b37df1b4bf46f8a",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 도움이 필요한지 명시 필요)"
+  },
+  {
+    "chat_id": "69614d2976a7159a25d9",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴지 명시 필요)"
+  },
+  {
+    "chat_id": "6958c7a57daaaeabcd88",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도움받고 싶으신지 설명 필요)"
+  },
+  {
+    "chat_id": "695f8020e15dd054de13",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴지 명확하지 않음)"
+  },
+  {
+    "chat_id": "69605abac7849e833e8f",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 문제나 질문인지 명시 필요)"
+  },
+  {
+    "chat_id": "695effcc127ef0286dc1",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (환불, 결제, 로그인, 기술오류, 강의, 카드, 구독 중 무엇인지)"
+  },
+  {
+    "chat_id": "69683b81822148bcf4f0",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (문제 상황, 요청사항 등)"
+  },
+  {
+    "chat_id": "696093ec6bd03cd4fd8c",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (환불, 결제, 로그인, 기술오류, 강의, 카드, 구독 등)"
+  },
+  {
+    "chat_id": "6970778c2099091dddd4",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도움받으려 하는지)"
+  },
+  {
+    "chat_id": "6957b13609b5eb4cd8cd",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇에 대해 도움이 필요한지)"
+  },
+  {
+    "chat_id": "6972c49f30c708932ae6",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 도움이 필요한지 명시 필요)"
+  },
+  {
+    "chat_id": "69560855ccb7ac0de638",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴지 명확하지 않음)"
+  },
+  {
+    "chat_id": "6956080d88973f3036dc",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용"
+  },
+  {
+    "chat_id": "69707be8aa7c21687222",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (환불, 결제, 로그인, 강의 등 어떤 도움이 필요한지)"
+  },
+  {
+    "chat_id": "695648946e0c0e50ff9c",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 문제나 질문인지 명시 필요)"
+  },
+  {
+    "chat_id": "695b7c911620fcceeb06",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (환불, 결제, 로그인, 기술오류, 강의, 카드, 구독 등 중 어느 것인지)"
+  },
+  {
+    "chat_id": "6972fdb41fa0d189e192",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴지)"
+  },
+  {
+    "chat_id": "6961eef714b78e27a4ae",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용이 없습니다. 무엇을 도와드릴지 알려주세요."
+  },
+  {
+    "chat_id": "696894ca4420347193f6",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (어떤 문제나 질문인지)"
+  },
+  {
+    "chat_id": "697c3d6e0e490f29fbc1",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (무엇을 도와드릴지 명확하지 않음)"
+  },
+  {
+    "chat_id": "69659d32d42ffe4b5aa6",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (문제 상황, 궁금한 점 등)"
+  },
+  {
+    "chat_id": "696724ffa0d5a15ce09f",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (문제점, 요청사항, 상품명 등)"
+  },
+  {
+    "chat_id": "6977faa4268d5ac27f55",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (환불, 결제, 로그인, 기술오류, 수강, 카드, 구독 등)"
+  },
+  {
+    "chat_id": "69730cc2960de9f51c68",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용"
+  },
+  {
+    "chat_id": "6957aafb9ad126cf1fa1",
+    "user_text": "👆🏻 박두환 투자동행학교 빠른 문의 | 👆🏻1:1 문의 바로 연결하기",
+    "type": "기타",
+    "sufficient": false,
+    "missing": "구체적인 문의 내용 (문제점, 요청사항 등)"
+  }
+]
