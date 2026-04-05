@@ -1,36 +1,39 @@
 """Wrapper Strands Agent — 검증된 legacy workflow를 tool로 감싸서 노출.
 
-설계 (2026-04-05 Gayoon 확정, 2026-04-06 multi-turn 보강):
-- 단일 Strands Agent + 평탄한 tools + SlidingWindow 멀티턴
+설계 (2026-04-05 ~ 2026-04-06):
+- 단일 Strands Agent + 평탄한 tools + AgentCore Memory 멀티턴
 - `src/agents/consultant.py`는 Phase 3 그대로 + 검증 안 됨 → 사용 안 함
 - 이 wrapper는 **검증된 legacy `RefundAgentV2.process()`** 를 `@tool` 로 감싸고,
   Strands Agent가 top 레이어로 앉아 멀티턴/Memory/AgentCore 훅을 제공.
 
-Multi-turn 맥락 전달 (2026-04-06 수정):
-- Session별 Agent 인스턴스마다 `turn_log` closure 보관
-- @tool 호출 시 closure에서 snapshot → legacy의 `conversation_turns` 로 주입
-- 이렇게 하면 legacy intent classifier가 "네 진행해주세요" 같은 후속 턴에서
-  이전 맥락을 보고 올바른 템플릿(T3)으로 라우팅 가능
-- caller(smoke script / dashboard)는 `agent.log_user_turn()` / `agent.log_assistant_turn()`
-  으로 session turn_log 를 업데이트해야 함
+Memory 2-layer (2026-04-06):
+1. **AgentCore Memory** (persistence):
+   - `src/memory.py` 를 통해 `MemorySessionManager` 사용
+   - 매 턴마다 `save_turn` 으로 이벤트 저장
+   - Agent 호출 시작 시 `get_context_for_prompt` 로 short-term + long-term context 를
+     system_prompt 에 주입 → 세션/프로세스 넘어서 맥락 유지
+   - us-product-agent 패턴 그대로 (SlidingWindow 안 씀)
+
+2. **turn_log closure** (legacy 주입):
+   - legacy `RefundAgentV2.process()` 의 `conversation_turns` 인자용
+   - workflow.py 의 `prev_had_t2` / `last_user_ts` 필터링을 위해 ts 필드 포함
+   - AgentCore Memory 와 별개 역할 (legacy 가 자체 context 형식을 요구함)
 
 장점:
 - 기존 workflow.py / RefundAgentV2 / refund_engine.py / templates.py = 0 변경 (회귀 0)
-- Strands Agent tool-loop 실제 돌아감 (해커톤 쇼케이스)
-- SlidingWindowConversationManager 로 LLM-level memory 자동
-- turn_log closure 로 legacy-level 맥락도 전달됨
-- AgentCore Guardrail / Evaluation 훅 지점 확보
+- Strands Agent tool-loop 실제 동작
+- AgentCore Memory 가 실제 persistence 제공 (해커톤 쇼케이스 가치)
+- Guardrail / Evaluation 훅 지점 확보
 """
 from __future__ import annotations
 
 import json
-from typing import Callable
 
 from strands import Agent, tool
 from strands.models import BedrockModel
-from strands.agent.conversation_manager import SlidingWindowConversationManager
 
 from src.refund_agent_v2 import RefundAgentV2
+from src.memory import AgentMemory, create_memory_session, get_context_for_prompt, save_turn
 
 
 MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
@@ -185,42 +188,80 @@ def _make_refund_tool(turn_log: list[dict], admin_cache: dict, session_id: str):
 
 def create_wrapper_agent(
     session_id: str = "default",
+    actor_id: str = "cs_agent_default",
     model_id: str = MODEL_ID,
     region: str = REGION,
-    max_window: int = 20,
 ) -> Agent:
-    """Wrapper Strands Agent 생성 (session 별 turn_log closure 포함).
+    """Wrapper Strands Agent 생성 + AgentCore Memory 연결 + legacy turn_log closure.
 
     Returns:
-        Agent: legacy workflow을 tool로 감싸고 SlidingWindow로 LLM-level 멀티턴 관리.
-               `agent.log_user_turn(text)` / `agent.log_assistant_turn(text)` 로
-               legacy-level 맥락 전달용 turn_log 업데이트.
+        Agent: legacy workflow 을 tool 로 감싸고, AgentCore Memory 로 세션 맥락 유지.
+               `agent.handle_turn(user_text)` 로 한 턴 처리 (Memory save/retrieve 자동).
+               또는 low-level: `log_user_turn` / `log_assistant_turn` + 직접 호출.
     """
+    # legacy 주입용 turn_log + admin_data 세션 캐시
     turn_log: list[dict] = []
     admin_cache: dict = {}
     refund_tool = _make_refund_tool(turn_log, admin_cache, session_id)
+
+    # AgentCore Memory 세션 생성 (실패 시 None → memory 없이 동작)
+    mem = create_memory_session(session_id=session_id, actor_id=actor_id)
 
     model = BedrockModel(model_id=model_id, region_name=region)
     agent = Agent(
         model=model,
         tools=[refund_tool, handoff_to_human],
         system_prompt=SYSTEM_PROMPT,
-        conversation_manager=SlidingWindowConversationManager(window_size=max_window),
+        # conversation_manager 미지정 — Strands 기본 (in-process messages).
+        # 세션 간 persistence 는 AgentCore Memory 가 담당.
     )
 
-    # closure 로깅 훅 노출 — caller 가 agent(msg) 호출 전후로 사용
-    # ts 필드 필수: workflow.py 가 last_user_ts 기준으로 prev_mgr 필터링함
-    # (증가 시퀀스로 할당해 turn 순서 보존)
+    # legacy turn_log 로깅 훅 — ts 필드 증가 시퀀스로 할당
     def _log_user(text: str) -> None:
         turn_log.append({"role": "user", "text": text, "ts": len(turn_log) + 1})
 
     def _log_assistant(text: str) -> None:
         turn_log.append({"role": "manager", "text": text, "ts": len(turn_log) + 1})
 
+    def _handle_turn(user_text: str) -> str:
+        """한 턴을 완전히 처리 — Memory save/retrieve + legacy log + Agent 호출.
+
+        1. user_text 를 AgentCore Memory + legacy turn_log 에 저장
+        2. Memory 에서 context 꺼내 system_prompt 에 주입 (임시로 agent.system_prompt 수정)
+        3. Agent 호출
+        4. assistant 답변을 Memory + legacy turn_log 에 저장
+        """
+        # 1. user turn 기록
+        save_turn(mem, "user", user_text)
+        _log_user(user_text)
+
+        # 2. Memory context 꺼내서 system prompt 에 덧붙임
+        base_prompt = SYSTEM_PROMPT
+        memory_context = get_context_for_prompt(mem, user_text)
+        if memory_context:
+            agent.system_prompt = (
+                base_prompt
+                + "\n\n# 이전 대화 맥락 (AgentCore Memory)\n"
+                + memory_context
+            )
+        else:
+            agent.system_prompt = base_prompt
+
+        # 3. Agent 호출
+        result = agent(user_text)
+        answer = str(result)
+
+        # 4. assistant turn 기록
+        save_turn(mem, "assistant", answer[:2000])
+        _log_assistant(answer)
+        return answer
+
     agent.log_user_turn = _log_user  # type: ignore[attr-defined]
     agent.log_assistant_turn = _log_assistant  # type: ignore[attr-defined]
+    agent.handle_turn = _handle_turn  # type: ignore[attr-defined]
     agent.turn_log = turn_log  # type: ignore[attr-defined]
     agent.admin_cache = admin_cache  # type: ignore[attr-defined]
+    agent.memory = mem  # type: ignore[attr-defined]
     return agent
 
 

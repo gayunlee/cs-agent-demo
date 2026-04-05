@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts import _aws_env  # noqa: F401  — AWS env 자동 로드
 from src.agents.wrapper_agent import (
     clear_all_sessions,
     get_agent_for_session,
@@ -88,12 +89,13 @@ def run_case(case_path: Path) -> dict:
     print(f"{'='*70}")
 
     try:
-        result = agent(message)
+        # Memory 경로를 거치도록 handle_turn 사용 (single-turn 이어도 무관)
+        result = agent.handle_turn(message)
     except Exception as e:
         return {"case": case_path.name, "ok": False, "error": f"invoke failed: {e}"}
 
     n_calls, names = count_tool_calls(agent, result)
-    text_out = str(result)
+    text_out = result if isinstance(result, str) else str(result)
 
     print(f"\n🔧 tool calls: {n_calls} — {names}")
     print(f"\n💬 agent answer (앞 500자):\n{text_out[:500]}")

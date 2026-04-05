@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts import _aws_env  # noqa: F401  — AWS env 자동 로드
 from src.agents.wrapper_agent import clear_all_sessions, get_agent_for_session
 
 
@@ -36,20 +37,20 @@ def main():
     turn2_msg = "네 진행해주세요. 환불 확정합니다."
 
     print("=" * 70)
+    print(f"Memory 세션: {'연결됨' if agent.memory else '없음 (fallback)'}")
+    print("=" * 70)
+
+    print("\n" + "=" * 70)
     print("TURN 1 — 환불 요청")
     print("=" * 70)
-    agent.log_user_turn(turn1_msg)
-    r1 = agent(turn1_msg)
-    agent.log_assistant_turn(str(r1))
-    print(str(r1)[:600])
+    r1 = agent.handle_turn(turn1_msg)
+    print(r1[:600])
 
     print("\n" + "=" * 70)
     print("TURN 2 — 확정 (이전 턴 맥락 필요)")
     print("=" * 70)
-    agent.log_user_turn(turn2_msg)
-    r2 = agent(turn2_msg)
-    agent.log_assistant_turn(str(r2))
-    print(str(r2)[:600])
+    r2 = agent.handle_turn(turn2_msg)
+    print(r2[:600])
 
     print(f"\n[turn_log 크기] {len(agent.turn_log)} 턴 누적 (legacy 주입용)")
 
