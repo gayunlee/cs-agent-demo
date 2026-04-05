@@ -188,6 +188,9 @@ CUSTOMER_CSS = """
 .ct-body { flex: 1; padding: 14px 14px 8px; background: #fafafa; overflow-y: auto; min-height: 400px; }
 .ct-msg-user { background: #5b21b6; color: white; padding: 10px 14px; border-radius: 16px 16px 4px 16px; margin: 4px 0 4px auto; max-width: 80%; font-size: 14px; line-height: 1.5; display: block; width: fit-content; }
 .ct-msg-user-wrap { display: flex; justify-content: flex-end; margin: 6px 0; }
+.ct-msg-mgr { background: #e8e8e8; color: #212121; padding: 10px 14px; border-radius: 16px 16px 16px 4px; margin: 4px 0; max-width: 85%; font-size: 14px; line-height: 1.5; display: block; width: fit-content; }
+.ct-msg-mgr-wrap { display: flex; justify-content: flex-start; margin: 6px 0; }
+.ct-msg-mgr-label { font-size: 10px; color: #757575; margin-bottom: 2px; }
 .ct-input { background: white; border-top: 1px solid #e0e0e0; padding: 12px 14px; color: #9e9e9e; font-size: 13px; }
 
 .admin-inbox { background: white; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
@@ -230,12 +233,17 @@ CUSTOMER_CSS = """
 """
 
 
-def render_customer_page(ph, messages: list[str], user_name: str) -> None:
+def render_customer_page(ph, messages: list[dict], user_name: str) -> None:
+    """messages: [{"role": "user"|"manager", "text": str}]"""
     html = [CUSTOMER_CSS, '<div class="ct-frame">']
     html.append(f'<div class="ct-header">📱 채널톡 상담하기<div class="ct-header-sub">{escape(user_name or "고객")} · 실시간 상담</div></div>')
     html.append('<div class="ct-body">')
     for m in messages:
-        html.append(f'<div class="ct-msg-user-wrap"><div class="ct-msg-user">{escape(m)}</div></div>')
+        text = escape(m["text"]).replace("\n", "<br>")
+        if m["role"] == "user":
+            html.append(f'<div class="ct-msg-user-wrap"><div class="ct-msg-user">{text}</div></div>')
+        else:
+            html.append(f'<div class="ct-msg-mgr-wrap"><div><div class="ct-msg-mgr-label">상담사</div><div class="ct-msg-mgr">{text}</div></div></div>')
     html.append('</div>')
     html.append('<div class="ct-input">💬 메시지 입력...</div>')
     html.append('</div>')
@@ -344,7 +352,7 @@ def play_scenario(scenario: dict, placeholders: dict, speed: float) -> None:
     expected_domain = scenario.get("expected_intent_domain", True)
 
     # 초기화
-    customer_messages: list[str] = []
+    customer_messages: list[dict] = []  # [{"role": "user"|"manager", "text": str}]
     admin_user_messages: list[str] = []
     admin_internal: list[dict] = []
     inbox: dict | None = None
@@ -358,7 +366,7 @@ def play_scenario(scenario: dict, placeholders: dict, speed: float) -> None:
 
     for turn_idx, user_text in enumerate(user_turns):
         # Phase 1: 유저 메시지 전송 (유저 페이지)
-        customer_messages.append(user_text)
+        customer_messages.append({"role": "user", "text": user_text})
         render_customer_page(placeholders["customer"], customer_messages, user_name)
         time.sleep(max(0.5, speed * 0.7))
 
@@ -423,6 +431,17 @@ def play_scenario(scenario: dict, placeholders: dict, speed: float) -> None:
             "refund_amount": tool_result.get("refund_amount"),
         })
         render_admin_detail(placeholders["detail"], admin_user_messages, admin_internal, chat_id)
+
+        # Phase 7: 유저 페이지에도 상담사 답변으로 표시 (멀티턴 핑퐁 효과)
+        if should_respond and draft_text:
+            time.sleep(max(0.5, speed * 0.5))
+            # draft 에서 첫 3줄 정도만 유저 페이지에 표시 (간결하게)
+            short_draft = "\n".join(draft_text.split("\n")[:6])
+            if len(short_draft) > 300:
+                short_draft = short_draft[:300] + "..."
+            customer_messages.append({"role": "manager", "text": short_draft})
+            render_customer_page(placeholders["customer"], customer_messages, user_name)
+
         time.sleep(max(0.8, speed * 1.2))
 
     # 시나리오 완료 — inbox 처리됨 표시
@@ -501,7 +520,7 @@ def main():
     }
 
     # 초기 빈 상태
-    render_customer_page(customer_ph, [], sc["admin_data"].get("ch_name", "고객") or "고객")
+    render_customer_page(customer_ph, [], sc.get("admin_data", {}).get("ch_name", "고객") or "고객")
     render_admin_inbox(inbox_ph, None)
     render_admin_detail(detail_ph, [], [], None)
 
