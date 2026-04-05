@@ -2,9 +2,15 @@
   "scenario": "LLM Fallback — 환불 철회",
   "description": "어제 환불 신청했는데 마음이 바뀌어 계속 이용하고 싶음. 정책 밖 케이스 → LLM 자유 답변.",
   "conversation_time": "2026-03-05T09:30:00Z",
-  "user_messages": ["어제 환불 신청했는데 취소하고 계속 이용할게요"],
+  "user_messages": [
+    "어제 환불 신청했는데 취소하고 계속 이용할게요"
+  ],
   "conversation_turns": [
-    {"role": "user", "ts": 1741130200000, "text": "어제 환불 신청했는데 취소하고 계속 이용할게요"}
+    {
+      "role": "user",
+      "ts": 1741130200000,
+      "text": "어제 환불 신청했는데 취소하고 계속 이용할게요"
+    }
   ],
   "admin_data": {
     "us_user_id": "mock_user_withdraw",
@@ -30,15 +36,22 @@
         "date": "2026-03-01"
       }
     ],
-    "usage": {"accessed": true, "count": 1},
+    "usage": {
+      "accessed": true,
+      "count": 1
+    },
     "memberships": [
       {
         "productName": "서재형 official club 투자학교(3개월)",
-        "paymentCycle": 3,
+        "paymentCycle": 1,
         "expiration": false,
-        "memberShipType": "card",
+        "memberShipType": "subscription",
         "transactionHistories": [
-          {"createdAt": "2026-03-01T10:00:00Z", "state": "purchased_success", "method": "card"}
+          {
+            "createdAt": "2026-03-01T10:00:00Z",
+            "state": "purchased_success",
+            "method": "card"
+          }
         ]
       }
     ],

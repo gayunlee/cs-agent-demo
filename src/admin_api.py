@@ -73,13 +73,17 @@ class UsageInfo:
 
 @dataclass
 class MembershipTransaction:
-    """membership-history 내 개별 거래 이력"""
+    """membership-history 내 개별 거래 이력
+
+    ⚠️ 보안: card_number는 백엔드에서 raw 값(마스킹 안 됨)으로 내려온다.
+    UI 레이어에서만 마스킹하므로 이 필드를 답변 초안/로그/외부 응답에 절대 포함 금지.
+    """
     created_at: str = ""
     state: str = ""
     method: str = ""
     purchased_amount: str = ""
     purchased_method: str = ""
-    card_number: str = ""
+    card_number: str = ""          # ⚠️ raw. 답변 노출 금지. 표시 필요 시 _mask_card()
     expired_at: str = ""
     changed_display_name: str = ""
     easy_pay_code: str = ""
@@ -103,36 +107,56 @@ class MembershipTransaction:
 class MembershipItem:
     """membership-history 내 개별 멤버십
 
-    ⚠️ paymentCycle 주의: us-admin UI 분석 결과 이 필드는 "결제 회차"이지
-    "결제 주기(개월)"가 아님. 6개월 상품 첫 결제도 payment_round=1.
-    주기 정보는 상품명 파싱 또는 product.paymentPeriod에서 얻어야 함.
+    ⚠️ 백엔드 네이밍 함정 (2026-04-05 확정, us-admin 코드 검증):
+    API 필드명은 `paymentCycle`이지만 실제 의미는 "결제 회차(카운트, 단위 없음)".
+    주기(개월)가 아님. UI 라벨도 "결제회차: {value}"로 하드코딩돼 있음.
+    증거: apps/us-admin/src/entities/user/ui/MembershipHistoryAccordion/index.tsx:10-37
+        const getPaymentCycleLabel = (m) => {
+          if (m.memberShipType === 'onetimepurchase') return '단건';
+          return m.paymentCycle;  // raw number, 단위 없음
+        }
+
+    단건결제(memberShipType === 'onetimepurchase')일 때는 payment_round 값이
+    무의미하므로 is_onetime 플래그를 확인해서 "단건" 처리할 것.
+
+    주기(개월) 정보가 필요하면:
+    - 1순위: 상품명 파싱 ("6개월", "1년" 등) — src/workflow._infer_cycle_from_products
+    - 2순위(미구현): ProductListData.paymentPeriod — /v1/product/group/{id}, join 경로 불명확
     """
     product_name: str = ""
-    payment_round: int = 1         # "결제 회차" (몇 번째 결제인지) — 주기가 아님!
+    payment_round: int = 1         # 결제 회차 카운트 — 주기(개월) 아님. 단건이면 0.
     expiration: bool = False
-    membership_type: str = ""      # card/CA/VA/corp/PZ/unknown
+    membership_type: str = ""      # subscription / onetimepurchase
+    is_onetime: bool = False       # memberShipType === 'onetimepurchase' 여부
     transaction_histories: list[MembershipTransaction] = field(default_factory=list)
 
     @classmethod
     def from_api(cls, data: dict) -> "MembershipItem":
+        # API 스펙: memberShipType (capital S) / enriched 데이터 호환: membershipType
+        mtype = data.get("memberShipType") or data.get("membershipType") or ""
+        is_onetime = mtype.lower() == "onetimepurchase"
+
         round_raw = data.get("paymentCycle", 1)
         # 스펙은 number지만 실제 응답이 string일 수 있음 — 방어적 변환
         try:
             round_num = int(round_raw) if round_raw else 1
         except (ValueError, TypeError):
             round_num = 1
+        # 단건결제면 회차 값 무의미 → 0으로 정규화
+        if is_onetime:
+            round_num = 0
+
         txs = [
             MembershipTransaction.from_api(t)
             for t in (data.get("transactionHistories") or [])
             if isinstance(t, dict)
         ]
-        # API 스펙: memberShipType (capital S) / enriched 데이터 호환: membershipType
-        mtype = data.get("memberShipType") or data.get("membershipType") or ""
         return cls(
             product_name=data.get("productName", ""),
             payment_round=round_num,
             expiration=bool(data.get("expiration", False)),
             membership_type=mtype,
+            is_onetime=is_onetime,
             transaction_histories=txs,
         )
 
@@ -143,10 +167,14 @@ class MembershipItem:
 
 @dataclass
 class PaymentHistoryDetail:
-    """환불 이력 내 원결제 정보"""
+    """환불 이력 내 원결제 정보
+
+    ⚠️ 보안: card_no는 백엔드에서 raw 값(마스킹 안 됨)으로 내려온다.
+    답변 초안/로그/외부 응답에 절대 포함 금지. 표시 필요 시 _mask_card() 경유.
+    """
     amount: int = 0
     card_type: str = ""
-    card_no: str = ""
+    card_no: str = ""              # ⚠️ raw. 답변 노출 금지.
     key: str = ""
     created_at: str = ""
 

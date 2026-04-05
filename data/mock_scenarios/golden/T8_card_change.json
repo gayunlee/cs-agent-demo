@@ -2,9 +2,15 @@
   "scenario": "T8 카드변경 안내",
   "description": "카드 변경 키워드 감지 → 고정 안내 템플릿 (데이터 조회 불필요)",
   "conversation_time": "2026-01-10T11:00:00Z",
-  "user_messages": ["결제카드 변경하고 싶은데 어떻게 하나요"],
+  "user_messages": [
+    "결제카드 변경하고 싶은데 어떻게 하나요"
+  ],
   "conversation_turns": [
-    {"role": "user", "ts": 1736506800000, "text": "결제카드 변경하고 싶은데 어떻게 하나요"}
+    {
+      "role": "user",
+      "ts": 1736506800000,
+      "text": "결제카드 변경하고 싶은데 어떻게 하나요"
+    }
   ],
   "admin_data": {
     "us_user_id": "mock_user_t8",
@@ -30,15 +36,22 @@
         "date": "2026-01-05"
       }
     ],
-    "usage": {"accessed": true, "count": 1},
+    "usage": {
+      "accessed": true,
+      "count": 1
+    },
     "memberships": [
       {
         "productName": "박두환 Official club 투자동행반(1개월)",
         "paymentCycle": 1,
         "expiration": false,
-        "memberShipType": "card",
+        "memberShipType": "subscription",
         "transactionHistories": [
-          {"createdAt": "2026-01-05T09:00:00Z", "state": "purchased_success", "method": "card"}
+          {
+            "createdAt": "2026-01-05T09:00:00Z",
+            "state": "purchased_success",
+            "method": "card"
+          }
         ]
       }
     ],

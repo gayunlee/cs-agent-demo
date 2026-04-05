@@ -214,7 +214,17 @@ def _compute_derived(ctx: WorkflowContext):
 
 
 def _calculate_refund(ctx: WorkflowContext):
-    """RefundEngine으로 환불 금액 계산"""
+    """RefundEngine으로 환불 금액 계산
+
+    ⚠️ 주기(개월) 정보 소스 주의:
+    - membership.payment_round (API 필드명 paymentCycle)는 "결제 회차 카운트"이지 주기가 아님.
+      증거: us-admin MembershipHistoryAccordion:10-37 getPaymentCycleLabel.
+      → 여기서 절대 사용 금지.
+    - 실제 주기(개월) 필드는 ProductListData.paymentPeriod (상품 상세 API)에 있지만
+      membership → product join 경로가 불명확하므로 현재는 상품명 파싱이 유일한 수단.
+    - 1순위: _infer_cycle_from_products — 상품명에서 "6개월"/"1년" 추출
+    - 폴백: 매칭 실패 시 1개월로 간주 (_infer_cycle_from_products 내부)
+    """
     from datetime import date, datetime
     from src.refund_engine import RefundEngine, RefundInput
 
@@ -229,9 +239,7 @@ def _calculate_refund(ctx: WorkflowContext):
     # 테스트에서는 date로 들어올 수 있어 fallback 유지.
     tx_date = (latest.get("created_at") or latest.get("date") or "")[:10]
 
-    # 1개월 정가 추정 — 상품명 파싱 (product.paymentPeriod 전용 필드가 없어서)
-    # ⚠️ membership.payment_round(구 paymentCycle)는 "결제 회차"이지 주기가 아니므로 사용 금지.
-    # 주기 정보는 상품명에서 추출: "6개월", "3개월", "1년" 등.
+    # 주기(개월) 추정 — 위 docstring 참조.
     payment_cycle_months = _infer_cycle_from_products(ctx.products)
     monthly_price = tx_amount // payment_cycle_months if payment_cycle_months > 1 else tx_amount
 

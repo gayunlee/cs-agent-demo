@@ -2,9 +2,15 @@
   "scenario": "T6b 본인확인 재질문 — 가족번호",
   "description": "유저가 '가족 번호'라고 언급 → 본인확인 재질문",
   "conversation_time": "2026-02-10T15:00:00Z",
-  "user_messages": ["이거 제 가족 번호인데요 환불 되나요"],
+  "user_messages": [
+    "이거 제 가족 번호인데요 환불 되나요"
+  ],
   "conversation_turns": [
-    {"role": "user", "ts": 1739192400000, "text": "이거 제 가족 번호인데요 환불 되나요"}
+    {
+      "role": "user",
+      "ts": 1739192400000,
+      "text": "이거 제 가족 번호인데요 환불 되나요"
+    }
   ],
   "admin_data": {
     "us_user_id": "mock_user_t6b",
@@ -30,15 +36,22 @@
         "date": "2026-02-08"
       }
     ],
-    "usage": {"accessed": false, "count": 0},
+    "usage": {
+      "accessed": false,
+      "count": 0
+    },
     "memberships": [
       {
         "productName": "박두환 Official club 투자동행반(1개월)",
         "paymentCycle": 1,
         "expiration": false,
-        "memberShipType": "card",
+        "memberShipType": "subscription",
         "transactionHistories": [
-          {"createdAt": "2026-02-08T09:00:00Z", "state": "purchased_success", "method": "card"}
+          {
+            "createdAt": "2026-02-08T09:00:00Z",
+            "state": "purchased_success",
+            "method": "card"
+          }
         ]
       }
     ],

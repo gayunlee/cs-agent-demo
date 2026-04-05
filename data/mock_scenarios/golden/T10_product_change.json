@@ -2,9 +2,15 @@
   "scenario": "T10 상품변경 차액환불",
   "description": "6개월 50만원 결제 후 1개월 10만원 상품으로 변경 요청. 차액 환불 계산 필요.",
   "conversation_time": "2026-01-20T14:00:00Z",
-  "user_messages": ["안녕하세요 50만원 결제한 거 취소하고 10만원짜리 상품으로 변경 부탁드려요"],
+  "user_messages": [
+    "안녕하세요 50만원 결제한 거 취소하고 10만원짜리 상품으로 변경 부탁드려요"
+  ],
   "conversation_turns": [
-    {"role": "user", "ts": 1737374400000, "text": "안녕하세요 50만원 결제한 거 취소하고 10만원짜리 상품으로 변경 부탁드려요"}
+    {
+      "role": "user",
+      "ts": 1737374400000,
+      "text": "안녕하세요 50만원 결제한 거 취소하고 10만원짜리 상품으로 변경 부탁드려요"
+    }
   ],
   "admin_data": {
     "us_user_id": "mock_user_t10",
@@ -30,15 +36,22 @@
         "date": "2026-01-15"
       }
     ],
-    "usage": {"accessed": true, "count": 5},
+    "usage": {
+      "accessed": true,
+      "count": 5
+    },
     "memberships": [
       {
         "productName": "박두환 Official club 투자동행반(6개월)",
-        "paymentCycle": 6,
+        "paymentCycle": 1,
         "expiration": false,
-        "memberShipType": "card",
+        "memberShipType": "subscription",
         "transactionHistories": [
-          {"createdAt": "2026-01-15T09:00:00Z", "state": "purchased_success", "method": "card"}
+          {
+            "createdAt": "2026-01-15T09:00:00Z",
+            "state": "purchased_success",
+            "method": "card"
+          }
         ]
       }
     ],
