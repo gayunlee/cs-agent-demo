@@ -4,7 +4,7 @@
   "reports": [
     {
       "evaluator": "EvaluationReport",
-      "overall_score": 0.75,
+      "overall_score": 0.875,
       "cases": [
         {
           "input": {
@@ -609,7 +609,7 @@
             }
           },
           "actual_output": {
-            "template_id": "T7_해지_확인_완료",
+            "template_id": "T4_자동결제_설명",
             "refund_amount": null
           },
           "name": "T4_689121ba_auto_payment",
@@ -927,7 +927,7 @@
         0.0,
         1.0,
         1.0,
-        0.0,
+        1.0,
         1.0,
         1.0
       ],
@@ -937,7 +937,7 @@
         false,
         true,
         true,
-        false,
+        true,
         true,
         true
       ],
@@ -947,7 +947,7 @@
         "expected=T2_환불_규정_금액, actual=T7_해지_확인_완료",
         "expected=T2_환불_규정_금액, actual=T2_환불_규정_금액",
         "expected=T3_환불_접수_완료, actual=T3_환불_접수_완료",
-        "expected=T4_자동결제_설명, actual=T7_해지_확인_완료",
+        "expected=T4_자동결제_설명, actual=T4_자동결제_설명",
         "expected=T6_본인확인_요청, actual=T6_본인확인_요청",
         "expected=T8_카드변경_안내, actual=T8_카드변경_안내"
       ]
@@ -1559,7 +1559,7 @@
             }
           },
           "actual_output": {
-            "template_id": "T7_해지_확인_완료",
+            "template_id": "T4_자동결제_설명",
             "refund_amount": null
           },
           "name": "T4_689121ba_auto_payment",
