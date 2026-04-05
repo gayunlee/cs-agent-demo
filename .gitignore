@@ -1,6 +1,12 @@
 .env
 memory_id.json
 guardrail_id.json
+data/shadow/snapshots/
+data/shadow/predictions/
+data/shadow/run_log_*.json
+data/shadow/compare_report_*.json
+data/shadow/compare_report_*.csv
+data/ambiguous/
 chroma_db/
 __pycache__/
 *.pyc

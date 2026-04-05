@@ -1,0 +1,421 @@
+{
+  "schema_version": 1,
+  "generated_from": [
+    "data/test_cases/refund_convos_jan.json",
+    "data/test_cases/refund_test_cases_enriched.json"
+  ],
+  "total": 34,
+  "pattern_counts": {
+    "B_자동결제_맥락": 6,
+    "A_짧은_환불해지": 16,
+    "E_기타_모호": 9,
+    "C_상품_특정_부족": 3
+  },
+  "definition": {
+    "ambiguous_criteria": "첫 유저 메시지가 25자 이하 또는 6단어 이하 + 매니저 첫 응답에 재질문 키워드 포함",
+    "patterns": {
+      "A_짧은_환불해지": "환불/해지 키워드 단독 or 짧은 요청",
+      "B_자동결제_맥락": "자동/연장/재구매 키워드 포함",
+      "C_상품_특정_부족": "환불/해지 + 상품 언급 있으나 모호",
+      "D_환불외_오픈": "환불 키워드 없는 오픈 질문 (문의/궁금 등)",
+      "E_기타_모호": "위 분류 어디에도 안 맞음"
+    },
+    "clarification_keyword_list": [
+      "성함",
+      "이름",
+      "전화번호",
+      "휴대전화",
+      "번호 알려",
+      "번호 남겨",
+      "연락처",
+      "어떤 상품",
+      "어떤 과정",
+      "상품명",
+      "상품 알려",
+      "어느 상품",
+      "어떤 멤버십",
+      "어떤 화면",
+      "어떤 증상",
+      "어느 기기",
+      "언제부터",
+      "어떤 부분",
+      "확인 가능한",
+      "확인 가능하신",
+      "확인 도와",
+      "확인 후 안내",
+      "확인이 필요",
+      "무엇을 도와",
+      "어떻게 도와",
+      "자세히",
+      "궁금하신",
+      "남겨주시면"
+    ]
+  },
+  "cases": [
+    {
+      "chat_id": "695616bc5e0d5dae8c4e",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "👆🏻 박두환 투자동행학교 빠른 문의",
+      "manager_first_excerpt": "네 회원님, 무엇을 도와드릴까요?",
+      "pattern": "B_자동결제_맥락",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "6957513161f5cae466e5",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "네 회원님, 무엇을 도와드릴까요?",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "6960a40d9a682118ad5c",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "성함",
+        "휴대전화",
+        "확인 도와"
+      ]
+    },
+    {
+      "chat_id": "69647e9044823063cb1d",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "네 회원님, 무엇을 도와드릴까요?",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "69649339d208b65f5944",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "안녕하세요 회원님,\n성함/연락처 확인부탁드립니다.",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "성함",
+        "연락처"
+      ]
+    },
+    {
+      "chat_id": "69649b2f43b9fc4b0f79",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "안녕하세요 회원님,\n문의량이 많아 남겨주시면 순차적으로 안내드리고 있습니다.\n정기결제 즉시 해지 및 환불을 희망하실까요?",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "남겨주시면"
+      ]
+    },
+    {
+      "chat_id": "69649f96b8994c507eca",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "안녕하세요 회원님,\n성함/연락처 확인부탁드립니다.",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "성함",
+        "연락처"
+      ]
+    },
+    {
+      "chat_id": "69687f96e150c8905588",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "어스 이용방법",
+      "manager_first_excerpt": "네 회원님, 어스플러스 앱을 통해 이용해주신 것으로 확인되시는데 어떤 부분이 어려우신 걸까요?",
+      "pattern": "E_기타_모호",
+      "clarification_keywords_matched": [
+        "어떤 부분"
+      ]
+    },
+    {
+      "chat_id": "696886c6e9c4981ca9d3",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "성함",
+        "휴대전화",
+        "확인 도와"
+      ]
+    },
+    {
+      "chat_id": "6969a06626fd7493e1b1",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "네 회원님, 무엇을 도와드릴까요?",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "69706e52d7e425e9b90b",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "성함",
+        "휴대전화",
+        "확인 도와"
+      ]
+    },
+    {
+      "chat_id": "697077b7dcbc7b27b577",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "네 회원님, 무엇을 도와드릴까요?",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "69730b901c2665541a8c",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "성함",
+        "휴대전화",
+        "확인 도와"
+      ]
+    },
+    {
+      "chat_id": "697325d3e61e76acf105",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "네 회원님, 무엇을 도와드릴까요?",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "697af9ad03fada34232f",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "성함",
+        "휴대전화",
+        "확인 도와"
+      ]
+    },
+    {
+      "chat_id": "697c6ac555ccec699f0b",
+      "source_file": "refund_convos_jan.json",
+      "user_first": "그 외 기타 문의(오류/구독해지/환불)",
+      "manager_first_excerpt": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "성함",
+        "휴대전화",
+        "확인 도와"
+      ]
+    },
+    {
+      "chat_id": "6896f367084e141d114e",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "해지시 수수료및.사용기간 제외하고 잔액이 반환되나요?",
+      "manager_first_excerpt": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+      "pattern": "C_상품_특정_부족",
+      "clarification_keywords_matched": [
+        "성함",
+        "휴대전화",
+        "확인 도와"
+      ]
+    },
+    {
+      "chat_id": "68a0392f3954c8d9413d",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "다음 정기결제 해지 방법",
+      "manager_first_excerpt": "안녕하세요 회원님, 무엇을 도와드릴까요?",
+      "pattern": "B_자동결제_맥락",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "68a2aea0770f537f477c",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "결제환불요청",
+      "manager_first_excerpt": "안녕하세요 회원님.\n어스를 이용해주셔서 감사의 말씀드립니다.\n\n정기구독해지 요청주신 사유가 어떻게 되실까요?\n\n1. 학습내용의 어려움\n2. 콘텐츠내용의 불만족(제공내용.방식 등)\n3. 앱 사용의 어려움\n4. 시간적 여유 부족\n5. 비용의 부담 \n6. 기타(사유를 작성해주세요)\n\n*앞으로 더 좋은 콘텐츠로 찾아뵐 수 있기 위한 질문으로 답변 주시면 확인 후 안내 도와드리도록 하겠습니다.",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "확인 후 안내"
+      ]
+    },
+    {
+      "chat_id": "68ad59d75a82618d8e2d",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "다음 정기결제 해지 방법",
+      "manager_first_excerpt": "안녕하세요 회원님, 무엇을 도와드릴까요?",
+      "pattern": "B_자동결제_맥락",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "68ae3cbd163ed39d7976",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "다음 정기결제 해지 방법",
+      "manager_first_excerpt": "안녕하세요 회원님, 무엇을 도와드릴까요?",
+      "pattern": "B_자동결제_맥락",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "68aff1df8055a9139a64",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "이정윤 마스타 자동결재가 되었는데 취소하고싶어요",
+      "manager_first_excerpt": "안녕하세요 회원님,\n금일 문의량이 많아 답변이 늦어진 점 양해부탁드립니다.\n상기 남겨주신 휴대폰 번호 조회 시 가입된 계정이 없는데 혹시 이용하시는 다른 번호가 있으실까요?\n\n별칭 확인 해주시면 확인 후 안내 도와드리도록 하겠습니다.\n\n(1) 어스플러스 앱 접속\n(2) 우측 상단 \"사람\" 모양 아이콘\n(3) 최상단 별칭 정보 확인\n\n별칭 정보 확인하시어 알려주시면 안내 도와드리겠습니다 :)",
+      "pattern": "B_자동결제_맥락",
+      "clarification_keywords_matched": [
+        "확인 후 안내"
+      ]
+    },
+    {
+      "chat_id": "68b6435f8341ecd14795",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "박두환 투자동행학교  남은 기간 환불  하고싶습니다.",
+      "manager_first_excerpt": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+      "pattern": "B_자동결제_맥락",
+      "clarification_keywords_matched": [
+        "성함",
+        "휴대전화",
+        "확인 도와"
+      ]
+    },
+    {
+      "chat_id": "68b647cc01319370f0a9",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "박두환  멤버쉽  남은기간 환불부틱헤요",
+      "manager_first_excerpt": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+      "pattern": "C_상품_특정_부족",
+      "clarification_keywords_matched": [
+        "성함",
+        "휴대전화",
+        "확인 도와"
+      ]
+    },
+    {
+      "chat_id": "68b663e68ee8264beb63",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "에셋 환불",
+      "manager_first_excerpt": "회원님, 우선은 정기결제의 경우\n반드시 회원님께 사전 해당 멤버십 설계에 대한 안내가 진행되어야 합니다.\n서비스 제공 시 반드시 필요한 부분입니다.\n\n이에 따라 회원님께서 신청하신 홈페이지와 \n결제 페이지, 이후 결제 등록 시 받으신 문자에도 반드시 명시되게 되어 있습니다.\n해당 부분 확인이 어려우셨던 것 같아 오해 없으시도록 안내 드리며, \n\n결제 건은 언제든 환불 요청하시면 환불 처리 도와드릴 수 있사오니\n말씀만 남겨주시면 되십니다 :)\n\n환불 처리 완료되셨습니다\n1~3일 이후 카드사 통해서 환불 반영 건 확인해주시면 됩니다.",
+      "pattern": "A_짧은_환불해지",
+      "clarification_keywords_matched": [
+        "남겨주시면"
+      ]
+    },
+    {
+      "chat_id": "68b7a15c0ce29d31e3e3",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "구독 상품변경/결제정보 확인",
+      "manager_first_excerpt": "안녕하세요 회원님, 무엇을 도와드릴까요?",
+      "pattern": "E_기타_모호",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "68b7f63fbb72a829c817",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "사이트 및 동영상 오류",
+      "manager_first_excerpt": "안녕하세요, 고객님. 어스플러스입니다. 고객님의 결재정보를 확인하기 위해서 전화번호가 필요합니다.",
+      "pattern": "E_기타_모호",
+      "clarification_keywords_matched": [
+        "전화번호"
+      ]
+    },
+    {
+      "chat_id": "68b8b8fa89c4e620ed13",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "사이트 및 동영상 오류",
+      "manager_first_excerpt": "안녕하세요 회원님, 무엇을 도와드릴까요?",
+      "pattern": "E_기타_모호",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "68ba3b002915d7658199",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "구독 상품변경/결제정보 확인",
+      "manager_first_excerpt": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+      "pattern": "E_기타_모호",
+      "clarification_keywords_matched": [
+        "성함",
+        "휴대전화",
+        "확인 도와"
+      ]
+    },
+    {
+      "chat_id": "68ba7521449dddf47bc8",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "8/30 결제한 책 환불 요청 드립니다",
+      "manager_first_excerpt": "안녕하세요 회원님, 결제 하신 휴대전화 번호를 다시한번 확인 요청 드립니다. (수령인 연락처)\n혹은 결제 당시 문자로 받으셨던 주문번호 말씀 주시면 조회 후 안내 도와드리도록 하겠습니다.",
+      "pattern": "C_상품_특정_부족",
+      "clarification_keywords_matched": [
+        "휴대전화",
+        "연락처"
+      ]
+    },
+    {
+      "chat_id": "68c1f98b6bba867fe604",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "책이 안오네요",
+      "manager_first_excerpt": "네 회원님,\n정확한 확인을 위하여 [이름,핸드폰번호]를 남겨주시면 안내 도와드리겠습니다.",
+      "pattern": "E_기타_모호",
+      "clarification_keywords_matched": [
+        "이름",
+        "남겨주시면"
+      ]
+    },
+    {
+      "chat_id": "68c33f38aaa4949ec926",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "구독 상품변경/결제정보 확인",
+      "manager_first_excerpt": "안녕하세요 회원님, 무엇을 도와드릴까요?",
+      "pattern": "E_기타_모호",
+      "clarification_keywords_matched": [
+        "무엇을 도와"
+      ]
+    },
+    {
+      "chat_id": "68c355a14359676296db",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "이메일주소를 다른걸로 바꾸고싶어요",
+      "manager_first_excerpt": "네 회원님,\n자세한 상담을 도와드리기 위해 [이름, 전화번호] 부탁드립니다.",
+      "pattern": "E_기타_모호",
+      "clarification_keywords_matched": [
+        "이름",
+        "전화번호"
+      ]
+    },
+    {
+      "chat_id": "68c37593c22cc9c33363",
+      "source_file": "refund_test_cases_enriched.json",
+      "user_first": "전화상담은 없나요?",
+      "manager_first_excerpt": "네 회원님, \n문의에 불편을 드려 죄송합니다.\n\n현재 어스플러스는 온라인 상담으로 진행되고 있습니다.\n\n문의하시는 내용 남겨주시면 답변 도와드리겠습니다!",
+      "pattern": "E_기타_모호",
+      "clarification_keywords_matched": [
+        "남겨주시면"
+      ]
+    }
+  ]
+}
