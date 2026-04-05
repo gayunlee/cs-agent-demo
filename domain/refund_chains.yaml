@@ -1,5 +1,14 @@
 # 환불/해지 조건 체인 Single Source of Truth
 #
+# ⚠️⚠️⚠️ 현재 사용 상태 (2026-04-05) ⚠️⚠️⚠️
+# 이 YAML은 `src/domain/diagnose_engine.py` + `src/tools/workflow_tools.py::diagnose_refund_case`
+# 가 참조하는 구조로 설계됐지만, 실제 대시보드/평가 경로는
+# legacy `src/workflow.py` (Python if/else) 를 사용 중.
+# 오늘(2026-04-05) 세션에서 T4/T7/T8/auto_payment/cancel_check 체인과 키워드를 추가했으나,
+# 이것들은 **현재 실제로는 호출되지 않음** (src/agents/wrapper_agent.py 는 RefundAgentV2 래핑).
+# → 4/6 이후 wrapper agent 가 diagnose_refund_case tool 을 쓰도록 전환되면 활성화됨.
+# → 지금 상태에서 수정해도 동작에는 영향 없음 (dead code 상태).
+#
 # 설계 원칙 (Gayoon visibility_chain.yaml 패턴):
 # - 진단(DiagnoseEngine), Harness, Knowledge handler가 전부 이 파일을 참조
 # - 규칙 변경 시 이 파일만 수정
@@ -29,6 +38,30 @@ chains:
         check: "has_keyword(user_text, 'card_change_keywords')"
         fail_message: "카드 변경 키워드 없음"
     on_pass_template: T8_카드변경_안내
+
+  is_auto_payment_complaint:
+    label: "자동결제 불만 (T4 리텐션)"
+    description: "유저 메시지에 자동/정기결제 키워드 + 이전 턴 T2 아님 → T4 리텐션 설명"
+    requires:
+      - id: APC1
+        check: "has_keyword(user_text, 'auto_payment_keywords')"
+        fail_message: "자동결제 시그널 없음"
+      - id: APC2
+        check: "ctx.prev_had_t2 == False"
+        fail_message: "이전 턴 T2 있음 (T3로 가야 함)"
+    on_pass_template: T4_자동결제_설명
+
+  is_cancel_check_inquiry:
+    label: "해지 신청 처리 확인 (T7)"
+    description: "유저가 '해지 신청했는데 처리됐나요?' 묻는 경우 → T7. 해지 단어 필수 + 확인 의도 키워드"
+    requires:
+      - id: CCI1
+        check: "has_keyword(user_text, 'cancellation_target_keywords')"
+        fail_message: "해지 단어 없음"
+      - id: CCI2
+        check: "has_keyword(user_text, 'cancel_check_keywords')"
+        fail_message: "확인 의도 키워드 없음"
+    on_pass_template: T7_해지_확인_완료
 
   is_prev_turn_t2_followup:
     label: "이전 턴 T2 → T3 전환"
@@ -212,11 +245,13 @@ routing_order:
   - is_prev_turn_t2_followup      # Node 1: 이전 턴 T2 → T3
   - needs_user_identification     # Node 2: 본인 확인 (tool 내부에서 T6/T6b 분기)
   - is_other_person_number        # Branch D: 타인 번호 시그널
+  - is_cancel_check_inquiry       # Node 3: 해지 신청 처리 확인 → T7 (2026-04-05 추가)
   - is_refund_urging              # Branch C: 환불 지연 재촉
   - has_no_payment                # Node 4: 결제 없음
   - is_all_refunded_with_new_question  # Node 5 fallback
   - is_all_refunded               # Node 5: 전부 환불됨
   - is_refund_withdrawal          # Fallback: 철회/예외
+  - is_auto_payment_complaint     # Branch A0: 자동결제 불만 → T4 (T2보다 먼저, 2026-04-05 추가)
   - is_product_change             # Branch A: 상품 변경
   - is_duplicate_payment          # Branch B: 중복 결제
   - can_refund_normally           # Node 6: 정상 환불 (T2)
@@ -232,6 +267,53 @@ keyword_groups:
     - "카드 분실"
     - "카드 만료"
     - "카드 재발급"
+    - "카드 바꾸"
+    - "새 카드"
+    - "다른 카드"
+    - "카드 해지"
+    - "카드 등록"
+    - "결제 방법 변경"
+    - "결제방법 변경"
+    - "결제 수단 변경"
+
+  auto_payment_keywords:
+    - "자동으로 결제"
+    - "자동결제"
+    - "자동결재"
+    - "자동으로 구독"
+    - "연장되어"
+    - "연장됐"
+    - "연장되었"
+    - "왜 결제"
+    - "결제된 줄 몰"
+    - "모르게 결제"
+    - "나도 모르게"
+    - "허락 없이"
+    - "취소 안 했는데"
+
+  cancel_check_keywords:
+    - "처리 되었"
+    - "처리됐"
+    - "처리 됐"
+    - "확인 차"
+    - "확인차"
+    - "확인 부탁"
+    - "확인 해주"
+    - "됐나"
+    - "됐는지"
+    - "되었는지"
+    - "되었나"
+    - "신청했는데"
+    - "신청해놨"
+    - "신청은 했"
+    - "잘 되었"
+    - "잘됐"
+    - "완료 됐"
+    - "완료됐"
+
+  cancellation_target_keywords:
+    - "해지"
+    - "해제"
 
   other_person_number_keywords:
     - "가족 번호"
