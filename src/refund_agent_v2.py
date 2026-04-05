@@ -157,7 +157,8 @@ class RefundAgentV2:
             refunds=collected_data.get("get_refund_history", {}).get("refunds", []),
             has_accessed=collected_data.get("get_membership_history", {}).get("has_accessed", False),
         )
-        template_id = run_workflow(wf_ctx)
+        # mock=True → classifier도 mock (회귀 테스트용), mock=False → 실제 LLM 분류
+        template_id = run_workflow(wf_ctx, use_llm_intent=not self.mock)
 
         result.steps.append(AgentStepV2(
             step="classify",

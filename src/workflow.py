@@ -61,47 +61,49 @@ class WorkflowContext:
         ]
 
 
-def run_workflow(ctx: WorkflowContext) -> str:
-    """정책 기반 워크플로우 — 데이터 조건만으로 분기
+def run_workflow(ctx: WorkflowContext, use_llm_intent: bool = True) -> str:
+    """Hybrid 워크플로우 — LLM 의도 분류 + 코드 데이터 분기
 
-    확정 정책:
-      유저 식별 불가 → T6
-      카드 문의 → T8
-      결제 없음 → T1
-      전부 환불됨 → T3
-      미환불 있음 → T2 (RefundEngine으로 전액/부분 계산)
-      이전턴 T2 → T3
+    트러스트 경계:
+    - **LLM**: 유저 의도 분류 (refund_request / cancel_method / card_change / …)
+    - **코드**: 이전턴 맥락, 유저 식별, 데이터 조건(미환불/전부환불/중복), 금액 계산
+
+    Args:
+        use_llm_intent: True(기본)면 Bedrock LLM 호출, False면 mock 키워드 분류 (회귀 테스트용)
     """
+    from src.intent_classifier import IntentClassifier
 
-    # ── Node 0: 카드 문의 (유저 식별/데이터 무관) ──
-    user_text = " ".join(ctx.user_messages).lower()
-    # "카드" 관련 변경/재등록/분실 문의는 전부 T8로 라우팅 (T10 상품변경이 아님)
-    card_change_signals = [
-        "카드 변경", "카드변경", "카드 분실", "카드 만료", "카드 재발급",
-        "카드 바꾸", "새 카드", "다른 카드", "카드 해지", "카드 등록",
-        "결제 방법 변경", "결제방법 변경", "결제 수단 변경",
-    ]
-    if any(kw in user_text for kw in card_change_signals):
-        ctx.path.append("카드_문의 → T8")
-        return "T8_카드변경_안내"
+    user_text = " ".join(ctx.user_messages).lower()  # 일부 하위 코드에서 참조
 
-    # ── Node 1: 이전 대화 맥락 ──
+    # ── Node 0: Intent 분류 (LLM or mock) ──
+    classifier = IntentClassifier(mock=not use_llm_intent)
+    intent_result = classifier.classify(
+        user_messages=ctx.user_messages,
+        conversation_turns=ctx.conversation_turns,
+    )
+    mode_tag = "LLM" if use_llm_intent else "mock"
+    ctx.path.append(f"intent[{mode_tag}]: {intent_result.intent} ({intent_result.confidence})")
+
+    intent = intent_result.intent
+    ctx.intent = intent  # ctx에도 저장 (디버그/노출용)
+
+    # ── Node 1: 이전 대화 맥락 (코드 판단 — LLM 무관) ──
     _analyze_prev_turns(ctx)
 
-    if ctx.prev_had_t2 and ctx.prev_manager_count >= 1:
+    # T2 후속 → T3 전환 (이전 턴이 T2 견적 제공 + 유저가 refund_request / 단순 동의)
+    if ctx.prev_had_t2 and ctx.prev_manager_count >= 1 and intent in ("refund_request", "other"):
         ctx.path.append("이전턴_T2 → T3")
         return "T3_환불_접수_완료"
 
-    # ── Node 2: 유저 식별 ──
+    # ── Node 2: 유저 식별 (데이터 판단) ──
     if not ctx.us_user_id:
-        # Branch D: 이전에 T6 안내했는데도 여전히 식별 실패 → 재질문
         if ctx.prev_had_t6:
             ctx.path.append("T6_재질문")
             return "T6b_본인확인_재질문"
         ctx.path.append("유저_식별_불가")
         return "T6_본인확인_요청"
 
-    # Branch D: 본인 아님 시그널 (가족/타인 번호 언급)
+    # 가족/타인 번호 시그널 (여전히 코드 — 개인정보 관련이라 결정론 유지)
     if any(kw in user_text for kw in [
         "가족 번호", "가족번호", "엄마 번호", "아빠 번호", "남편 번호", "아내 번호",
         "제 번호 아니", "제 명의 아니", "다른 사람 번호", "본인 번호 아니"
@@ -109,9 +111,16 @@ def run_workflow(ctx: WorkflowContext) -> str:
         ctx.path.append("타인번호_시그널 → T6b")
         return "T6b_본인확인_재질문"
 
-    # ── Branch C: 환불 지연/미처리 재촉 ──
-    # 진행 중 환불 건이 있고 + 유저가 재촉/상태확인 의도
-    if ctx.refunds and _is_urging_refund(user_text):
+    # ── Node 3: 카드 변경 (데이터 무관) ──
+    if intent == "card_change":
+        ctx.path.append("카드_문의 → T8")
+        return "T8_카드변경_안내"
+
+    # ── Node 4: 데이터 계산 ──
+    _compute_derived(ctx)
+
+    # ── Node 5: 환불 지연 재촉 ──
+    if intent == "refund_delay" and ctx.refunds:
         pending = _find_pending_refund(ctx.refunds)
         if pending:
             ctx.path.append("환불지연_재촉 → T12")
@@ -120,67 +129,62 @@ def run_workflow(ctx: WorkflowContext) -> str:
             ctx.template_variables["상품명"] = pending.product_name or "구독 상품"
             return "T12_환불진행_상태안내"
 
-    # ── Node 3: 데이터 계산 ──
-    _compute_derived(ctx)
-
-    # ── Node 3.5: 해지 신청 처리 확인 → T7 ──
-    # 유저가 "해지 처리 됐나요?" 묻는 경우. 멤버십 status로 완료/미완료 분기.
-    if _is_cancel_check_intent(user_text):
+    # ── Node 6: 해지 신청 처리 확인 ──
+    if intent == "cancel_check":
         cancelled = _is_membership_cancelled(ctx)
-        if cancelled:
-            ctx.path.append("해지확인 → T7_완료")
-            ctx.template_variables["구독상태"] = "해지됨"
-            return "T7_해지_확인_완료"
-        else:
-            ctx.path.append("해지확인 → T7_미완료")
-            ctx.template_variables["구독상태"] = "활성"
-            # 미완료 케이스는 별도 변형 템플릿 사용 필요 — 일단 같은 ID + 변형 플래그
+        ctx.template_variables["구독상태"] = "해지됨" if cancelled else "활성"
+        if not cancelled:
             ctx.template_variables["_t7_variant"] = "not_cancelled"
-            return "T7_해지_확인_완료"
+        ctx.path.append(f"해지확인 → T7_{'완료' if cancelled else '미완료'}")
+        return "T7_해지_확인_완료"
 
-    # ── Node 4: 결제 이력 없음 → T1 ──
+    # ── Node 7: 결제 이력 없음 ──
     if not ctx.success_txs:
         ctx.path.append("결제없음 → T1")
         return "T1_구독해지_방법_앱"
 
-    # ── Node 5: 전부 환불됨 → T3 ──
+    # ── Node 8: 전부 환불됨 ──
     if ctx.all_refunded:
-        # Fallback 분기: 전부 환불된 상태에서 유저가 새 질문(재결제/재가입/예외) 제기
-        if _is_post_refund_question(user_text):
+        # 전부환불 후 추가 질문(재가입/재결제) — refund_request 아닌 intent만 LLM fallback
+        if intent not in ("refund_request",) or _is_post_refund_question(user_text):
             ctx.path.append("전부환불후_추가질문 → LLM_FALLBACK")
             return "T_LLM_FALLBACK"
         ctx.path.append("전부_환불됨 → T3")
         return "T3_환불_접수_완료"
 
-    # ── Fallback 분기: 환불 철회/예외 요청 등 ──
-    if _is_refund_withdrawal_intent(user_text) or _is_exception_request(user_text):
-        ctx.path.append("환불철회/예외 → LLM_FALLBACK")
+    # ── Node 9: edge intents → LLM fallback ──
+    if intent in ("refund_withdrawal", "exception_refund", "emotional_escalation",
+                  "system_error", "compound_issue", "other"):
+        ctx.path.append(f"환불철회/예외 → LLM_FALLBACK")
         return "T_LLM_FALLBACK"
 
-    # ── Branch A0: 자동결제 불만 → T4 (리텐션 설명) ──
-    # T4는 T2보다 먼저 평가 — 자동결제 불만 먼저 설명, 유저가 그래도 환불 원하면 다음 턴에 T2/T3
-    if _is_auto_payment_complaint(user_text) and not ctx.prev_had_t2:
+    # ── Node 10: 자동결제 불만 → T4 (리텐션) ──
+    if intent == "auto_payment_complaint" and not ctx.prev_had_t2:
         _set_t4_variables_real(ctx)
         ctx.path.append("자동결제_불만 → T4")
         return "T4_자동결제_설명"
 
-    # ── Branch A: 상품 변경 + 차액 환불 ──
-    if _is_product_change_intent(user_text):
+    # ── Node 11: 상품 변경 + 차액 환불 ──
+    if intent == "product_change":
         _calculate_exchange(ctx, user_text)
         ctx.path.append("상품변경 → T10")
         return "T10_상품변경_차액환불"
 
-    # ── Branch B: 중복/이중 결제 환불 선택 ──
-    # 미환불 결제가 2건 이상이고, 유저 메시지에 중복 의도가 있거나 금액 불일치 언급
+    # ── Node 12: 중복 결제 ──
     unrefunded = [t for t in ctx.success_txs if not any(
         (r.get("round") == t.get("round") or r.get("amount") == t.get("amount"))
         for r in ctx.refund_txs
     )]
-    if len(unrefunded) >= 2 and _is_duplicate_payment_intent(user_text):
+    if intent == "duplicate_payment" and len(unrefunded) >= 2:
         ctx.template_variables["미환불건수"] = str(len(unrefunded))
         ctx.template_variables["결제목록"] = _format_payment_list(unrefunded)
         ctx.path.append(f"중복결제_{len(unrefunded)}건 → T11")
         return "T11_중복결제_환불선택"
+
+    # ── Node 13: 해지 방법 단순 문의 ──
+    if intent == "cancel_method_inquiry":
+        ctx.path.append("cancel_method → T1")
+        return "T1_구독해지_방법_앱"
 
     # ── Node 6: 미환불 결제 있음 → T2 (RefundEngine) ──
     _calculate_refund(ctx)

@@ -352,9 +352,13 @@ def _load_enriched_for_manager():
         return {e["chat_id"]: e for e in json.load(f)}
 
 
-def _run_agent_on_case(case: dict) -> dict:
-    """1 case 실행 → 전체 결과 딕셔너리 반환."""
-    agent = RefundAgentV2(mock=True)
+def _run_agent_on_case(case: dict, use_real_llm: bool = False) -> dict:
+    """1 case 실행 → 전체 결과 딕셔너리 반환.
+
+    use_real_llm=True → intent classifier + LLM fallback 실제 Bedrock 호출
+    use_real_llm=False → mock 키워드 경로 (회귀 테스트/빠른 개발용)
+    """
+    agent = RefundAgentV2(mock=not use_real_llm)
     try:
         result = agent.process(
             user_messages=case["user_messages"],
@@ -382,7 +386,7 @@ def _run_agent_on_case(case: dict) -> dict:
         }
 
 
-def _run_agent_multi_turn(case: dict) -> list[dict]:
+def _run_agent_multi_turn(case: dict, use_real_llm: bool = False) -> list[dict]:
     """멀티턴 실행 — 각 user turn마다 agent 실행 + 다음 manager turn 매칭.
 
     Returns list of turn records:
@@ -418,7 +422,7 @@ def _run_agent_multi_turn(case: dict) -> list[dict]:
             "user_messages": user_msgs_so_far,
             "conversation_turns": prior_turns,
         }
-        run = _run_agent_on_case(sub_case)
+        run = _run_agent_on_case(sub_case, use_real_llm=use_real_llm)
 
         # 다음 manager turn 찾기 (이 user turn 이후 첫 manager)
         next_mgr_text = None
@@ -623,16 +627,16 @@ def _render_turn_pingpong(records: list[dict], src_id: str):
         st.divider()
 
 
-def _render_case_card(case: dict, idx: int):
+def _render_case_card(case: dict, idx: int, use_real_llm: bool = False):
     """케이스 1건 Evidence Chain 카드 렌더링. 멀티턴 지원."""
     exp = case.get("expected") or {}
     ev = _format_evidence(case)
 
     # 멀티턴 실행
-    turn_records = _run_agent_multi_turn(case)
+    turn_records = _run_agent_multi_turn(case, use_real_llm=use_real_llm)
 
     # 헤더 요약: 첫 턴 기준으로 템플릿 일치 여부
-    first_run = turn_records[0]["agent"] if turn_records else _run_agent_on_case(case)
+    first_run = turn_records[0]["agent"] if turn_records else _run_agent_on_case(case, use_real_llm=use_real_llm)
     expected_tid = exp.get("template_id", "")
     agent_tid = first_run["template_id"]
     tid_ok = agent_tid == expected_tid
@@ -731,15 +735,27 @@ def render_t2_spot_check():
         st.warning("`data/mock_scenarios/golden/v2/` 비어있음.")
         return
 
-    if not st.button("전체 실행", type="primary", use_container_width=True):
-        st.info("위 버튼 클릭 → 8건 전부 실행 + 카드 렌더링 (약 5~10초)")
+    # LLM 토글
+    col_btn, col_llm = st.columns([3, 2])
+    with col_llm:
+        use_real_llm = st.checkbox(
+            "🧠 실제 LLM 호출 (Bedrock Haiku 4.5)",
+            value=True,
+            help="체크 시 intent 분류 + fallback 답변 생성에 실제 Bedrock 호출. 해제 시 mock 키워드 경로.",
+        )
+    with col_btn:
+        run_btn = st.button("전체 실행", type="primary", use_container_width=True)
+
+    if not run_btn:
+        mode = "LLM" if use_real_llm else "mock"
+        st.info(f"현재 모드: **{mode}**. 버튼 클릭 → 6건 전부 실행 (LLM 모드는 ~20초, mock은 ~2초)")
         return
 
     # 요약 메트릭 계산 (먼저 전체 돌려서 상태 집계)
     results = []
-    with st.spinner("v2 골든셋 전체 실행 중..."):
+    with st.spinner(f"v2 골든셋 전체 실행 중... ({'LLM' if use_real_llm else 'mock'})"):
         for c in cases:
-            run = _run_agent_on_case(c)
+            run = _run_agent_on_case(c, use_real_llm=use_real_llm)
             exp = c.get("expected") or {}
             expected_tid = exp.get("template_id", "")
             expected_amt = exp.get("refund_amount_policy")
@@ -771,7 +787,7 @@ def render_t2_spot_check():
 
     # 각 케이스 카드 렌더링
     for idx, c in enumerate(cases):
-        _render_case_card(c, idx)
+        _render_case_card(c, idx, use_real_llm=use_real_llm)
 
 
 def main():
