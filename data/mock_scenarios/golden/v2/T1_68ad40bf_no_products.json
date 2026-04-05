@@ -1,0 +1,44 @@
+{
+  "scenario": "T1 구독해지 방법 — 결제 이력 없음",
+  "description": "실 케이스 68ad40bf. 유저 '해지부탁드려요' + 결제/상품 없음 → T1 해지 방법 안내.",
+  "source_chat_id": "68ad40bf3e50d002f99b",
+  "conversation_time": "2025-09-01T10:00:00Z",
+  "user_messages": [
+    "해지부탁드려요"
+  ],
+  "conversation_turns": [
+    {
+      "role": "user",
+      "text": "환불 및 해지",
+      "ts": 1756184821398
+    },
+    {
+      "role": "user",
+      "text": "해지부탁드려요",
+      "ts": 1756185012181
+    },
+    {
+      "role": "manager",
+      "text": "안녕하세요 회원님,\n다음 정기결제 구독해지방법 안내드립니다.\n\n■정기결제 구독해지 방법\n①어스플러스 앱 접속\n②우측 상단 my(사람모양 아이콘) 클릭 -> 멤버십 관리 클릭 \n③회색글씨로 된 <내역보기> 클릭\n④구독해지 클릭\n\n❗주의사항\n-구독해지 신청은 다음 정기결제에 대한 해지입니다.",
+      "ts": 1756187442608
+    }
+  ],
+  "admin_data": {
+    "us_user_id": "690ec4349d4ef4e7f7572a39",
+    "phone": "01051310394",
+    "ch_name": "이예순",
+    "products": [],
+    "transactions": [],
+    "usage": {
+      "accessed": false,
+      "count": 0
+    },
+    "memberships": [],
+    "refunds": []
+  },
+  "expected": {
+    "template_id": "T1_구독해지_방법_앱",
+    "applied_rule": "결제 이력 없음 → T1 해지 방법 안내",
+    "path_contains": "T1"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "scenario": "T6 본인확인 요청 — 유저 미식별",
+  "description": "실 케이스 68b6435f. 환불 요청 but us_user_id 없음 → 성함/전화번호 요청.",
+  "source_chat_id": "68b6435f8341ecd14795",
+  "conversation_time": "2025-09-01T10:00:00Z",
+  "user_messages": [
+    "박두환 투자동행학교  남은 기간 환불  하고싶습니다."
+  ],
+  "conversation_turns": [
+    {
+      "role": "user",
+      "text": "박두환 투자동행학교  남은 기간 환불  하고싶습니다.",
+      "ts": 1756775315881
+    },
+    {
+      "role": "manager",
+      "text": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+      "ts": 1756781876604
+    }
+  ],
+  "admin_data": null,
+  "expected": {
+    "template_id": "T6_본인확인_요청",
+    "applied_rule": "us_user_id 없음 → T6 본인확인 요청",
+    "path_contains": "T6"
+  }
+}

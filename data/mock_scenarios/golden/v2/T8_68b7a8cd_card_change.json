@@ -1,0 +1,212 @@
+{
+  "scenario": "T8 카드변경 안내 — 롯데→국민카드 변경 요청",
+  "description": "실 케이스 68b7a8cd. 유저 카드 변경 요청 → T8 변경 방법 안내.",
+  "source_chat_id": "68b7a8cd30036d61f257",
+  "conversation_time": "2025-09-01T10:00:00Z",
+  "user_messages": [
+    "그 외 기타 문의(오류/구독해지/환불)",
+    "롯데카드로 결제를 했는데 카드 해지를 해야해서 결제 방법을 국민카드로 변경하고 싶습니다."
+  ],
+  "conversation_turns": [
+    {
+      "role": "user",
+      "text": "롯데카드로 결제를 했는데 카드 해지를 해야해서 결제 방법을 국민카드로 변경하고 싶습니다.",
+      "ts": 1756866959890
+    },
+    {
+      "role": "manager",
+      "text": "안녕하세요 회원님,\n결제 등록를 다른 카드로 결제 변경 희망하실까요? \n \n✅ 변경 방법을 안내 드립니다. \n \n▶결제카드 변경: https://us-insight.com/ \n \n1. 어스 앱이 아닌 웹페이지로 접속 해주세요. \n2. 구독 결제 해주신 계정으로 로그인 해주세요. \n3. 오른쪽 상단 'MY' 클릭 해주세요. \n4. 멤버십 관리를 눌러주세요 \n5. 구독중 상품에 [결제 변경]을 눌러주세요 \n6. 100원 결제 후, 카드변경이 완료됩니다. \n \n※ 카드 변경 안내\n* 결제 정보 변경 시, 100원이 일시적으로 결제됩니다.",
+      "ts": 1756875955027
+    }
+  ],
+  "admin_data": {
+    "us_user_id": "68792b82decdf0c10a02a696",
+    "phone": "01052397323",
+    "ch_name": "안영희",
+    "products": [
+      {
+        "master": "서재형 Official club",
+        "name": "개나리반",
+        "status": "active",
+        "price": 5000,
+        "activated": "2025-07-17T17:02:10.491Z",
+        "expired": "2026-04-17T17:02:10.491Z"
+      }
+    ],
+    "transactions": [
+      {
+        "round": 9,
+        "state": "purchased_success",
+        "amount": 5000,
+        "method": "CA",
+        "info": "470349******7098",
+        "date": "2026-03-18T06:01:44.373Z"
+      },
+      {
+        "round": 8,
+        "state": "purchased_success",
+        "amount": 5000,
+        "method": "CA",
+        "info": "470349******7098",
+        "date": "2026-02-18T06:02:07.889Z"
+      },
+      {
+        "round": 7,
+        "state": "purchased_success",
+        "amount": 5000,
+        "method": "CA",
+        "info": "470349******7098",
+        "date": "2026-01-18T06:01:32.256Z"
+      },
+      {
+        "round": 6,
+        "state": "purchased_success",
+        "amount": 5000,
+        "method": "CA",
+        "info": "470349******7098",
+        "date": "2025-12-18T06:01:34.264Z"
+      },
+      {
+        "round": 5,
+        "state": "purchased_success",
+        "amount": 5000,
+        "method": "CA",
+        "info": "470349******7098",
+        "date": "2025-11-18T06:01:36.620Z"
+      },
+      {
+        "round": 4,
+        "state": "purchased_success",
+        "amount": 5000,
+        "method": "CA",
+        "info": "470349******7098",
+        "date": "2025-10-18T06:00:33.878Z"
+      },
+      {
+        "round": 3,
+        "state": "purchased_success",
+        "amount": 5000,
+        "method": "CA",
+        "info": "470349******7098",
+        "date": "2025-09-18T06:00:29.578Z"
+      },
+      {
+        "round": 2,
+        "state": "purchased_success",
+        "amount": 5000,
+        "method": "CA",
+        "info": "513792******2812",
+        "date": "2025-08-18T06:00:25.746Z"
+      },
+      {
+        "round": 1,
+        "state": "purchased_success",
+        "amount": 5000,
+        "method": "CA",
+        "info": "513792******2812",
+        "date": "2025-07-17T17:02:10.506Z"
+      }
+    ],
+    "usage": {
+      "accessed": true,
+      "count": 9
+    },
+    "memberships": [
+      {
+        "productName": "서재형 Official club 개나리반",
+        "paymentCycle": 9,
+        "expiration": false,
+        "membershipType": "subscription",
+        "transactionHistories": [
+          {
+            "createdAt": "2026-03-18T06:01:44.373Z",
+            "state": "purchased_success",
+            "method": "CA",
+            "purchasedAmount": "5000",
+            "purchasedMethod": "hecto",
+            "cardNumber": "470349******7098",
+            "cardType": "KB국민"
+          },
+          {
+            "createdAt": "2026-02-18T06:02:07.889Z",
+            "state": "purchased_success",
+            "method": "CA",
+            "purchasedAmount": "5000",
+            "purchasedMethod": "hecto",
+            "cardNumber": "470349******7098",
+            "cardType": "KB국민"
+          },
+          {
+            "createdAt": "2026-01-18T06:01:32.256Z",
+            "state": "purchased_success",
+            "method": "CA",
+            "purchasedAmount": "5000",
+            "purchasedMethod": "hecto",
+            "cardNumber": "470349******7098",
+            "cardType": "KB국민"
+          },
+          {
+            "createdAt": "2025-12-18T06:01:34.264Z",
+            "state": "purchased_success",
+            "method": "CA",
+            "purchasedAmount": "5000",
+            "purchasedMethod": "hecto",
+            "cardNumber": "470349******7098",
+            "cardType": "KB국민"
+          },
+          {
+            "createdAt": "2025-11-18T06:01:36.620Z",
+            "state": "purchased_success",
+            "method": "CA",
+            "purchasedAmount": "5000",
+            "purchasedMethod": "hecto",
+            "cardNumber": "470349******7098",
+            "cardType": "KB국민"
+          },
+          {
+            "createdAt": "2025-10-18T06:00:33.878Z",
+            "state": "purchased_success",
+            "method": "CA",
+            "purchasedAmount": "5000",
+            "purchasedMethod": "hecto",
+            "cardNumber": "470349******7098",
+            "cardType": "KB국민"
+          },
+          {
+            "createdAt": "2025-09-18T06:00:29.578Z",
+            "state": "purchased_success",
+            "method": "CA",
+            "purchasedAmount": "5000",
+            "purchasedMethod": "hecto",
+            "cardNumber": "470349******7098",
+            "cardType": "KB국민"
+          },
+          {
+            "createdAt": "2025-08-18T06:00:25.746Z",
+            "state": "purchased_success",
+            "method": "CA",
+            "purchasedAmount": "5000",
+            "purchasedMethod": "hecto",
+            "cardNumber": "513792******2812",
+            "cardType": "롯데"
+          },
+          {
+            "createdAt": "2025-07-17T17:02:10.506Z",
+            "state": "purchased_success",
+            "method": "CA",
+            "purchasedAmount": "5000",
+            "purchasedMethod": "hecto",
+            "cardNumber": "513792******2812",
+            "cardType": "롯데카드"
+          }
+        ]
+      }
+    ],
+    "refunds": []
+  },
+  "expected": {
+    "template_id": "T8_카드변경_안내",
+    "applied_rule": "카드 변경 키워드 → T8",
+    "path_contains": "T8"
+  }
+}

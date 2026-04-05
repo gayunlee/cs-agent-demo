@@ -18,6 +18,130 @@
 
 폐기: T4(리텐션), T9(해지처리완료). 에셋 제외(멤버십 구독만).
 
+---
+
+## 환불 계산 공식 — 확정 ground truth (2026-04-05)
+
+**정책 원문 (운영 공지)**:
+> 1. 결제 후 7일 이내, 구독권 미개시 및 콘텐츠 미열람 시 **전액 환불**
+> 2. 구독권 개시 후: 이용 기간에 따라 **이용 금액 차감** + **수수료 10%**
+> 3. 전체 기간 1/3 경과 전: **1/3 차감**
+> 4. 전체 기간 1/2 경과 전: **1/2 차감**
+> 5. 환불 기준일 = 회원이 최초로 환불을 요청한 날짜
+> 6. **1개월 = 30일 기준**
+> 7. 결제주기가 2개월 이상인 구독 상품도 환불 시 **1개월 정가 기준**으로 이용 금액을 산정하여 차감
+> 8. 전액 환불 대상은 수수료 없음
+
+### 확정 공식 (2026-04-05 Gayoon 확정)
+
+```python
+# 입력
+total_paid         # 유저가 결제한 금액
+cycle_months       # 상품 결제주기 (1, 2, 3, 4, 6, 12 등)
+days_elapsed       # 결제일 ~ 유저 환불 요청일 사이 경과일
+content_accessed   # 콘텐츠 열람 여부
+monthly_price      # 1개월 정가 (아래 출처 참조)
+
+# 계산
+total_period_days = cycle_months × 30         # 정책 6번
+period_fraction   = days_elapsed / total_period_days
+
+if days_elapsed <= 7 and not content_accessed:
+    refund = total_paid                        # 전액 환불, 수수료 없음 (정책 1번, 8번)
+
+else:
+    if period_fraction <= 1/3:
+        deduction = monthly_price × (1/3)      # 정책 3번
+    else:
+        deduction = monthly_price × (1/2)      # 정책 4번 + 1/2 경과 후도 동일 적용
+                                               # (1/2 경과 후는 정책 본문 침묵 → 1/2 차감 규칙 유지,
+                                               #  예외 판단은 CS팀 재량)
+    remaining = total_paid - deduction
+    fee       = floor(remaining × 0.10)        # 정책 2번 수수료
+    refund    = remaining - fee
+```
+
+### `monthly_price` (1개월 정가) 출처
+
+정책 7번 **"2개월 이상 구독도 1개월 정가 기준"** 구현:
+
+| 상품 주기 | monthly_price |
+|---|---|
+| 1개월권 (`cycle_months == 1`) | `monthly_price = total_paid` (= 상품 가격) |
+| 2개월 이상 | 같은 `productPageId` 그룹의 `paymentPeriod == ONE_MONTH` 옵션의 `price` |
+
+**API 경로**:
+```
+myProducts[].product.groupCode  (= productPageId)
+  → GET /v1/product/group/{productPageId}
+  → ProductListData[]
+  → filter paymentPeriod == "ONE_MONTH"
+  → .price  ✅ 이게 1개월 정가
+```
+
+**Fallback** (product_group 조회 실패 또는 ONE_MONTH 옵션 없음):
+`monthly_price = total_paid / cycle_months` + 경고 로그. CS팀이 이상치 감지 시 수동 검수.
+
+**근거**: `openspec/admin-ui-page-map.md:179` (`groupCode`), `:305-313` (`/v1/product/group/` API + `paymentPeriod` enum).
+
+### 실데이터 역산 검증 (2026-04-05)
+
+`refund_test_cases_enriched.json` 18건 중 매니저 답변에 "환불 금액 X원" 명시된 케이스 분석:
+
+| 케이스 패턴 | 건수 | 총결제 | 매니저 환불 | 공식 검증 |
+|---|---:|---:|---:|---|
+| 1개월권 50k + 1/3 경과 전 + 열람 | 11 | 50,000 | 30,000 | `(50k - 50k×1/3) × 0.9 = 30,000` ✅ |
+| 1개월권 40k + 1/3 경과 전 + 열람 | 1 | 40,000 | 24,000 | `(40k - 40k×1/3) × 0.9 = 24,000` ✅ |
+| 1개월권 30k + 1/3 경과 전 + 열람 | 1 | 30,000 | 18,000 | `(30k - 30k×1/3) × 0.9 = 18,000` ✅ |
+| 6개월권 500k + 1개월 경과 | 1 | 500,000 | 360,000 | `(500k - 100k×1/3) × 0.9 = 438,000`으로 계산됨. 매니저는 `(500k - 100k×1) × 0.9 = 360,000` 적용 (재량) |
+| 1개월권 50k + 7일 이내 열람 (수수료만) | 2 | 50,000 | 45,000 | `50k × 0.9 = 45,000` — 수수료만 케이스 (정책 해석 필요) |
+
+**결론**:
+- 1개월권 패턴 = 정책 공식과 **정확히 일치** (단, 소수 정밀도 `0.333` vs `1/3` 로 ±15원 오차 있음 → `Fraction(1,3)` 사용)
+- 6개월권 실답변은 매니저 재량 경로 (우리 agent는 정책 본문대로 438k 답하고 CS팀이 필요 시 수정)
+- `50k → 45k` 케이스는 수수료만 차감하는 별도 규칙 존재 가능성 — 추후 확인 필요
+
+### 현재 코드와의 gap (2026-04-05 Option A 발견)
+
+| # | 위치 | 현재 | 정책에 맞게 수정 |
+|---|---|---|---|
+| **B1** | `src/workflow.py:267` | `payment_cycle_days=30` 하드코딩 | `payment_cycle_days = cycle_months × 30` |
+| **B2** | `src/workflow.py:244` | `monthly_price = tx_amount / cycle_months` | 2개월 이상: product_group API로 ONE_MONTH 옵션 price 조회 |
+| **B3** | `config/refund_rules.json` EP-002 | `deduct_fraction: 0.333` (소수) | `1/3` (Fraction 정확도) |
+| **B4** | `config/refund_rules.json` EP-004 | 1/2 경과 후 → `method: none` (환불 불가) | 1/2 경과 후도 1/2 차감 규칙 적용 (EP-004 삭제 or max 제거) |
+| **B5** | `config/refund_rules.json` EP-005 | `months_deduct` 공식 존재 | 정책 본문에 없음 — 삭제 또는 비활성화 |
+| **B6** | `src/admin_api.py` | `get_product_group()` 없음 | 추가 필요: `GET /v1/product/group/{productPageId}` |
+| **B7** | `data/test_cases/refund_test_cases_enriched.json` | `conversation_time=""` 전부 누락 | 평가셋에서 이 소스 대신 수동 mock (`data/mock_scenarios/golden/v2/`) 사용 |
+
+### Phase 5-B 평가셋 스키마 (확정)
+
+`data/mock_scenarios/golden/v2/*.json`:
+```json
+{
+  "scenario": "설명",
+  "source_chat_id": "역산 소스 (옵션)",
+  "conversation_time": "YYYY-MM-DDTHH:MM:SSZ",
+  "user_messages": [...],
+  "admin_data": {
+    "products": [{..., "groupCode": "xxx"}],
+    "transactions": [...],
+    "usage": {"accessed": true/false},
+    "product_group": [  // ← 신규: product_group API 응답 mock
+      {"paymentPeriod": "ONE_MONTH", "price": 100000},
+      {"paymentPeriod": "SIX_MONTH", "price": 500000}
+    ]
+  },
+  "expected": {
+    "template_id": "T2_환불_규정_금액",
+    "refund_amount_policy": 438000,       // 정책 공식 적용 결과
+    "refund_amount_manager": 360000,       // 실제 매니저 답 (참고용)
+    "manager_discretion_note": "6개월권 재량 처리 사례"
+  }
+}
+```
+
+---
+
 ## 구현 단계
 
 ### Step 1: 테스트 케이스 준비

@@ -1,6 +1,7 @@
 {
   "scenario": "T2 부분환불 — 7일 경과 + 열람",
   "description": "표준 T2 플로우. 미환불 결제 1건, 14일 경과, 열람 있음 → 1개월 정가 차감 + 수수료",
+  "source_chat_id": "68b96029c4550622265d",
   "conversation_time": "2026-01-15T10:00:00Z",
   "user_messages": [
     "환불해주세요"

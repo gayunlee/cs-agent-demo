@@ -1,0 +1,63 @@
+{
+  "scenario": "T2 부분환불 — 1개월권 50,000원, 5일 경과, 열람 있음",
+  "description": "enriched 68b96029c4550622265d 역산. 매니저 답: 환불금액 30,000원 (1개월 정가 1/3 차감 + 잔여 90%). baseline 회귀 케이스 — 1개월권은 버그 #2 영향 없음.",
+  "source_chat_id": "68b96029c4550622265d",
+  "conversation_time": "2025-09-08T10:00:00Z",
+  "user_messages": [
+    "환불 문의드립니다"
+  ],
+  "conversation_turns": [
+    {"role": "user", "ts": 1725789600000, "text": "환불 문의드립니다"}
+  ],
+  "admin_data": {
+    "us_user_id": "mock_user_68b9602",
+    "phone": "01000000000",
+    "ch_name": "이가연",
+    "products": [
+      {
+        "master": "캡틴 돈깡의 머니 크루",
+        "name": "캡틴 돈깡의 머니 크루 1개월반",
+        "status": "active",
+        "price": 50000,
+        "activated": "2025-09-03T10:00:00Z",
+        "expired": "2025-10-03T10:00:00Z"
+      }
+    ],
+    "transactions": [
+      {
+        "round": 1,
+        "state": "purchased_success",
+        "amount": 50000,
+        "method": "card",
+        "info": "신한카드",
+        "date": "2025-09-03T10:00:00Z"
+      }
+    ],
+    "usage": {
+      "accessed": true,
+      "count": 1
+    },
+    "memberships": [
+      {
+        "productName": "캡틴 돈깡의 머니 크루 1개월반",
+        "paymentCycle": 1,
+        "expiration": false,
+        "membershipType": "subscription",
+        "transactionHistories": [
+          {
+            "createdAt": "2025-09-03T10:00:00Z",
+            "state": "purchased_success",
+            "method": "card"
+          }
+        ]
+      }
+    ],
+    "refunds": []
+  },
+  "expected": {
+    "template_id": "T2_환불_규정_금액",
+    "refund_amount_manager": 30000,
+    "manager_reasoning": "50,000 - 1개월정가 50,000 × 1/3 = 33,334, × 0.9 = 30,001 (±1원)",
+    "path_contains": "T2"
+  }
+}

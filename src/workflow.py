@@ -75,7 +75,13 @@ def run_workflow(ctx: WorkflowContext) -> str:
 
     # ── Node 0: 카드 문의 (유저 식별/데이터 무관) ──
     user_text = " ".join(ctx.user_messages).lower()
-    if any(kw in user_text for kw in ["카드 변경", "카드변경", "카드 분실", "카드 만료", "카드 재발급"]):
+    # "카드" 관련 변경/재등록/분실 문의는 전부 T8로 라우팅 (T10 상품변경이 아님)
+    card_change_signals = [
+        "카드 변경", "카드변경", "카드 분실", "카드 만료", "카드 재발급",
+        "카드 바꾸", "새 카드", "다른 카드", "카드 해지", "카드 등록",
+        "결제 방법 변경", "결제방법 변경", "결제 수단 변경",
+    ]
+    if any(kw in user_text for kw in card_change_signals):
         ctx.path.append("카드_문의 → T8")
         return "T8_카드변경_안내"
 
@@ -117,6 +123,21 @@ def run_workflow(ctx: WorkflowContext) -> str:
     # ── Node 3: 데이터 계산 ──
     _compute_derived(ctx)
 
+    # ── Node 3.5: 해지 신청 처리 확인 → T7 ──
+    # 유저가 "해지 처리 됐나요?" 묻는 경우. 멤버십 status로 완료/미완료 분기.
+    if _is_cancel_check_intent(user_text):
+        cancelled = _is_membership_cancelled(ctx)
+        if cancelled:
+            ctx.path.append("해지확인 → T7_완료")
+            ctx.template_variables["구독상태"] = "해지됨"
+            return "T7_해지_확인_완료"
+        else:
+            ctx.path.append("해지확인 → T7_미완료")
+            ctx.template_variables["구독상태"] = "활성"
+            # 미완료 케이스는 별도 변형 템플릿 사용 필요 — 일단 같은 ID + 변형 플래그
+            ctx.template_variables["_t7_variant"] = "not_cancelled"
+            return "T7_해지_확인_완료"
+
     # ── Node 4: 결제 이력 없음 → T1 ──
     if not ctx.success_txs:
         ctx.path.append("결제없음 → T1")
@@ -135,6 +156,13 @@ def run_workflow(ctx: WorkflowContext) -> str:
     if _is_refund_withdrawal_intent(user_text) or _is_exception_request(user_text):
         ctx.path.append("환불철회/예외 → LLM_FALLBACK")
         return "T_LLM_FALLBACK"
+
+    # ── Branch A0: 자동결제 불만 → T4 (리텐션 설명) ──
+    # T4는 T2보다 먼저 평가 — 자동결제 불만 먼저 설명, 유저가 그래도 환불 원하면 다음 턴에 T2/T3
+    if _is_auto_payment_complaint(user_text) and not ctx.prev_had_t2:
+        _set_t4_variables_real(ctx)
+        ctx.path.append("자동결제_불만 → T4")
+        return "T4_자동결제_설명"
 
     # ── Branch A: 상품 변경 + 차액 환불 ──
     if _is_product_change_intent(user_text):
@@ -296,8 +324,52 @@ def _calculate_refund(ctx: WorkflowContext):
 
 
 def _set_t4_variables(ctx: WorkflowContext):
-    """T4 템플릿 변수 설정 (폐기됐지만 하위 호환)"""
+    """T4 템플릿 변수 설정 (하위 호환 stub)"""
     pass
+
+
+def _set_t4_variables_real(ctx: WorkflowContext):
+    """T4 자동결제 템플릿 변수 채우기.
+
+    - 마스터명: products[0].master (또는 product_name에서 추출)
+    - 이전결제월 / 현재결제월: transactions success 건들의 날짜에서 월 추출 (최근 2건)
+    """
+    # 마스터명
+    master = ""
+    if ctx.products:
+        p = ctx.products[0]
+        master = p.get("master") or p.get("master_name") or ""
+        if not master:
+            # product name에서 첫 단어 추출 fallback
+            name = p.get("name", "")
+            master = name.split()[0] if name else "선생님"
+    ctx.template_variables["마스터명"] = master or "선생님"
+
+    # 결제 월 추출 — success_txs는 이미 _compute_derived에서 세팅됨
+    success_dates = []
+    for t in (ctx.success_txs or []):
+        d = (t.get("date") or t.get("created_at") or "")[:10]
+        if d:
+            success_dates.append(d)
+    success_dates.sort()
+
+    def month_of(date_str: str) -> str:
+        if len(date_str) >= 7:
+            try:
+                return f"{int(date_str[5:7])}월"
+            except ValueError:
+                pass
+        return ""
+
+    if len(success_dates) >= 2:
+        ctx.template_variables["이전결제월"] = month_of(success_dates[-2])
+        ctx.template_variables["현재결제월"] = month_of(success_dates[-1])
+    elif len(success_dates) == 1:
+        ctx.template_variables["현재결제월"] = month_of(success_dates[0])
+        ctx.template_variables["이전결제월"] = ""
+    else:
+        ctx.template_variables["이전결제월"] = ""
+        ctx.template_variables["현재결제월"] = ""
 
 
 def _is_refund_withdrawal_intent(text: str) -> bool:
@@ -346,10 +418,84 @@ def _format_payment_list(txs: list[dict]) -> str:
 
 def _is_product_change_intent(text: str) -> bool:
     """상품 변경 의도 감지"""
+    # 카드 관련 문맥이면 상품 변경 아님 — T8 카드변경으로 가야 함
+    if "카드" in text:
+        return False
     # "변경" 단독은 너무 광범위 — 맥락 키워드 결합
     strong = ["상품 변경", "상품변경", "다른 상품", "다른상품", "상품 바꿔",
               "차액", "바꿔서", "바꾸고 싶", "으로 변경", "로 변경"]
     return any(kw in text for kw in strong)
+
+
+def _is_auto_payment_complaint(text: str) -> bool:
+    """자동결제 불만/설명 요청 감지 — T4 리텐션 트리거"""
+    kws = [
+        "자동으로 결제", "자동결제", "자동결재",
+        "자동으로 구독", "연장되어", "연장됐", "연장되었",
+        "왜 결제", "결제된 줄 몰", "모르게 결제",
+        "나도 모르게", "허락 없이", "취소 안 했는데",
+    ]
+    return any(kw in text for kw in kws)
+
+
+def _is_cancel_check_intent(text: str) -> bool:
+    """해지 신청 처리 확인 의도 감지 — T7 트리거.
+
+    유저가 이전에 해지를 신청했고 "처리 됐나?"를 확인하는 문의.
+    "해지" 맥락이 반드시 포함돼야 환불 철회 같은 다른 의도와 구분됨.
+    """
+    # 환불 철회("환불 취소/안 받을게") 의도는 제외
+    if "환불 취소" in text or "환불취소" in text or "환불 안 할" in text or "환불 안할" in text:
+        return False
+
+    # "해지" 단어가 반드시 들어가야 T7 (환불 문맥에서 "처리됐나"는 T12 환불지연)
+    if "해지" not in text:
+        return False
+
+    # 해지 + 확인/처리 의도 키워드
+    kws = [
+        "처리 되었", "처리됐", "처리 됐",
+        "확인 차", "확인차", "확인 부탁", "확인 해주",
+        "됐나", "됐는지", "되었는지", "되었나",
+        "신청했는데", "신청해놨", "신청은 했",
+        "잘 되었", "잘됐", "완료 됐", "완료됐",
+    ]
+    return any(kw in text for kw in kws)
+
+
+def _is_membership_cancelled(ctx: WorkflowContext) -> bool:
+    """멤버십이 해지된 상태인지 판단.
+
+    판단 기준 (우선순위):
+    1. memberships[].expiration == True → 해지
+    2. memberships[].transaction_histories에 'cancel' state 존재
+    3. products[].status == 'inactive'
+
+    ctx.memberships는 MembershipItem dataclass (admin_api.py) — attribute 접근 사용.
+    ctx.products는 dict list.
+    """
+    for mb in (ctx.memberships or []):
+        # MembershipItem dataclass or dict 둘 다 지원
+        expiration = getattr(mb, "expiration", None)
+        if expiration is None and isinstance(mb, dict):
+            expiration = mb.get("expiration")
+        if expiration is True:
+            return True
+
+        histories = getattr(mb, "transaction_histories", None)
+        if histories is None and isinstance(mb, dict):
+            histories = mb.get("transactionHistories")
+        for th in (histories or []):
+            state = getattr(th, "state", None)
+            if state is None and isinstance(th, dict):
+                state = th.get("state")
+            if state and "cancel" in str(state).lower():
+                return True
+
+    for p in (ctx.products or []):
+        if isinstance(p, dict) and p.get("status") == "inactive":
+            return True
+    return False
 
 
 def _extract_price_hints(text: str) -> list[int]:
