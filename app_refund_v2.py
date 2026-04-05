@@ -533,31 +533,52 @@ def _render_evidence_panel(ev: dict):
     else:
         st.caption("결제 이력 없음")
 
-    # 멤버십 정보
+    # 멤버십 정보 — dict or MembershipItem dataclass 양쪽 지원
     if ev["memberships"]:
         st.markdown(f"**멤버십** ({len(ev['memberships'])}건)")
         for mb in ev["memberships"]:
-            pname = mb.get("productName", "")
-            cycle = mb.get("paymentCycle", "")
-            expired = mb.get("expiration", False)
-            mtype = mb.get("memberShipType") or mb.get("membershipType") or ""
+            if isinstance(mb, dict):
+                pname = mb.get("productName", "")
+                cycle = mb.get("paymentCycle", "")
+                expired = mb.get("expiration", False)
+                mtype = mb.get("memberShipType") or mb.get("membershipType") or ""
+            else:
+                # dataclass
+                pname = getattr(mb, "product_name", "") or ""
+                cycle = getattr(mb, "payment_round", "") or ""
+                expired = getattr(mb, "expiration", False)
+                mtype = getattr(mb, "membership_type", "") or ""
             exp_icon = "⏰ 만료" if expired else "✅ 활성"
             st.caption(
                 f"- {pname}  \n"
                 f"  └ 결제회차: {cycle} · 타입: `{mtype}` · {exp_icon}"
             )
 
-    # 환불 이력 (refundHistory)
+    # 환불 이력 (refundHistory) — dict or RefundHistoryItem dataclass 양쪽 지원
     if ev["refunds"]:
         st.markdown(f"**환불 이력** ({len(ev['refunds'])}건)")
         for r in ev["refunds"]:
-            rh = r.get("refundHistory") or r
-            refund_at = (rh.get("refundAt") or rh.get("createdAt") or "")[:10]
-            refund_amt = rh.get("refundAmount", 0)
-            if isinstance(refund_amt, str):
-                try: refund_amt = int(refund_amt)
-                except: refund_amt = 0
-            pending = not rh.get("refundAt")
+            # dataclass인 경우 (RefundHistoryItem) attribute 접근
+            if hasattr(r, "refund_history"):
+                rh_obj = r.refund_history
+                refund_at = getattr(rh_obj, "refund_at", "") or ""
+                if hasattr(refund_at, "isoformat"):
+                    refund_at = refund_at.isoformat()
+                refund_at = str(refund_at)[:10]
+                refund_amt = getattr(rh_obj, "refund_amount", 0) or 0
+                pending = not refund_at
+            # dict인 경우
+            elif isinstance(r, dict):
+                rh = r.get("refundHistory") or r
+                refund_at_raw = rh.get("refundAt") or rh.get("createdAt") or ""
+                refund_at = str(refund_at_raw)[:10]
+                refund_amt = rh.get("refundAmount", 0)
+                if isinstance(refund_amt, str):
+                    try: refund_amt = int(refund_amt)
+                    except: refund_amt = 0
+                pending = not rh.get("refundAt")
+            else:
+                continue
             status = "⏳ 진행중" if pending else "✅ 완료"
             st.caption(f"- {status} · {refund_at} · {refund_amt:,}원")
 
