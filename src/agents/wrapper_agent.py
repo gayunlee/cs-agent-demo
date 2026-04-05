@@ -28,6 +28,8 @@ Memory 2-layer (2026-04-06):
 from __future__ import annotations
 
 import json
+import logging
+from pathlib import Path
 
 from strands import Agent, tool
 from strands.models import BedrockModel
@@ -35,9 +37,28 @@ from strands.models import BedrockModel
 from src.refund_agent_v2 import RefundAgentV2
 from src.memory import AgentMemory, create_memory_session, get_context_for_prompt, save_turn
 
+logger = logging.getLogger(__name__)
+
 
 MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 REGION = "us-west-2"
+GUARDRAIL_ID_PATH = Path(__file__).resolve().parents[2] / "guardrail_id.json"
+
+
+def _load_guardrail_kwargs() -> dict:
+    """guardrail_id.json 이 있으면 BedrockModel 용 kwargs 반환, 없으면 빈 dict."""
+    if not GUARDRAIL_ID_PATH.exists():
+        return {}
+    try:
+        with open(GUARDRAIL_ID_PATH) as f:
+            gd = json.load(f)
+        return {
+            "guardrail_id": gd["guardrailId"],
+            "guardrail_version": str(gd["version"]),
+        }
+    except Exception as e:
+        logger.warning(f"guardrail_id.json 로드 실패 (guardrail 없이 동작): {e}")
+        return {}
 
 
 SYSTEM_PROMPT = """당신은 어스플러스(한국 교육 SaaS)의 CS 상담 에이전트입니다.
@@ -207,7 +228,8 @@ def create_wrapper_agent(
     # AgentCore Memory 세션 생성 (실패 시 None → memory 없이 동작)
     mem = create_memory_session(session_id=session_id, actor_id=actor_id)
 
-    model = BedrockModel(model_id=model_id, region_name=region)
+    guardrail_kwargs = _load_guardrail_kwargs()
+    model = BedrockModel(model_id=model_id, region_name=region, **guardrail_kwargs)
     agent = Agent(
         model=model,
         tools=[refund_tool, handoff_to_human],

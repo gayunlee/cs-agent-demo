@@ -1,5 +1,6 @@
 .env
 memory_id.json
+guardrail_id.json
 chroma_db/
 __pycache__/
 *.pyc
