@@ -75,6 +75,24 @@
 ### 목적
 **매일 들어오는 실제 환불 문의 대해**, agent가 미리 답안을 생성해 두고, 나중에 상담사가 처리한 답변과 **자동 대조**해서 일치/불일치 통계 산출. 이게 **continuous evaluation + 템플릿 drift 감지** 역할을 동시에 한다.
 
+### 핵심 제약 (2026-04-05 Gayoon 확정)
+
+**1. 비영업시간 window 에서만 수집**
+- **평일**: 퇴근시간 (18:30) 이후 ~ 자정
+- **주말**: 금요일 18:30 이후 ~ 일요일 자정 직전
+- 이유: 영업시간 중에는 상담사가 실시간으로 답해버려서 "에이전트가 먼저 답 만들어두고 상담사 답변 나온 뒤 비교" 의 **비교 window 가 생기지 않음**. 비영업시간에 쌓인 문의는 다음 영업일 오전에 상담사가 일괄 답변 → 그 사이에 에이전트가 미리 돌려놓으면 shadow 비교 가능.
+
+**2. 스냅샷 기반 mock data**
+- 에이전트가 admin API 를 조회한 **그 시점** 의 응답을 JSON 으로 snapshot 저장
+- 이유: 다음날 상담사가 답변할 때쯤이면 admin 데이터가 변할 수 있음 (환불 처리 반영, 상품 상태 변경 등). 에이전트 실행 시점과 상담사 답변 시점이 어긋나면 "같은 입력에 대한 두 답변" 이 아니게 됨.
+- Snapshot 은 `data/shadow/snapshots/{date}/{chat_id}.json` 에 고정 → 나중에 재현용으로도 활용 가능
+- 추후 골든셋 확장 재료로 자동 유입
+
+**3. 도메인 gate 통과 건만 스냅샷**
+- Shadow collector 가 받은 문의는 일단 wrapper agent 로 intent 분류 (LLM 1회 호출)
+- **환불 도메인 whitelist (REFUND_DOMAIN_INTENTS)** 에 해당되면 → 스냅샷 + agent 실행 + 비교 대상
+- 비도메인 (기타/수업/배송 등) → skip 하되 로그만 남김 (향후 도메인 확장 시 재료)
+
 ### 아키텍처 (shadow evaluation)
 
 ```
@@ -111,19 +129,26 @@
 
 ### 데이터 흐름
 
-**매 N분** (예: 15분):
-1. 채널톡 환불 대화 pull → `data/shadow/inbox/{date}/{chat_id}.json`
-2. 미처리 필터: 매니저 답변 없음 or 진행 중
-3. 각 대화에 대해 debounce 체크: 마지막 유저 메시지 후 2분 경과?
-4. 통과 → us_user_id로 admin API 호출 → admin_data snapshot
-5. agent 실행 (멀티턴) → `data/shadow/predictions/{date}/{chat_id}.json`
+**비영업시간 수집 루프** (스케줄러로 15분 주기):
+1. 현재 시각이 비영업시간 window 인지 체크 → 아니면 skip
+2. 채널톡에서 최근 N분 대화 pull → `data/shadow/inbox/{date}/{chat_id}.json`
+3. 미처리 필터: 상담사 답변 없음 or 진행 중
+4. 각 대화에 대해 debounce 체크: 마지막 유저 메시지 후 2분 경과?
+5. Wrapper agent intent 분류 → 환불 도메인 whitelist 통과?
+6. 통과 → us_user_id로 admin API 호출 → **admin_data snapshot 파일 저장**
+   `data/shadow/snapshots/{date}/{chat_id}.json`
+7. Wrapper agent 실행 (snapshot 을 admin_data 로 주입) → 초안 저장
+   `data/shadow/predictions/{date}/{chat_id}.json`
 
-**N시간 후** (예: 1시간, 또는 내일):
-6. 같은 chat_id 재 pull → 상담사 답변 추가됐는지 확인
-7. 각 유저 턴마다: agent 초안 vs 상담사 실답변 대조
-8. 평가 기록: `data/shadow/eval/{date}.csv`
-   - `chat_id, turn_idx, agent_template, manager_template_inferred, template_match, agent_amount, manager_amount, amount_diff, notes`
-9. 대시보드 업데이트 (일별 요약 + 불일치 케이스 상세)
+**다음 영업일 비교 루프** (예: 오전 11시 1회):
+8. 전날 수집된 chat_id 들 재 pull → 상담사 답변 추가됐는지 확인
+9. 상담사 답변이 들어온 대화만 필터
+10. 각 유저 턴마다: agent 초안 (snapshot 기준) vs 상담사 실답변 대조
+11. 평가 기록: `data/shadow/eval/{date}.csv`
+    - `chat_id, turn_idx, agent_template, manager_template_inferred, template_match, agent_amount, manager_amount, amount_diff, notes`
+12. 대시보드 업데이트 (일별 요약 + 불일치 케이스 드릴다운)
+
+**핵심 불변조건**: 스냅샷 시점의 admin_data 와 상담사가 실제로 본 admin_data 가 다를 수 있음 (예: 상담사가 환불 처리하면 transactions 에 refund 가 추가됨). 비교는 **스냅샷 시점 기준** 으로만 유효. 상담사 답변이 스냅샷 이후 admin 변경을 반영하고 있으면 불일치로 기록하되 "admin 상태 변경으로 인한 불일치" 태그로 구분.
 
 ### 평가자 (4종)
 1. **template_accuracy** — agent 고른 template_id vs 상담사 답변에서 추론한 template
