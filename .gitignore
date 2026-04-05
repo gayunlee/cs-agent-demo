@@ -6,3 +6,6 @@ __pycache__/
 data/rag_pairs.json
 data/demo_results.json
 accountKey.json
+.venv311/
+.venv/
+venv/

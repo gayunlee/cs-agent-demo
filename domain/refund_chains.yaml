@@ -1,0 +1,265 @@
+# 환불/해지 조건 체인 Single Source of Truth
+#
+# 설계 원칙 (Gayoon visibility_chain.yaml 패턴):
+# - 진단(DiagnoseEngine), Harness, Knowledge handler가 전부 이 파일을 참조
+# - 규칙 변경 시 이 파일만 수정
+# - check 표현식 = Turing-incomplete DSL (field.path == 'VALUE', has_keyword(text, 'kw'), AND/OR)
+# - 순서가 체크 순서 — 첫 실패에서 멈추고 first_failure 반환
+# - fail_template 있으면 → 실패 시 해당 템플릿으로 답변
+# - fail_message의 {placeholder}는 context 값으로 치환됨
+#
+# ⚠️ paymentCycle은 "결제 회차(카운트)"지 주기(개월) 아님
+#    → 주기는 상품명 파싱으로 얻음. YAML에서 이 필드 참조 금지.
+#
+# ⚠️ 복잡한 계산(환불 금액, 주기 추정)은 DSL로 표현 불가 → tool 내부에서 처리
+#    YAML chain은 "라우팅 조건"과 "단순 가드"만 담당
+
+chains:
+
+  # ─────────────────────────────────────────────────────────
+  # 라우팅 체인 — 어느 템플릿을 쓸지 결정
+  # 각 체인은 "이 시나리오에 매칭되는가?"를 평가
+  # ─────────────────────────────────────────────────────────
+
+  is_card_change_inquiry:
+    label: "카드 변경 문의"
+    description: "유저 메시지에 카드 변경 키워드가 있으면 T8"
+    requires:
+      - id: CARD1
+        check: "has_keyword(user_text, 'card_change_keywords')"
+        fail_message: "카드 변경 키워드 없음"
+    on_pass_template: T8_카드변경_안내
+
+  is_prev_turn_t2_followup:
+    label: "이전 턴 T2 → T3 전환"
+    description: "직전 턴에 T2 환불 규정 안내했고 매니저 응답 있으면 → T3"
+    requires:
+      - id: PREV1
+        check: "ctx.prev_had_t2 == True"
+        fail_message: "이전 턴 T2 없음"
+      - id: PREV2
+        check: "ctx.prev_manager_count >= 1"
+        fail_message: "매니저 응답 없음"
+    on_pass_template: T3_환불_접수_완료
+
+  needs_user_identification:
+    label: "본인 확인 필요"
+    description: "us_user_id 없으면 T6 또는 T6b (이전 T6 있으면 재질문)"
+    requires:
+      - id: USER1
+        check: "ctx.us_user_id == ''"
+        fail_message: "본인 확인 완료"
+
+  is_other_person_number:
+    label: "가족/타인 번호 시그널"
+    description: "유저 메시지에 가족 번호 등 시그널 → T6b"
+    requires:
+      - id: OTHER1
+        check: "has_keyword(user_text, 'other_person_number_keywords')"
+        fail_message: "타인 번호 시그널 없음"
+    on_pass_template: T6b_본인확인_재질문
+
+  is_refund_urging:
+    label: "환불 지연 재촉"
+    description: "진행 중 환불 건이 있고 유저가 재촉 → T12"
+    requires:
+      - id: URGE1
+        check: "is_not_empty(ctx.refunds)"
+        fail_message: "환불 이력 없음"
+      - id: URGE2
+        check: "has_keyword(user_text, 'urging_keywords')"
+        fail_message: "재촉 시그널 없음"
+    on_pass_template: T12_환불진행_상태안내
+
+  has_no_payment:
+    label: "결제 이력 없음"
+    description: "success_txs 비어있으면 T1 (해지 방법 안내)"
+    requires:
+      - id: PAY1
+        check: "is_empty(ctx.success_txs)"
+        fail_message: "결제 이력 존재"
+    on_pass_template: T1_구독해지_방법_앱
+
+  is_all_refunded:
+    label: "전부 환불됨"
+    description: "모든 결제가 환불된 상태 → T3 또는 LLM fallback"
+    requires:
+      - id: REF1
+        check: "ctx.all_refunded == True"
+        fail_message: "미환불 결제 존재"
+    on_pass_template: T3_환불_접수_완료
+
+  is_all_refunded_with_new_question:
+    label: "전부 환불 후 추가 질문"
+    description: "전부 환불됐는데 재결제/재가입/예외 질문 → LLM fallback"
+    requires:
+      - id: REFQ1
+        check: "ctx.all_refunded == True"
+        fail_message: "전부 환불 아님"
+      - id: REFQ2
+        check: "has_keyword(user_text, 'post_refund_question_keywords')"
+        fail_message: "추가 질문 시그널 없음"
+    on_pass_template: T_LLM_FALLBACK
+
+  is_refund_withdrawal:
+    label: "환불 철회/예외 요청"
+    description: "환불 취소하고 싶다거나 예외 전액환불 요청 → LLM fallback"
+    requires:
+      - id: WD1
+        check: "has_keyword(user_text, 'refund_withdrawal_or_exception_keywords')"
+        fail_message: "철회/예외 시그널 없음"
+    on_pass_template: T_LLM_FALLBACK
+
+  is_product_change:
+    label: "상품 변경 + 차액 환불"
+    description: "유저가 상품 변경 의도 표현 → T10"
+    requires:
+      - id: PC1
+        check: "has_keyword(user_text, 'product_change_keywords')"
+        fail_message: "상품 변경 시그널 없음"
+    on_pass_template: T10_상품변경_차액환불
+
+  is_duplicate_payment:
+    label: "중복/이중 결제"
+    description: "미환불 결제 2건 이상이고 중복 의도 표현 → T11"
+    requires:
+      - id: DUP1
+        check: "unrefunded_count(ctx.success_txs, ctx.refund_txs) >= 2"
+        fail_message: "미환불 결제 2건 미만"
+      - id: DUP2
+        check: "has_keyword(user_text, 'duplicate_payment_keywords')"
+        fail_message: "중복 의도 시그널 없음"
+    on_pass_template: T11_중복결제_환불선택
+
+  can_refund_normally:
+    label: "정상 환불 처리 (T2)"
+    description: "미환불 결제 있고 계산 가능 → T2"
+    requires:
+      - id: REFN1
+        check: "is_not_empty(ctx.success_txs)"
+        fail_message: "결제 이력 없음"
+      - id: REFN2
+        check: "ctx.all_refunded == False"
+        fail_message: "전부 환불됨"
+    on_pass_template: T2_환불_규정_금액
+
+# ─────────────────────────────────────────────────────────
+# 라우팅 순서 (DiagnoseEngine이 first_passing_chain으로 순회)
+# workflow.py의 run_workflow() if/else 순서와 동일
+# ─────────────────────────────────────────────────────────
+
+routing_order:
+  - is_card_change_inquiry        # Node 0: 카드 문의 (최우선)
+  - is_prev_turn_t2_followup      # Node 1: 이전 턴 T2 → T3
+  - needs_user_identification     # Node 2: 본인 확인 (tool 내부에서 T6/T6b 분기)
+  - is_other_person_number        # Branch D: 타인 번호 시그널
+  - is_refund_urging              # Branch C: 환불 지연 재촉
+  - has_no_payment                # Node 4: 결제 없음
+  - is_all_refunded_with_new_question  # Node 5 fallback
+  - is_all_refunded               # Node 5: 전부 환불됨
+  - is_refund_withdrawal          # Fallback: 철회/예외
+  - is_product_change             # Branch A: 상품 변경
+  - is_duplicate_payment          # Branch B: 중복 결제
+  - can_refund_normally           # Node 6: 정상 환불 (T2)
+
+# ─────────────────────────────────────────────────────────
+# 키워드 그룹 (has_keyword 함수가 참조)
+# ─────────────────────────────────────────────────────────
+
+keyword_groups:
+  card_change_keywords:
+    - "카드 변경"
+    - "카드변경"
+    - "카드 분실"
+    - "카드 만료"
+    - "카드 재발급"
+
+  other_person_number_keywords:
+    - "가족 번호"
+    - "가족번호"
+    - "엄마 번호"
+    - "아빠 번호"
+    - "남편 번호"
+    - "아내 번호"
+    - "제 번호 아니"
+    - "제 명의 아니"
+    - "다른 사람 번호"
+    - "본인 번호 아니"
+
+  urging_keywords:
+    - "왜 아직"
+    - "언제 환불"
+    - "언제쯤"
+    - "처리 안"
+    - "처리 안돼"
+    - "처리안"
+    - "아직도"
+    - "아직 환불"
+    - "환불 언제"
+    - "환불언제"
+    - "며칠 됐"
+    - "몇일 됐"
+    - "1달"
+    - "한달"
+    - "한 달"
+    - "일주일 지"
+    - "소식이 없"
+    - "답변이 없"
+    - "연락이 없"
+
+  post_refund_question_keywords:
+    - "재결제"
+    - "다시 결제"
+    - "재가입"
+    - "다시 가입"
+    - "새 카드"
+    - "추가 환불"
+    - "또 환불"
+    - "다른 건"
+    - "보안카드"
+
+  refund_withdrawal_or_exception_keywords:
+    - "환불 취소"
+    - "환불취소"
+    - "환불 안 할"
+    - "환불 안할"
+    - "환불 안 받"
+    - "다시 이용"
+    - "계속 이용"
+    - "환불 철회"
+    - "철회할게"
+    - "철회하고"
+    - "전액 환불"
+    - "전액환불"
+    - "특별 환불"
+    - "예외 환불"
+    - "100% 환불"
+    - "다 돌려"
+    - "전부 돌려"
+    - "규정 예외"
+
+  product_change_keywords:
+    - "상품 변경"
+    - "상품변경"
+    - "다른 상품"
+    - "다른상품"
+    - "상품 바꿔"
+    - "차액"
+    - "바꿔서"
+    - "바꾸고 싶"
+    - "으로 변경"
+    - "로 변경"
+
+  duplicate_payment_keywords:
+    - "중복"
+    - "이중"
+    - "두 번"
+    - "두번"
+    - "2번 결제"
+    - "두 개"
+    - "두개"
+    - "여러 번"
+    - "여러번"
+    - "또 결제"
+    - "또 빠져"
+    - "또 빠졌"
