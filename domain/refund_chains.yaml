@@ -143,6 +143,58 @@ chains:
         fail_message: "전부 환불됨"
     on_pass_template: T2_환불_규정_금액
 
+  # ─────────────────────────────────────────────────────────
+  # Phase 5-A — Edge 라우팅 체인 5개 (2026-04-05 추가)
+  # 2026-04-04 노트 18:30의 5패턴 매핑 기반.
+  # refund_edge_reclassified.json 48건 (A_워크플로우 38 + B_LLM 10).
+  # 새 텍스트 템플릿 0개, 새 tool 0개 — 기존 리소스 재사용.
+  # ─────────────────────────────────────────────────────────
+
+  is_system_error:
+    label: "시스템/기술 오류 (앱/로그인/라이브/다운로드)"
+    description: "기술 지원 필요 → LLM fallback → handoff_to_human 라우팅"
+    requires:
+      - id: SYS1
+        check: "has_keyword(user_text, 'system_error_keywords')"
+        fail_message: "시스템 오류 시그널 없음"
+    on_pass_template: T_LLM_FALLBACK
+
+  is_compound_issue:
+    label: "복합 이슈 (환불+기술+해지 등 2개 이상)"
+    description: "여러 도메인 엮인 이슈 → 상담사 인계"
+    requires:
+      - id: CMP1
+        check: "has_keyword(user_text, 'compound_issue_keywords')"
+        fail_message: "복합 시그널 없음"
+    on_pass_template: T_LLM_FALLBACK
+
+  is_emotional_escalation:
+    label: "감정 폭발/강한 불만"
+    description: "유저가 강한 감정 표현(욕설/분노/좌절) → LLM fallback + emotional opener"
+    requires:
+      - id: EMO1
+        check: "has_keyword(user_text, 'emotional_distress_keywords')"
+        fail_message: "감정 시그널 없음"
+    on_pass_template: T_LLM_FALLBACK
+
+  is_flow_cancellation:
+    label: "진행 중 flow 철회"
+    description: "환불/해지 요청 후 취소 의사 → handle_cancellation_of_flow"
+    requires:
+      - id: CNCL1
+        check: "has_keyword(user_text, 'flow_cancellation_keywords')"
+        fail_message: "철회 시그널 없음"
+    on_pass_template: T_LLM_FALLBACK
+
+  is_exception_refund_request:
+    label: "예외 환불 요청 (규정 외 사유)"
+    description: "건강 사유/특별 상황/규정 예외 요청 → 매니저 재량 판단 → LLM fallback"
+    requires:
+      - id: EXC1
+        check: "has_keyword(user_text, 'exception_refund_keywords')"
+        fail_message: "예외 시그널 없음"
+    on_pass_template: T_LLM_FALLBACK
+
 # ─────────────────────────────────────────────────────────
 # 라우팅 순서 (DiagnoseEngine이 first_passing_chain으로 순회)
 # workflow.py의 run_workflow() if/else 순서와 동일
@@ -150,6 +202,13 @@ chains:
 
 routing_order:
   - is_card_change_inquiry        # Node 0: 카드 문의 (최우선)
+  # ── Phase 5-A edge 라우팅 (조기 필터링, 비즈니스 체인보다 앞) ──
+  - is_system_error               # Edge: 기술 오류 → handoff
+  - is_compound_issue             # Edge: 복합 이슈 → handoff
+  - is_emotional_escalation       # Edge: 감정 폭발 → LLM + opener
+  - is_flow_cancellation          # Edge: 철회 → handle_cancellation
+  - is_exception_refund_request   # Edge: 예외 환불 사유 → LLM
+  # ── 기존 비즈니스 체인 ──
   - is_prev_turn_t2_followup      # Node 1: 이전 턴 T2 → T3
   - needs_user_identification     # Node 2: 본인 확인 (tool 내부에서 T6/T6b 분기)
   - is_other_person_number        # Branch D: 타인 번호 시그널
@@ -263,3 +322,123 @@ keyword_groups:
     - "또 결제"
     - "또 빠져"
     - "또 빠졌"
+
+  # ─────────────────────────────────────────────────────────
+  # Phase 5-A — Edge 키워드 그룹 5개 (2026-04-05 추가)
+  # 베이스라인 수준. 정확도 낮으면 후속에서 LLM classifier로 보강.
+  # ─────────────────────────────────────────────────────────
+
+  system_error_keywords:
+    - "앱 오류"
+    - "앱오류"
+    - "로그인 안"
+    - "로그인안"
+    - "로그인 오류"
+    - "로그인 실패"
+    - "로그인 불가"
+    - "접속 안"
+    - "접속 불가"
+    - "라이브"
+    - "입장 안"
+    - "입장 불가"
+    - "재생 안"
+    - "재생 불가"
+    - "다운로드 안"
+    - "다운로드 불가"
+    - "에러"
+    - "400 에러"
+    - "500 에러"
+    - "오류 메시지"
+    - "오류메시지"
+    - "앱 설치"
+    - "앱설치"
+    - "앱이 안"
+    - "안 열려"
+    - "안열려"
+    - "안 보여"
+    - "작동 안"
+
+  compound_issue_keywords:
+    - "그리고 또"
+    - "그런데 또"
+    - "추가로"
+    - "같이"
+    - "동시에"
+    - "더해서"
+    - "같은 계정"
+    - "다른 문제"
+    - "겸"
+    - "하면서"
+    - "그리고 환불"
+    - "그리고 해지"
+    - "그리고 카드"
+    - "배송"
+    - "이메일 재발송"
+    - "개인정보 삭제"
+
+  emotional_distress_keywords:
+    - "욕"
+    - "욕나오"
+    - "화가"
+    - "화나"
+    - "짜증"
+    - "열받"
+    - "미치"
+    - "답답"
+    - "실망"
+    - "배신"
+    - "사기"
+    - "말이 돼"
+    - "말이안"
+    - "말이 안"
+    - "어이없"
+    - "너무하"
+    - "소비자원"
+    - "법적"
+    - "고소"
+    - "불쾌"
+    - "황당"
+    - "기가 막"
+    - "이게 뭐"
+    - "진짜 너무"
+
+  flow_cancellation_keywords:
+    - "취소할게요"
+    - "취소할게"
+    - "안 할게"
+    - "안할게"
+    - "안 받을"
+    - "안받을"
+    - "그만둘게"
+    - "그만할"
+    - "없었던 걸로"
+    - "없던 걸로"
+    - "취소하고 싶"
+    - "보류"
+    - "잠시 멈"
+    - "다시 생각"
+    - "계속 이용할"
+    - "계속 쓸"
+
+  exception_refund_keywords:
+    - "건강"
+    - "아파서"
+    - "병원"
+    - "입원"
+    - "수술"
+    - "사망"
+    - "장례"
+    - "개인 사정"
+    - "개인사정"
+    - "특별한 사정"
+    - "특별히"
+    - "사정이 생겨"
+    - "예외적"
+    - "예외로"
+    - "규정 예외"
+    - "한 번만"
+    - "한번만"
+    - "부탁드려요"
+    - "선처"
+    - "녹내장"
+    - "진단"
