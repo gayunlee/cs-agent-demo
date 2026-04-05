@@ -44,6 +44,22 @@ MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 REGION = "us-west-2"
 GUARDRAIL_ID_PATH = Path(__file__).resolve().parents[2] / "guardrail_id.json"
 
+# 환불 도메인 gate — legacy intent classifier 결과 재사용 (중복 LLM 호출 없음).
+# `result.intent` 는 RefundAgentV2 자체 classifier 의 **한국어 7-enum** 결과를 담음
+# (`src/refund_agent_v2.py:28-43` CLASSIFY_PROMPT). workflow.py 가 쓰는 영어 intent
+# (`src/intent_classifier.py`)와는 별개. 여기 whitelist 는 한국어 enum 기준.
+# 장기적으로 모든 CS 유형 대응하면 이 whitelist 는 제거 예정.
+REFUND_DOMAIN_INTENTS: set[str] = {
+    "환불_요청",
+    "해지_방법",
+    "해지_확인",
+    "자동결제_불만",
+    "환불_규정_문의",
+    "카드변경",
+}
+# RefundAgentV2 한국어 classifier 에는 "기타" 만 비도메인. 경계 intent 없음.
+ALLOWED_INTENTS: set[str] = REFUND_DOMAIN_INTENTS
+
 
 def _load_guardrail_kwargs() -> dict:
     """guardrail_id.json 이 있으면 BedrockModel 용 kwargs 반환, 없으면 빈 dict."""
@@ -202,6 +218,8 @@ def _make_refund_tool(turn_log: list[dict], admin_cache: dict, session_id: str):
             "draft_answer": result.final_answer or "",
             "reasoning_path": " → ".join(path_parts) if path_parts else "",
             "refund_amount": refund_amount,
+            "intent": result.intent or "",
+            "is_refund_domain": (result.intent or "") in ALLOWED_INTENTS,
         }
 
     return run_refund_workflow
@@ -249,15 +267,14 @@ def create_wrapper_agent(
         """한 턴을 완전히 처리 — Memory save/retrieve + legacy log + Agent 호출.
 
         1. user_text 를 AgentCore Memory + legacy turn_log 에 저장
-        2. Memory 에서 context 꺼내 system_prompt 에 주입 (임시로 agent.system_prompt 수정)
-        3. Agent 호출
-        4. assistant 답변을 Memory + legacy turn_log 에 저장
+        2. Memory 에서 context 꺼내 system_prompt 에 주입
+        3. Agent 호출 (내부적으로 run_refund_workflow tool 호출)
+        4. tool result 에서 intent 추출 → agent.last_intent 저장 (caller 가 gate 판단용)
+        5. assistant 답변을 Memory + legacy turn_log 에 저장
         """
-        # 1. user turn 기록
         save_turn(mem, "user", user_text)
         _log_user(user_text)
 
-        # 2. Memory context 꺼내서 system prompt 에 덧붙임
         base_prompt = SYSTEM_PROMPT
         memory_context = get_context_for_prompt(mem, user_text)
         if memory_context:
@@ -269,21 +286,52 @@ def create_wrapper_agent(
         else:
             agent.system_prompt = base_prompt
 
-        # 3. Agent 호출
         result = agent(user_text)
         answer = str(result)
 
-        # 4. assistant turn 기록
+        # tool result 에서 가장 최근 intent 추출 (legacy 재사용 = 중복 LLM 호출 없음)
+        last_intent = ""
+        is_refund_domain = False
+        for m in agent.messages:
+            content = m.get("content", [])
+            if not isinstance(content, list):
+                continue
+            for b in content:
+                if not isinstance(b, dict) or "toolResult" not in b:
+                    continue
+                for c in b["toolResult"].get("content", []):
+                    if isinstance(c, dict) and "text" in c:
+                        try:
+                            j = json.loads(c["text"])
+                        except Exception:
+                            continue
+                        if j.get("intent"):
+                            last_intent = j["intent"]
+                        if "is_refund_domain" in j:
+                            is_refund_domain = bool(j["is_refund_domain"])
+        agent.last_intent = last_intent  # type: ignore[attr-defined]
+        agent.last_is_refund_domain = is_refund_domain  # type: ignore[attr-defined]
+
         save_turn(mem, "assistant", answer[:2000])
         _log_assistant(answer)
         return answer
 
+    def _should_respond() -> bool:
+        """마지막 handle_turn 결과가 환불 도메인인지 — caller 의 draft skip 판단용.
+
+        True 면 draft 저장/답장, False 면 skip (무응답).
+        """
+        return bool(getattr(agent, "last_is_refund_domain", False))
+
     agent.log_user_turn = _log_user  # type: ignore[attr-defined]
     agent.log_assistant_turn = _log_assistant  # type: ignore[attr-defined]
     agent.handle_turn = _handle_turn  # type: ignore[attr-defined]
+    agent.should_respond = _should_respond  # type: ignore[attr-defined]
     agent.turn_log = turn_log  # type: ignore[attr-defined]
     agent.admin_cache = admin_cache  # type: ignore[attr-defined]
     agent.memory = mem  # type: ignore[attr-defined]
+    agent.last_intent = ""  # type: ignore[attr-defined]
+    agent.last_is_refund_domain = False  # type: ignore[attr-defined]
     return agent
 
 
