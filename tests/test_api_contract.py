@@ -80,7 +80,7 @@ def test_enriched_contract():
                         membership_samples.append({
                             "chat_id": case.get("chat_id", "")[:12],
                             "product_name": item.product_name,
-                            "payment_cycle": item.payment_cycle,
+                            "payment_round": item.payment_round,
                             "tx_count": len(item.transaction_histories),
                             "membership_type": item.membership_type,
                         })

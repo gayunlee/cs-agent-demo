@@ -101,21 +101,26 @@ class MembershipTransaction:
 
 @dataclass
 class MembershipItem:
-    """membership-history 내 개별 멤버십"""
+    """membership-history 내 개별 멤버십
+
+    ⚠️ paymentCycle 주의: us-admin UI 분석 결과 이 필드는 "결제 회차"이지
+    "결제 주기(개월)"가 아님. 6개월 상품 첫 결제도 payment_round=1.
+    주기 정보는 상품명 파싱 또는 product.paymentPeriod에서 얻어야 함.
+    """
     product_name: str = ""
-    payment_cycle: int = 1         # 결제 주기 (개월)
+    payment_round: int = 1         # "결제 회차" (몇 번째 결제인지) — 주기가 아님!
     expiration: bool = False
     membership_type: str = ""      # card/CA/VA/corp/PZ/unknown
     transaction_histories: list[MembershipTransaction] = field(default_factory=list)
 
     @classmethod
     def from_api(cls, data: dict) -> "MembershipItem":
-        cycle_raw = data.get("paymentCycle", 1)
+        round_raw = data.get("paymentCycle", 1)
         # 스펙은 number지만 실제 응답이 string일 수 있음 — 방어적 변환
         try:
-            cycle = int(cycle_raw) if cycle_raw else 1
+            round_num = int(round_raw) if round_raw else 1
         except (ValueError, TypeError):
-            cycle = 1
+            round_num = 1
         txs = [
             MembershipTransaction.from_api(t)
             for t in (data.get("transactionHistories") or [])
@@ -125,7 +130,7 @@ class MembershipItem:
         mtype = data.get("memberShipType") or data.get("membershipType") or ""
         return cls(
             product_name=data.get("productName", ""),
-            payment_cycle=cycle,
+            payment_round=round_num,
             expiration=bool(data.get("expiration", False)),
             membership_type=mtype,
             transaction_histories=txs,

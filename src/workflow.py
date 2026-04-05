@@ -229,20 +229,11 @@ def _calculate_refund(ctx: WorkflowContext):
     # 테스트에서는 date로 들어올 수 있어 fallback 유지.
     tx_date = (latest.get("created_at") or latest.get("date") or "")[:10]
 
-    # 1개월 정가 추정
-    payment_cycle = 1
-    if ctx.memberships:
-        # memberships는 list[MembershipItem] (__post_init__에서 변환됨)
-        cycle = ctx.memberships[0].payment_cycle
-        if cycle and cycle > 0:
-            payment_cycle = cycle
-    elif ctx.products:
-        name = (ctx.products[0].get("name") or "").lower()
-        if "6개월" in name:
-            payment_cycle = 6
-        elif "3개월" in name:
-            payment_cycle = 3
-    monthly_price = tx_amount // payment_cycle if payment_cycle > 1 else tx_amount
+    # 1개월 정가 추정 — 상품명 파싱 (product.paymentPeriod 전용 필드가 없어서)
+    # ⚠️ membership.payment_round(구 paymentCycle)는 "결제 회차"이지 주기가 아니므로 사용 금지.
+    # 주기 정보는 상품명에서 추출: "6개월", "3개월", "1년" 등.
+    payment_cycle_months = _infer_cycle_from_products(ctx.products)
+    monthly_price = tx_amount // payment_cycle_months if payment_cycle_months > 1 else tx_amount
 
     # 결제일 파싱
     pay_date = None
@@ -353,30 +344,43 @@ def _is_product_change_intent(text: str) -> bool:
     return any(kw in text for kw in strong)
 
 
-def _extract_price_hint(text: str) -> int | None:
-    """유저 메시지에서 '10만원', '100,000원', '10만' 같은 금액 추출"""
+def _extract_price_hints(text: str) -> list[int]:
+    """유저 메시지에서 금액 표현 전부 추출 (출현 순서대로).
+
+    예: "50만원 취소하고 10만원으로 변경" → [500000, 100000]
+    """
     import re
-    # 만원 단위: "10만원", "10만"
-    m = re.search(r"(\d+)\s*만\s*원?", text)
-    if m:
-        return int(m.group(1)) * 10000
-    # 원 단위: "100,000원", "100000원"
-    m = re.search(r"([\d,]+)\s*원", text)
-    if m:
+    hints: list[int] = []
+    # 모든 '\d+만(원)?' 매칭 — 만원 단위
+    for m in re.finditer(r"(\d+)\s*만\s*원?", text):
+        hints.append(int(m.group(1)) * 10000)
+    # 모든 '[\d,]+원' 매칭 — 원 단위 (만 단위와 중복 가능하지만 보강용)
+    for m in re.finditer(r"([\d,]{4,})\s*원", text):
         try:
-            return int(m.group(1).replace(",", ""))
+            val = int(m.group(1).replace(",", ""))
+            if val not in hints:
+                hints.append(val)
         except ValueError:
             pass
-    return None
+    return hints
+
+
+def _pick_new_price(hints: list[int], existing_amount: int) -> int:
+    """여러 금액 후보 중 '신규 상품 가격'으로 쓸 값 선택.
+
+    휴리스틱: 기존 결제금액과 다른 것 중 가장 작은 것.
+    (유저가 "50만원 → 10만원" 말하면 10만이 신규 가격)
+    """
+    candidates = [h for h in hints if h > 0 and h != existing_amount]
+    if not candidates:
+        return 0
+    return min(candidates)
 
 
 def _calculate_exchange(ctx: WorkflowContext, user_text: str):
     """상품 변경 차액 계산 — Branch A"""
     from datetime import datetime
     from src.refund_engine import RefundEngine, RefundInput
-
-    # 신규 상품 가격: 외부 주입이 우선, 없으면 메시지에서 파싱
-    new_price = ctx.new_product_price or _extract_price_hint(user_text) or 0
 
     latest = ctx.latest_tx or (ctx.success_txs[-1] if ctx.success_txs else {})
     tx_amount = latest.get("amount", 0)
@@ -387,6 +391,15 @@ def _calculate_exchange(ctx: WorkflowContext, user_text: str):
             tx_amount = 0
     # 필드명 통일: created_at 우선, 테스트 호환 위해 date도 fallback
     tx_date = (latest.get("created_at") or latest.get("date") or "")[:10]
+
+    # 신규 상품 가격: 외부 주입이 우선, 없으면 메시지에서 파싱
+    # 메시지에 "50만원 취소하고 10만원으로 변경" 같이 여러 금액이 나올 수 있으니,
+    # 기존 결제금액과 다른 것 중 작은 값을 선택 (downgrade 가정).
+    if ctx.new_product_price:
+        new_price = ctx.new_product_price
+    else:
+        hints = _extract_price_hints(user_text)
+        new_price = _pick_new_price(hints, tx_amount)
 
     pay_date = None
     if tx_date:
@@ -399,13 +412,26 @@ def _calculate_exchange(ctx: WorkflowContext, user_text: str):
     ctx.template_variables["신규상품가격"] = f"{new_price:,}" if new_price else "(확인 필요)"
 
     if pay_date and tx_amount and new_price:
+        # 상품명에서 주기 추정 (6개월 상품이면 monthly = total/6)
+        cycle_months = _infer_cycle_from_products(ctx.products)
+        monthly_price = tx_amount // cycle_months if cycle_months > 1 else tx_amount
+
+        # 시점 복원: conv_time 있으면 그 날을 '오늘'로
+        calc_today = None
+        if ctx.conversation_time:
+            try:
+                calc_today = datetime.strptime(ctx.conversation_time[:10], "%Y-%m-%d").date()
+            except ValueError:
+                calc_today = None
+
         engine = RefundEngine()
         inp = RefundInput(
             total_paid=tx_amount,
-            monthly_price=tx_amount,  # 정가 추정 — 단건 기준
+            monthly_price=monthly_price,
             payment_date=pay_date,
             payment_cycle_days=30,
             content_accessed=ctx.has_accessed,
+            today=calc_today,
         )
         result = engine.calculate_exchange(inp, new_price)
         ctx.template_variables["기존환불가능액"] = f"{(result.refund_amount + new_price if result.refundable else 0):,}"
@@ -416,6 +442,30 @@ def _calculate_exchange(ctx: WorkflowContext, user_text: str):
         # 신규 가격 파싱 실패 — 템플릿 변수만 placeholder로 두고 상담사/LLM에 맡김
         ctx.template_variables["기존환불가능액"] = "(계산 필요)"
         ctx.template_variables["차액환불금액"] = "(계산 필요)"
+
+
+def _infer_cycle_from_products(products: list[dict]) -> int:
+    """상품명에서 결제 주기(개월) 추출. 없으면 1 (단건/1개월 기본).
+
+    예: "박두환 Official club 투자동행반(6개월)" → 6
+        "서재형 투자학교 (3개월)" → 3
+        "1년 멤버십" → 12
+    """
+    if not products:
+        return 1
+    for p in products:
+        name = (p.get("name") or p.get("product_name") or "").lower()
+        if not name:
+            continue
+        if "12개월" in name or "1년" in name:
+            return 12
+        if "6개월" in name:
+            return 6
+        if "3개월" in name:
+            return 3
+        if "1개월" in name:
+            return 1
+    return 1
 
 
 def _is_urging_refund(text: str) -> bool:
