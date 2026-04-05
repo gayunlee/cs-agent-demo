@@ -1,0 +1,1906 @@
+{
+  "cases_count": 8,
+  "mode": "LLM",
+  "reports": [
+    {
+      "evaluator": "EvaluationReport",
+      "overall_score": 0.75,
+      "cases": [
+        {
+          "input": {
+            "scenario": "T12 환불 진행 상태 안내 — 지난주 신청, 아직 입금 안 됨",
+            "description": "실 케이스 68afbc9e. 유저 '지난주 환불 신청했는데 입금 아직' → 매니저 '이미 처리 완료, 카드사 문의'. admin_data는 원본에 비어있어 인공 구성: pending refund 1건.",
+            "source_chat_id": "68afbc9ed824868f902e",
+            "conversation_time": "2025-08-26T10:00:00Z",
+            "user_messages": [
+              "안녕하세요 지난주에 환불 신청했는데 입금이 아직 되지 않고 있어서 확인차 연락 드립니다. 현재 진행 상태 알려 주시기 부탁 드리겠습니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "ts": 1756195200000,
+                "text": "안녕하세요 지난주에 환불 신청했는데 입금이 아직 되지 않고 있어서 확인차 연락 드립니다. 현재 진행 상태 알려 주시기 부탁 드리겠습니다."
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "mock_68afbc9e",
+              "phone": "01000000000",
+              "ch_name": "지연 재촉 테스트",
+              "products": [
+                {
+                  "master": "이정윤 Official club",
+                  "name": "프라임클래스",
+                  "status": "inactive",
+                  "price": 50000,
+                  "activated": "2025-07-15T10:00:00Z",
+                  "expired": "2025-08-19T10:00:00Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 50000,
+                  "method": "card",
+                  "info": "신한카드",
+                  "date": "2025-07-15T10:00:00Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 5
+              },
+              "memberships": [
+                {
+                  "productName": "이정윤 Official club 프라임클래스",
+                  "paymentCycle": 1,
+                  "expiration": true,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2025-07-15T10:00:00Z",
+                      "state": "purchased_success",
+                      "method": "card"
+                    },
+                    {
+                      "createdAt": "2025-08-19T10:00:00Z",
+                      "state": "subscription_cancelled"
+                    }
+                  ]
+                }
+              ],
+              "refunds": [
+                {
+                  "productName": "이정윤 Official club 프라임클래스",
+                  "createdAt": "2025-08-19T10:00:00Z",
+                  "paymentHistory": {
+                    "amount": 50000,
+                    "cardType": "신한카드",
+                    "cardNo": "****1234",
+                    "createdAt": "2025-07-15T10:00:00Z"
+                  },
+                  "refundHistory": {
+                    "refundAmount": 30000,
+                    "refundAt": null
+                  }
+                }
+              ]
+            },
+            "expected": {
+              "template_id": "T12_환불진행_상태안내",
+              "applied_rule": "진행 중 환불 + 재촉/확인 의도 → T12",
+              "path_contains": "T12"
+            }
+          },
+          "actual_output": {
+            "template_id": "T12_환불진행_상태안내",
+            "refund_amount": null
+          },
+          "name": "T12_68afbc9e_refund_delay",
+          "expected_output": "T12_환불진행_상태안내",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "final"
+          ],
+          "metadata": {
+            "source_chat_id": "68afbc9ed824868f902e",
+            "expected_template_id": "T12_환불진행_상태안내",
+            "expected_refund_amount": null,
+            "applied_rule": "진행 중 환불 + 재촉/확인 의도 → T12",
+            "scenario": "T12 환불 진행 상태 안내 — 지난주 신청, 아직 입금 안 됨"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T1 구독해지 방법 — 결제 이력 없음",
+            "description": "실 케이스 68ad40bf. 유저 '해지부탁드려요' + 결제/상품 없음 → T1 해지 방법 안내.",
+            "source_chat_id": "68ad40bf3e50d002f99b",
+            "conversation_time": "2025-09-01T10:00:00Z",
+            "user_messages": [
+              "해지부탁드려요"
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "text": "환불 및 해지",
+                "ts": 1756184821398
+              },
+              {
+                "role": "user",
+                "text": "해지부탁드려요",
+                "ts": 1756185012181
+              },
+              {
+                "role": "manager",
+                "text": "안녕하세요 회원님,\n다음 정기결제 구독해지방법 안내드립니다.\n\n■정기결제 구독해지 방법\n①어스플러스 앱 접속\n②우측 상단 my(사람모양 아이콘) 클릭 -> 멤버십 관리 클릭 \n③회색글씨로 된 <내역보기> 클릭\n④구독해지 클릭\n\n❗주의사항\n-구독해지 신청은 다음 정기결제에 대한 해지입니다.",
+                "ts": 1756187442608
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "690ec4349d4ef4e7f7572a39",
+              "phone": "01051310394",
+              "ch_name": "이예순",
+              "products": [],
+              "transactions": [],
+              "usage": {
+                "accessed": false,
+                "count": 0
+              },
+              "memberships": [],
+              "refunds": []
+            },
+            "expected": {
+              "template_id": "T1_구독해지_방법_앱",
+              "applied_rule": "결제 이력 없음 → T1 해지 방법 안내",
+              "path_contains": "T1"
+            }
+          },
+          "actual_output": {
+            "template_id": "T1_구독해지_방법_앱",
+            "refund_amount": null
+          },
+          "name": "T1_68ad40bf_no_products",
+          "expected_output": "T1_구독해지_방법_앱",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "compose"
+          ],
+          "metadata": {
+            "source_chat_id": "68ad40bf3e50d002f99b",
+            "expected_template_id": "T1_구독해지_방법_앱",
+            "expected_refund_amount": null,
+            "applied_rule": "결제 이력 없음 → T1 해지 방법 안내",
+            "scenario": "T1 구독해지 방법 — 결제 이력 없음"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T2 부분환불 — 6개월권 500,000원, 1개월 경과",
+            "description": "enriched 688ffafde9824368e3cc 역산. 매니저 답: 환불금액 360,000원 (1개월 정가 100k 차감 + 잔여 90%). conversation_time을 refund 이전으로 설정.",
+            "source_chat_id": "688ffafde9824368e3cc",
+            "conversation_time": "2025-08-01T10:00:00Z",
+            "user_messages": [
+              "해지신청했는데 처리 되었는지 확인 차 문의드립니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "ts": 1722506400000,
+                "text": "해지신청했는데 처리 되었는지 확인 차 문의드립니다."
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "mock_user_688ffaf",
+              "phone": "01000000000",
+              "ch_name": "김가연",
+              "products": [
+                {
+                  "master": "박두환 Official club",
+                  "name": "투자동행반(6개월)",
+                  "status": "active",
+                  "price": 500000,
+                  "activated": "2025-07-01T13:48:11.954Z",
+                  "expired": "2026-01-01T13:48:11.942Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 500000,
+                  "method": "card",
+                  "info": "531764******8882",
+                  "date": "2025-07-01T13:48:11.954Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 2
+              },
+              "memberships": [
+                {
+                  "productName": "박두환 Official club 투자동행반(6개월)",
+                  "paymentCycle": 1,
+                  "expiration": false,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2025-07-01T13:48:11.954Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "500000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "531764******8882",
+                      "cardType": "우리카드"
+                    }
+                  ]
+                }
+              ],
+              "refunds": []
+            },
+            "expected": {
+              "template_id": "T2_환불_규정_금액",
+              "refund_amount_manager": 360000,
+              "manager_reasoning": "500,000 - 1개월정가 100,000 = 400,000, × 0.9 = 360,000",
+              "path_contains": "T2"
+            }
+          },
+          "actual_output": {
+            "template_id": "T7_해지_확인_완료",
+            "refund_amount": null
+          },
+          "name": "T2_688ffaf_6month_500k",
+          "expected_output": "T2_환불_규정_금액",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "final"
+          ],
+          "metadata": {
+            "source_chat_id": "688ffafde9824368e3cc",
+            "expected_template_id": "T2_환불_규정_금액",
+            "expected_refund_amount": 360000,
+            "applied_rule": "",
+            "scenario": "T2 부분환불 — 6개월권 500,000원, 1개월 경과"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T2 부분환불 — 1개월권 50,000원, 5일 경과, 열람 있음",
+            "description": "enriched 68b96029c4550622265d 역산. 매니저 답: 환불금액 30,000원 (1개월 정가 1/3 차감 + 잔여 90%). baseline 회귀 케이스 — 1개월권은 버그 #2 영향 없음.",
+            "source_chat_id": "68b96029c4550622265d",
+            "conversation_time": "2025-09-08T10:00:00Z",
+            "user_messages": [
+              "환불 문의드립니다"
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "ts": 1725789600000,
+                "text": "환불 문의드립니다"
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "mock_user_68b9602",
+              "phone": "01000000000",
+              "ch_name": "이가연",
+              "products": [
+                {
+                  "master": "캡틴 돈깡의 머니 크루",
+                  "name": "캡틴 돈깡의 머니 크루 1개월반",
+                  "status": "active",
+                  "price": 50000,
+                  "activated": "2025-09-03T10:00:00Z",
+                  "expired": "2025-10-03T10:00:00Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 50000,
+                  "method": "card",
+                  "info": "신한카드",
+                  "date": "2025-09-03T10:00:00Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 1
+              },
+              "memberships": [
+                {
+                  "productName": "캡틴 돈깡의 머니 크루 1개월반",
+                  "paymentCycle": 1,
+                  "expiration": false,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2025-09-03T10:00:00Z",
+                      "state": "purchased_success",
+                      "method": "card"
+                    }
+                  ]
+                }
+              ],
+              "refunds": []
+            },
+            "expected": {
+              "template_id": "T2_환불_규정_금액",
+              "refund_amount_manager": 30000,
+              "manager_reasoning": "50,000 - 1개월정가 50,000 × 1/3 = 33,334, × 0.9 = 30,001 (±1원)",
+              "path_contains": "T2"
+            }
+          },
+          "actual_output": {
+            "template_id": "T2_환불_규정_금액",
+            "refund_amount": 30015
+          },
+          "name": "T2_68b9602_1month_50k",
+          "expected_output": "T2_환불_규정_금액",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "tool_call",
+            "tool_result",
+            "final"
+          ],
+          "metadata": {
+            "source_chat_id": "68b96029c4550622265d",
+            "expected_template_id": "T2_환불_규정_금액",
+            "expected_refund_amount": 30000,
+            "applied_rule": "",
+            "scenario": "T2 부분환불 — 1개월권 50,000원, 5일 경과, 열람 있음"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T2→T3 멀티턴 — 견적 안내 후 환불 확정",
+            "description": "실 케이스 68c0de43. 유저 '해지+환불' → 매니저 T2 견적 → 유저 '네 진행해주세요' → 매니저 T3 접수완료. 1개월권 50,000원, 3일 경과, 열람 있음 → 30,000원 환불. 시점 복원: conversation_time=대화 시작일, refunds/refund_tx 제거.",
+            "source_chat_id": "68c0de43ee1b54a05d8b",
+            "conversation_time": "2025-09-09T22:00:00Z",
+            "user_messages": [
+              "구독해지, 환불 요청합니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "ts": 1757470325627,
+                "text": "구독해지, 환불 요청합니다."
+              },
+              {
+                "role": "manager",
+                "ts": 1757470807155,
+                "text": "네 회원님, 환불 처리 도와드리겠습니다. 현재 어스플러스는 7일 이내 구독권 미개시 시 전액 환불 접수를 도와드리나 구독권 개시 시 환불 규정에 따른 금액으로 차감됩니다. ■ 환불 금액: 30,000원"
+              },
+              {
+                "role": "user",
+                "ts": 1757470893949,
+                "text": "콘텐츠가 너무 안올라오는 것 같습니다. 다음에 필요시 재신청하겠습니다. 환불 진행해주세요."
+              },
+              {
+                "role": "manager",
+                "ts": 1757471090744,
+                "text": "[환불 최종 확정 안내] 네 회원님, 환불 접수 완료되었습니다."
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "mock_68c0de43",
+              "phone": "01000000000",
+              "ch_name": "T2T3 멀티턴 테스트",
+              "products": [
+                {
+                  "master": "돈깡 Official club",
+                  "name": "캡틴 돈깡의 머니 크루 1개월반",
+                  "status": "active",
+                  "price": 50000,
+                  "activated": "2025-09-07T05:14:00.907Z",
+                  "expired": "2025-10-07T05:14:00.907Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 50000,
+                  "method": "CA",
+                  "info": "498761******5886",
+                  "date": "2025-09-07T05:14:00.919Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 2
+              },
+              "memberships": [
+                {
+                  "productName": "돈깡 Official club 캡틴 돈깡의 머니 크루 1개월반",
+                  "paymentCycle": 1,
+                  "expiration": false,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2025-09-07T05:14:00.919Z",
+                      "state": "purchased_success",
+                      "method": "CA"
+                    }
+                  ]
+                }
+              ],
+              "refunds": []
+            },
+            "expected": {
+              "template_id": "T3_환불_접수_완료",
+              "applied_rule": "멀티턴 최종 — 이전 턴 T2 견적 + 유저 환불 확정 → T3 접수완료",
+              "path_contains": "T3",
+              "note": "Turn 0 → T2, Turn 2 → T3. 평가는 **멀티턴 최종(=T3)** 기준. 매니저도 turn 3에서 T3 접수완료 응답. conversation_turns 전체 맥락으로 판단."
+            }
+          },
+          "actual_output": {
+            "template_id": "T3_환불_접수_완료",
+            "refund_amount": null
+          },
+          "name": "T2_T3_68c0de43_multiturn",
+          "expected_output": "T3_환불_접수_완료",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "compose"
+          ],
+          "metadata": {
+            "source_chat_id": "68c0de43ee1b54a05d8b",
+            "expected_template_id": "T3_환불_접수_완료",
+            "expected_refund_amount": null,
+            "applied_rule": "멀티턴 최종 — 이전 턴 T2 견적 + 유저 환불 확정 → T3 접수완료",
+            "scenario": "T2→T3 멀티턴 — 견적 안내 후 환불 확정"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T4 자동결제 설명 — 자동 결제 불만",
+            "description": "실 케이스 689121ba. '어제 자동 결제됐어요 취소' → T4 리텐션 설명.",
+            "source_chat_id": "689121ba9950118cab08",
+            "conversation_time": "2025-09-01T10:00:00Z",
+            "user_messages": [
+              "어제 자동으로 구독이 연장되어 결제가 진행되었습니다. 구독 취소 부탁드립니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "text": "어제 자동으로 구독이 연장되어 결제가 진행되었습니다. 구독 취소 부탁드립니다.",
+                "ts": 1754341983120
+              },
+              {
+                "role": "manager",
+                "text": "안녕하세요, 회원님. 문의 주셔서 감사합니다.\n박두환 마스터 과정을 함께해 주시고 꾸준히 학습해 주심에 진심으로 감사드립니다.\n본 과정은 정기적으로 제공되는 콘텐츠를 통해 투자 학습을 이어가는 구독형 스터디입니다.\n회원님께서는 지난 7월 과정에 이어 8월 과정의 정기결제가 진행되었습니다.\n정기결제는 최초 결제 시 상세히 안내드렸으며, 회원님께서 안내 확인 후 동의 및 카드 정보 등록을 해주신 내용에 따라 자동 결제가 진행되고 있습니다.\n\n회원님께서 환불 혹은 다음 결제 해지 요청을 주신다면 언제든지 해지 도와드릴 수 있습니다.\n회원",
+                "ts": 1754356575311
+              },
+              {
+                "role": "user",
+                "text": "어제 자동결제가 된 이번달부터 구독 해지 및 환불 부탁드립니다.",
+                "ts": 1754357287575
+              },
+              {
+                "role": "manager",
+                "text": "네 회원님, 환불 접수 완료되었습니다. \n \n카드 결제를 해주시어 결제해주신 카드 취소로 진행될 예정입니다. \n카드사 반영까지는 영업일 기준 최대 3일 정도 소요되실 수 있습니다. \n감사합니다. \n \n[환불 안내사항] \n1. 최종 카드 환불의 경우 카드사 사정으로 인해 환불접수일로부터 영업일 기준 최대 3일가량 소요될 수 있습니다. \n2. 취소 완료 시, 카드사에서 안내해 드리는 SMS는 회원님의 수신 설정 여부에 따라 미수신 될 수 있습니다. \n3. 환불 접수 완료 시, 구독권은 즉시 종료됩니다.",
+                "ts": 1754359670203
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "6863a0058c3c9f69febc9c46",
+              "phone": "01089131410",
+              "ch_name": "이현서",
+              "products": [
+                {
+                  "master": "박두환 Official club",
+                  "name": "투자동행반(1개월)",
+                  "status": "inactive",
+                  "price": 100000,
+                  "activated": "2025-07-01T08:48:58.221Z",
+                  "expired": "2025-08-05T02:07:26.543Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 2,
+                  "state": "purchased_success",
+                  "amount": 100000,
+                  "method": "CA",
+                  "info": "510737******6948",
+                  "date": "2025-08-04T06:04:44.983Z"
+                },
+                {
+                  "round": 2,
+                  "state": "purchased_refund",
+                  "amount": 100000,
+                  "method": "unknown",
+                  "info": "510737******6948",
+                  "date": "2025-08-05T02:07:26.540Z"
+                },
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 100000,
+                  "method": "CA",
+                  "info": "510737******6948",
+                  "date": "2025-07-01T08:48:58.234Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 2
+              },
+              "memberships": [
+                {
+                  "productName": "박두환 Official club 투자동행반(1개월)",
+                  "paymentCycle": 2,
+                  "expiration": true,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2025-08-04T06:04:44.983Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "100000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "510737******6948",
+                      "cardType": "신한"
+                    },
+                    {
+                      "createdAt": "2025-07-01T08:48:58.234Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "100000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "510737******6948",
+                      "cardType": "신한카드체크"
+                    }
+                  ]
+                }
+              ],
+              "refunds": [
+                {
+                  "productName": "박두환 Official club 투자동행반(1개월)",
+                  "createdAt": "2025-07-01T08:48:58.222Z",
+                  "paymentHistory": {
+                    "amount": 100000,
+                    "cardType": null,
+                    "cardNo": "510737******6948",
+                    "createdAt": "2025-07-01T08:48:58.222Z"
+                  },
+                  "refundHistory": {
+                    "refundAmount": 100000,
+                    "refundAt": "2025-08-05T02:07:26.540Z"
+                  }
+                }
+              ]
+            },
+            "expected": {
+              "template_id": "T4_자동결제_설명",
+              "applied_rule": "자동결제 불만 + 결제 이력 있음 → T4",
+              "path_contains": "T4"
+            }
+          },
+          "actual_output": {
+            "template_id": "T7_해지_확인_완료",
+            "refund_amount": null
+          },
+          "name": "T4_689121ba_auto_payment",
+          "expected_output": "T4_자동결제_설명",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "final"
+          ],
+          "metadata": {
+            "source_chat_id": "689121ba9950118cab08",
+            "expected_template_id": "T4_자동결제_설명",
+            "expected_refund_amount": null,
+            "applied_rule": "자동결제 불만 + 결제 이력 있음 → T4",
+            "scenario": "T4 자동결제 설명 — 자동 결제 불만"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T6 본인확인 요청 — 유저 미식별",
+            "description": "실 케이스 68b6435f. 환불 요청 but us_user_id 없음 → 성함/전화번호 요청.",
+            "source_chat_id": "68b6435f8341ecd14795",
+            "conversation_time": "2025-09-01T10:00:00Z",
+            "user_messages": [
+              "박두환 투자동행학교  남은 기간 환불  하고싶습니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "text": "박두환 투자동행학교  남은 기간 환불  하고싶습니다.",
+                "ts": 1756775315881
+              },
+              {
+                "role": "manager",
+                "text": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+                "ts": 1756781876604
+              }
+            ],
+            "admin_data": null,
+            "expected": {
+              "template_id": "T6_본인확인_요청",
+              "applied_rule": "us_user_id 없음 → T6 본인확인 요청",
+              "path_contains": "T6"
+            }
+          },
+          "actual_output": {
+            "template_id": "T6_본인확인_요청",
+            "refund_amount": null
+          },
+          "name": "T6_68b6435f_no_user",
+          "expected_output": "T6_본인확인_요청",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "classify",
+            "final"
+          ],
+          "metadata": {
+            "source_chat_id": "68b6435f8341ecd14795",
+            "expected_template_id": "T6_본인확인_요청",
+            "expected_refund_amount": null,
+            "applied_rule": "us_user_id 없음 → T6 본인확인 요청",
+            "scenario": "T6 본인확인 요청 — 유저 미식별"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T8 카드변경 안내 — 롯데→국민카드 변경 요청",
+            "description": "실 케이스 68b7a8cd. 유저 카드 변경 요청 → T8 변경 방법 안내.",
+            "source_chat_id": "68b7a8cd30036d61f257",
+            "conversation_time": "2025-09-01T10:00:00Z",
+            "user_messages": [
+              "그 외 기타 문의(오류/구독해지/환불)",
+              "롯데카드로 결제를 했는데 카드 해지를 해야해서 결제 방법을 국민카드로 변경하고 싶습니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "text": "롯데카드로 결제를 했는데 카드 해지를 해야해서 결제 방법을 국민카드로 변경하고 싶습니다.",
+                "ts": 1756866959890
+              },
+              {
+                "role": "manager",
+                "text": "안녕하세요 회원님,\n결제 등록를 다른 카드로 결제 변경 희망하실까요? \n \n✅ 변경 방법을 안내 드립니다. \n \n▶결제카드 변경: https://us-insight.com/ \n \n1. 어스 앱이 아닌 웹페이지로 접속 해주세요. \n2. 구독 결제 해주신 계정으로 로그인 해주세요. \n3. 오른쪽 상단 'MY' 클릭 해주세요. \n4. 멤버십 관리를 눌러주세요 \n5. 구독중 상품에 [결제 변경]을 눌러주세요 \n6. 100원 결제 후, 카드변경이 완료됩니다. \n \n※ 카드 변경 안내\n* 결제 정보 변경 시, 100원이 일시적으로 결제됩니다.",
+                "ts": 1756875955027
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "68792b82decdf0c10a02a696",
+              "phone": "01052397323",
+              "ch_name": "안영희",
+              "products": [
+                {
+                  "master": "서재형 Official club",
+                  "name": "개나리반",
+                  "status": "active",
+                  "price": 5000,
+                  "activated": "2025-07-17T17:02:10.491Z",
+                  "expired": "2026-04-17T17:02:10.491Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 9,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2026-03-18T06:01:44.373Z"
+                },
+                {
+                  "round": 8,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2026-02-18T06:02:07.889Z"
+                },
+                {
+                  "round": 7,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2026-01-18T06:01:32.256Z"
+                },
+                {
+                  "round": 6,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2025-12-18T06:01:34.264Z"
+                },
+                {
+                  "round": 5,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2025-11-18T06:01:36.620Z"
+                },
+                {
+                  "round": 4,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2025-10-18T06:00:33.878Z"
+                },
+                {
+                  "round": 3,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2025-09-18T06:00:29.578Z"
+                },
+                {
+                  "round": 2,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "513792******2812",
+                  "date": "2025-08-18T06:00:25.746Z"
+                },
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "513792******2812",
+                  "date": "2025-07-17T17:02:10.506Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 9
+              },
+              "memberships": [
+                {
+                  "productName": "서재형 Official club 개나리반",
+                  "paymentCycle": 9,
+                  "expiration": false,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2026-03-18T06:01:44.373Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2026-02-18T06:02:07.889Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2026-01-18T06:01:32.256Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2025-12-18T06:01:34.264Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2025-11-18T06:01:36.620Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2025-10-18T06:00:33.878Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2025-09-18T06:00:29.578Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2025-08-18T06:00:25.746Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "513792******2812",
+                      "cardType": "롯데"
+                    },
+                    {
+                      "createdAt": "2025-07-17T17:02:10.506Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "513792******2812",
+                      "cardType": "롯데카드"
+                    }
+                  ]
+                }
+              ],
+              "refunds": []
+            },
+            "expected": {
+              "template_id": "T8_카드변경_안내",
+              "applied_rule": "카드 변경 키워드 → T8",
+              "path_contains": "T8"
+            }
+          },
+          "actual_output": {
+            "template_id": "T8_카드변경_안내",
+            "refund_amount": null
+          },
+          "name": "T8_68b7a8cd_card_change",
+          "expected_output": "T8_카드변경_안내",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "compose"
+          ],
+          "metadata": {
+            "source_chat_id": "68b7a8cd30036d61f257",
+            "expected_template_id": "T8_카드변경_안내",
+            "expected_refund_amount": null,
+            "applied_rule": "카드 변경 키워드 → T8",
+            "scenario": "T8 카드변경 안내 — 롯데→국민카드 변경 요청"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        }
+      ],
+      "scores": [
+        1.0,
+        1.0,
+        0.0,
+        1.0,
+        1.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "test_passes": [
+        true,
+        true,
+        false,
+        true,
+        true,
+        false,
+        true,
+        true
+      ],
+      "reasons": [
+        "expected=T12_환불진행_상태안내, actual=T12_환불진행_상태안내",
+        "expected=T1_구독해지_방법_앱, actual=T1_구독해지_방법_앱",
+        "expected=T2_환불_규정_금액, actual=T7_해지_확인_완료",
+        "expected=T2_환불_규정_금액, actual=T2_환불_규정_금액",
+        "expected=T3_환불_접수_완료, actual=T3_환불_접수_완료",
+        "expected=T4_자동결제_설명, actual=T7_해지_확인_완료",
+        "expected=T6_본인확인_요청, actual=T6_본인확인_요청",
+        "expected=T8_카드변경_안내, actual=T8_카드변경_안내"
+      ]
+    },
+    {
+      "evaluator": "EvaluationReport",
+      "overall_score": 0.75,
+      "cases": [
+        {
+          "input": {
+            "scenario": "T12 환불 진행 상태 안내 — 지난주 신청, 아직 입금 안 됨",
+            "description": "실 케이스 68afbc9e. 유저 '지난주 환불 신청했는데 입금 아직' → 매니저 '이미 처리 완료, 카드사 문의'. admin_data는 원본에 비어있어 인공 구성: pending refund 1건.",
+            "source_chat_id": "68afbc9ed824868f902e",
+            "conversation_time": "2025-08-26T10:00:00Z",
+            "user_messages": [
+              "안녕하세요 지난주에 환불 신청했는데 입금이 아직 되지 않고 있어서 확인차 연락 드립니다. 현재 진행 상태 알려 주시기 부탁 드리겠습니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "ts": 1756195200000,
+                "text": "안녕하세요 지난주에 환불 신청했는데 입금이 아직 되지 않고 있어서 확인차 연락 드립니다. 현재 진행 상태 알려 주시기 부탁 드리겠습니다."
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "mock_68afbc9e",
+              "phone": "01000000000",
+              "ch_name": "지연 재촉 테스트",
+              "products": [
+                {
+                  "master": "이정윤 Official club",
+                  "name": "프라임클래스",
+                  "status": "inactive",
+                  "price": 50000,
+                  "activated": "2025-07-15T10:00:00Z",
+                  "expired": "2025-08-19T10:00:00Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 50000,
+                  "method": "card",
+                  "info": "신한카드",
+                  "date": "2025-07-15T10:00:00Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 5
+              },
+              "memberships": [
+                {
+                  "productName": "이정윤 Official club 프라임클래스",
+                  "paymentCycle": 1,
+                  "expiration": true,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2025-07-15T10:00:00Z",
+                      "state": "purchased_success",
+                      "method": "card"
+                    },
+                    {
+                      "createdAt": "2025-08-19T10:00:00Z",
+                      "state": "subscription_cancelled"
+                    }
+                  ]
+                }
+              ],
+              "refunds": [
+                {
+                  "productName": "이정윤 Official club 프라임클래스",
+                  "createdAt": "2025-08-19T10:00:00Z",
+                  "paymentHistory": {
+                    "amount": 50000,
+                    "cardType": "신한카드",
+                    "cardNo": "****1234",
+                    "createdAt": "2025-07-15T10:00:00Z"
+                  },
+                  "refundHistory": {
+                    "refundAmount": 30000,
+                    "refundAt": null
+                  }
+                }
+              ]
+            },
+            "expected": {
+              "template_id": "T12_환불진행_상태안내",
+              "applied_rule": "진행 중 환불 + 재촉/확인 의도 → T12",
+              "path_contains": "T12"
+            }
+          },
+          "actual_output": {
+            "template_id": "T12_환불진행_상태안내",
+            "refund_amount": null
+          },
+          "name": "T12_68afbc9e_refund_delay",
+          "expected_output": "T12_환불진행_상태안내",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "final"
+          ],
+          "metadata": {
+            "source_chat_id": "68afbc9ed824868f902e",
+            "expected_template_id": "T12_환불진행_상태안내",
+            "expected_refund_amount": null,
+            "applied_rule": "진행 중 환불 + 재촉/확인 의도 → T12",
+            "scenario": "T12 환불 진행 상태 안내 — 지난주 신청, 아직 입금 안 됨"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T1 구독해지 방법 — 결제 이력 없음",
+            "description": "실 케이스 68ad40bf. 유저 '해지부탁드려요' + 결제/상품 없음 → T1 해지 방법 안내.",
+            "source_chat_id": "68ad40bf3e50d002f99b",
+            "conversation_time": "2025-09-01T10:00:00Z",
+            "user_messages": [
+              "해지부탁드려요"
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "text": "환불 및 해지",
+                "ts": 1756184821398
+              },
+              {
+                "role": "user",
+                "text": "해지부탁드려요",
+                "ts": 1756185012181
+              },
+              {
+                "role": "manager",
+                "text": "안녕하세요 회원님,\n다음 정기결제 구독해지방법 안내드립니다.\n\n■정기결제 구독해지 방법\n①어스플러스 앱 접속\n②우측 상단 my(사람모양 아이콘) 클릭 -> 멤버십 관리 클릭 \n③회색글씨로 된 <내역보기> 클릭\n④구독해지 클릭\n\n❗주의사항\n-구독해지 신청은 다음 정기결제에 대한 해지입니다.",
+                "ts": 1756187442608
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "690ec4349d4ef4e7f7572a39",
+              "phone": "01051310394",
+              "ch_name": "이예순",
+              "products": [],
+              "transactions": [],
+              "usage": {
+                "accessed": false,
+                "count": 0
+              },
+              "memberships": [],
+              "refunds": []
+            },
+            "expected": {
+              "template_id": "T1_구독해지_방법_앱",
+              "applied_rule": "결제 이력 없음 → T1 해지 방법 안내",
+              "path_contains": "T1"
+            }
+          },
+          "actual_output": {
+            "template_id": "T1_구독해지_방법_앱",
+            "refund_amount": null
+          },
+          "name": "T1_68ad40bf_no_products",
+          "expected_output": "T1_구독해지_방법_앱",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "compose"
+          ],
+          "metadata": {
+            "source_chat_id": "68ad40bf3e50d002f99b",
+            "expected_template_id": "T1_구독해지_방법_앱",
+            "expected_refund_amount": null,
+            "applied_rule": "결제 이력 없음 → T1 해지 방법 안내",
+            "scenario": "T1 구독해지 방법 — 결제 이력 없음"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T2 부분환불 — 6개월권 500,000원, 1개월 경과",
+            "description": "enriched 688ffafde9824368e3cc 역산. 매니저 답: 환불금액 360,000원 (1개월 정가 100k 차감 + 잔여 90%). conversation_time을 refund 이전으로 설정.",
+            "source_chat_id": "688ffafde9824368e3cc",
+            "conversation_time": "2025-08-01T10:00:00Z",
+            "user_messages": [
+              "해지신청했는데 처리 되었는지 확인 차 문의드립니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "ts": 1722506400000,
+                "text": "해지신청했는데 처리 되었는지 확인 차 문의드립니다."
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "mock_user_688ffaf",
+              "phone": "01000000000",
+              "ch_name": "김가연",
+              "products": [
+                {
+                  "master": "박두환 Official club",
+                  "name": "투자동행반(6개월)",
+                  "status": "active",
+                  "price": 500000,
+                  "activated": "2025-07-01T13:48:11.954Z",
+                  "expired": "2026-01-01T13:48:11.942Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 500000,
+                  "method": "card",
+                  "info": "531764******8882",
+                  "date": "2025-07-01T13:48:11.954Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 2
+              },
+              "memberships": [
+                {
+                  "productName": "박두환 Official club 투자동행반(6개월)",
+                  "paymentCycle": 1,
+                  "expiration": false,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2025-07-01T13:48:11.954Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "500000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "531764******8882",
+                      "cardType": "우리카드"
+                    }
+                  ]
+                }
+              ],
+              "refunds": []
+            },
+            "expected": {
+              "template_id": "T2_환불_규정_금액",
+              "refund_amount_manager": 360000,
+              "manager_reasoning": "500,000 - 1개월정가 100,000 = 400,000, × 0.9 = 360,000",
+              "path_contains": "T2"
+            }
+          },
+          "actual_output": {
+            "template_id": "T7_해지_확인_완료",
+            "refund_amount": null
+          },
+          "name": "T2_688ffaf_6month_500k",
+          "expected_output": "T2_환불_규정_금액",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "final"
+          ],
+          "metadata": {
+            "source_chat_id": "688ffafde9824368e3cc",
+            "expected_template_id": "T2_환불_규정_금액",
+            "expected_refund_amount": 360000,
+            "applied_rule": "",
+            "scenario": "T2 부분환불 — 6개월권 500,000원, 1개월 경과"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T2 부분환불 — 1개월권 50,000원, 5일 경과, 열람 있음",
+            "description": "enriched 68b96029c4550622265d 역산. 매니저 답: 환불금액 30,000원 (1개월 정가 1/3 차감 + 잔여 90%). baseline 회귀 케이스 — 1개월권은 버그 #2 영향 없음.",
+            "source_chat_id": "68b96029c4550622265d",
+            "conversation_time": "2025-09-08T10:00:00Z",
+            "user_messages": [
+              "환불 문의드립니다"
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "ts": 1725789600000,
+                "text": "환불 문의드립니다"
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "mock_user_68b9602",
+              "phone": "01000000000",
+              "ch_name": "이가연",
+              "products": [
+                {
+                  "master": "캡틴 돈깡의 머니 크루",
+                  "name": "캡틴 돈깡의 머니 크루 1개월반",
+                  "status": "active",
+                  "price": 50000,
+                  "activated": "2025-09-03T10:00:00Z",
+                  "expired": "2025-10-03T10:00:00Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 50000,
+                  "method": "card",
+                  "info": "신한카드",
+                  "date": "2025-09-03T10:00:00Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 1
+              },
+              "memberships": [
+                {
+                  "productName": "캡틴 돈깡의 머니 크루 1개월반",
+                  "paymentCycle": 1,
+                  "expiration": false,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2025-09-03T10:00:00Z",
+                      "state": "purchased_success",
+                      "method": "card"
+                    }
+                  ]
+                }
+              ],
+              "refunds": []
+            },
+            "expected": {
+              "template_id": "T2_환불_규정_금액",
+              "refund_amount_manager": 30000,
+              "manager_reasoning": "50,000 - 1개월정가 50,000 × 1/3 = 33,334, × 0.9 = 30,001 (±1원)",
+              "path_contains": "T2"
+            }
+          },
+          "actual_output": {
+            "template_id": "T2_환불_규정_금액",
+            "refund_amount": 30015
+          },
+          "name": "T2_68b9602_1month_50k",
+          "expected_output": "T2_환불_규정_금액",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "tool_call",
+            "tool_result",
+            "final"
+          ],
+          "metadata": {
+            "source_chat_id": "68b96029c4550622265d",
+            "expected_template_id": "T2_환불_규정_금액",
+            "expected_refund_amount": 30000,
+            "applied_rule": "",
+            "scenario": "T2 부분환불 — 1개월권 50,000원, 5일 경과, 열람 있음"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T2→T3 멀티턴 — 견적 안내 후 환불 확정",
+            "description": "실 케이스 68c0de43. 유저 '해지+환불' → 매니저 T2 견적 → 유저 '네 진행해주세요' → 매니저 T3 접수완료. 1개월권 50,000원, 3일 경과, 열람 있음 → 30,000원 환불. 시점 복원: conversation_time=대화 시작일, refunds/refund_tx 제거.",
+            "source_chat_id": "68c0de43ee1b54a05d8b",
+            "conversation_time": "2025-09-09T22:00:00Z",
+            "user_messages": [
+              "구독해지, 환불 요청합니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "ts": 1757470325627,
+                "text": "구독해지, 환불 요청합니다."
+              },
+              {
+                "role": "manager",
+                "ts": 1757470807155,
+                "text": "네 회원님, 환불 처리 도와드리겠습니다. 현재 어스플러스는 7일 이내 구독권 미개시 시 전액 환불 접수를 도와드리나 구독권 개시 시 환불 규정에 따른 금액으로 차감됩니다. ■ 환불 금액: 30,000원"
+              },
+              {
+                "role": "user",
+                "ts": 1757470893949,
+                "text": "콘텐츠가 너무 안올라오는 것 같습니다. 다음에 필요시 재신청하겠습니다. 환불 진행해주세요."
+              },
+              {
+                "role": "manager",
+                "ts": 1757471090744,
+                "text": "[환불 최종 확정 안내] 네 회원님, 환불 접수 완료되었습니다."
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "mock_68c0de43",
+              "phone": "01000000000",
+              "ch_name": "T2T3 멀티턴 테스트",
+              "products": [
+                {
+                  "master": "돈깡 Official club",
+                  "name": "캡틴 돈깡의 머니 크루 1개월반",
+                  "status": "active",
+                  "price": 50000,
+                  "activated": "2025-09-07T05:14:00.907Z",
+                  "expired": "2025-10-07T05:14:00.907Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 50000,
+                  "method": "CA",
+                  "info": "498761******5886",
+                  "date": "2025-09-07T05:14:00.919Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 2
+              },
+              "memberships": [
+                {
+                  "productName": "돈깡 Official club 캡틴 돈깡의 머니 크루 1개월반",
+                  "paymentCycle": 1,
+                  "expiration": false,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2025-09-07T05:14:00.919Z",
+                      "state": "purchased_success",
+                      "method": "CA"
+                    }
+                  ]
+                }
+              ],
+              "refunds": []
+            },
+            "expected": {
+              "template_id": "T3_환불_접수_완료",
+              "applied_rule": "멀티턴 최종 — 이전 턴 T2 견적 + 유저 환불 확정 → T3 접수완료",
+              "path_contains": "T3",
+              "note": "Turn 0 → T2, Turn 2 → T3. 평가는 **멀티턴 최종(=T3)** 기준. 매니저도 turn 3에서 T3 접수완료 응답. conversation_turns 전체 맥락으로 판단."
+            }
+          },
+          "actual_output": {
+            "template_id": "T3_환불_접수_완료",
+            "refund_amount": null
+          },
+          "name": "T2_T3_68c0de43_multiturn",
+          "expected_output": "T3_환불_접수_완료",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "compose"
+          ],
+          "metadata": {
+            "source_chat_id": "68c0de43ee1b54a05d8b",
+            "expected_template_id": "T3_환불_접수_완료",
+            "expected_refund_amount": null,
+            "applied_rule": "멀티턴 최종 — 이전 턴 T2 견적 + 유저 환불 확정 → T3 접수완료",
+            "scenario": "T2→T3 멀티턴 — 견적 안내 후 환불 확정"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T4 자동결제 설명 — 자동 결제 불만",
+            "description": "실 케이스 689121ba. '어제 자동 결제됐어요 취소' → T4 리텐션 설명.",
+            "source_chat_id": "689121ba9950118cab08",
+            "conversation_time": "2025-09-01T10:00:00Z",
+            "user_messages": [
+              "어제 자동으로 구독이 연장되어 결제가 진행되었습니다. 구독 취소 부탁드립니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "text": "어제 자동으로 구독이 연장되어 결제가 진행되었습니다. 구독 취소 부탁드립니다.",
+                "ts": 1754341983120
+              },
+              {
+                "role": "manager",
+                "text": "안녕하세요, 회원님. 문의 주셔서 감사합니다.\n박두환 마스터 과정을 함께해 주시고 꾸준히 학습해 주심에 진심으로 감사드립니다.\n본 과정은 정기적으로 제공되는 콘텐츠를 통해 투자 학습을 이어가는 구독형 스터디입니다.\n회원님께서는 지난 7월 과정에 이어 8월 과정의 정기결제가 진행되었습니다.\n정기결제는 최초 결제 시 상세히 안내드렸으며, 회원님께서 안내 확인 후 동의 및 카드 정보 등록을 해주신 내용에 따라 자동 결제가 진행되고 있습니다.\n\n회원님께서 환불 혹은 다음 결제 해지 요청을 주신다면 언제든지 해지 도와드릴 수 있습니다.\n회원",
+                "ts": 1754356575311
+              },
+              {
+                "role": "user",
+                "text": "어제 자동결제가 된 이번달부터 구독 해지 및 환불 부탁드립니다.",
+                "ts": 1754357287575
+              },
+              {
+                "role": "manager",
+                "text": "네 회원님, 환불 접수 완료되었습니다. \n \n카드 결제를 해주시어 결제해주신 카드 취소로 진행될 예정입니다. \n카드사 반영까지는 영업일 기준 최대 3일 정도 소요되실 수 있습니다. \n감사합니다. \n \n[환불 안내사항] \n1. 최종 카드 환불의 경우 카드사 사정으로 인해 환불접수일로부터 영업일 기준 최대 3일가량 소요될 수 있습니다. \n2. 취소 완료 시, 카드사에서 안내해 드리는 SMS는 회원님의 수신 설정 여부에 따라 미수신 될 수 있습니다. \n3. 환불 접수 완료 시, 구독권은 즉시 종료됩니다.",
+                "ts": 1754359670203
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "6863a0058c3c9f69febc9c46",
+              "phone": "01089131410",
+              "ch_name": "이현서",
+              "products": [
+                {
+                  "master": "박두환 Official club",
+                  "name": "투자동행반(1개월)",
+                  "status": "inactive",
+                  "price": 100000,
+                  "activated": "2025-07-01T08:48:58.221Z",
+                  "expired": "2025-08-05T02:07:26.543Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 2,
+                  "state": "purchased_success",
+                  "amount": 100000,
+                  "method": "CA",
+                  "info": "510737******6948",
+                  "date": "2025-08-04T06:04:44.983Z"
+                },
+                {
+                  "round": 2,
+                  "state": "purchased_refund",
+                  "amount": 100000,
+                  "method": "unknown",
+                  "info": "510737******6948",
+                  "date": "2025-08-05T02:07:26.540Z"
+                },
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 100000,
+                  "method": "CA",
+                  "info": "510737******6948",
+                  "date": "2025-07-01T08:48:58.234Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 2
+              },
+              "memberships": [
+                {
+                  "productName": "박두환 Official club 투자동행반(1개월)",
+                  "paymentCycle": 2,
+                  "expiration": true,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2025-08-04T06:04:44.983Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "100000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "510737******6948",
+                      "cardType": "신한"
+                    },
+                    {
+                      "createdAt": "2025-07-01T08:48:58.234Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "100000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "510737******6948",
+                      "cardType": "신한카드체크"
+                    }
+                  ]
+                }
+              ],
+              "refunds": [
+                {
+                  "productName": "박두환 Official club 투자동행반(1개월)",
+                  "createdAt": "2025-07-01T08:48:58.222Z",
+                  "paymentHistory": {
+                    "amount": 100000,
+                    "cardType": null,
+                    "cardNo": "510737******6948",
+                    "createdAt": "2025-07-01T08:48:58.222Z"
+                  },
+                  "refundHistory": {
+                    "refundAmount": 100000,
+                    "refundAt": "2025-08-05T02:07:26.540Z"
+                  }
+                }
+              ]
+            },
+            "expected": {
+              "template_id": "T4_자동결제_설명",
+              "applied_rule": "자동결제 불만 + 결제 이력 있음 → T4",
+              "path_contains": "T4"
+            }
+          },
+          "actual_output": {
+            "template_id": "T7_해지_확인_완료",
+            "refund_amount": null
+          },
+          "name": "T4_689121ba_auto_payment",
+          "expected_output": "T4_자동결제_설명",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "final"
+          ],
+          "metadata": {
+            "source_chat_id": "689121ba9950118cab08",
+            "expected_template_id": "T4_자동결제_설명",
+            "expected_refund_amount": null,
+            "applied_rule": "자동결제 불만 + 결제 이력 있음 → T4",
+            "scenario": "T4 자동결제 설명 — 자동 결제 불만"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T6 본인확인 요청 — 유저 미식별",
+            "description": "실 케이스 68b6435f. 환불 요청 but us_user_id 없음 → 성함/전화번호 요청.",
+            "source_chat_id": "68b6435f8341ecd14795",
+            "conversation_time": "2025-09-01T10:00:00Z",
+            "user_messages": [
+              "박두환 투자동행학교  남은 기간 환불  하고싶습니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "text": "박두환 투자동행학교  남은 기간 환불  하고싶습니다.",
+                "ts": 1756775315881
+              },
+              {
+                "role": "manager",
+                "text": "안녕하세요 회원님, 문의 주셔서 감사합니다.\n성함/휴대전화 번호 말씀 주시면 확인 도와드리도록 하겠습니다.",
+                "ts": 1756781876604
+              }
+            ],
+            "admin_data": null,
+            "expected": {
+              "template_id": "T6_본인확인_요청",
+              "applied_rule": "us_user_id 없음 → T6 본인확인 요청",
+              "path_contains": "T6"
+            }
+          },
+          "actual_output": {
+            "template_id": "T6_본인확인_요청",
+            "refund_amount": null
+          },
+          "name": "T6_68b6435f_no_user",
+          "expected_output": "T6_본인확인_요청",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "classify",
+            "final"
+          ],
+          "metadata": {
+            "source_chat_id": "68b6435f8341ecd14795",
+            "expected_template_id": "T6_본인확인_요청",
+            "expected_refund_amount": null,
+            "applied_rule": "us_user_id 없음 → T6 본인확인 요청",
+            "scenario": "T6 본인확인 요청 — 유저 미식별"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        },
+        {
+          "input": {
+            "scenario": "T8 카드변경 안내 — 롯데→국민카드 변경 요청",
+            "description": "실 케이스 68b7a8cd. 유저 카드 변경 요청 → T8 변경 방법 안내.",
+            "source_chat_id": "68b7a8cd30036d61f257",
+            "conversation_time": "2025-09-01T10:00:00Z",
+            "user_messages": [
+              "그 외 기타 문의(오류/구독해지/환불)",
+              "롯데카드로 결제를 했는데 카드 해지를 해야해서 결제 방법을 국민카드로 변경하고 싶습니다."
+            ],
+            "conversation_turns": [
+              {
+                "role": "user",
+                "text": "롯데카드로 결제를 했는데 카드 해지를 해야해서 결제 방법을 국민카드로 변경하고 싶습니다.",
+                "ts": 1756866959890
+              },
+              {
+                "role": "manager",
+                "text": "안녕하세요 회원님,\n결제 등록를 다른 카드로 결제 변경 희망하실까요? \n \n✅ 변경 방법을 안내 드립니다. \n \n▶결제카드 변경: https://us-insight.com/ \n \n1. 어스 앱이 아닌 웹페이지로 접속 해주세요. \n2. 구독 결제 해주신 계정으로 로그인 해주세요. \n3. 오른쪽 상단 'MY' 클릭 해주세요. \n4. 멤버십 관리를 눌러주세요 \n5. 구독중 상품에 [결제 변경]을 눌러주세요 \n6. 100원 결제 후, 카드변경이 완료됩니다. \n \n※ 카드 변경 안내\n* 결제 정보 변경 시, 100원이 일시적으로 결제됩니다.",
+                "ts": 1756875955027
+              }
+            ],
+            "admin_data": {
+              "us_user_id": "68792b82decdf0c10a02a696",
+              "phone": "01052397323",
+              "ch_name": "안영희",
+              "products": [
+                {
+                  "master": "서재형 Official club",
+                  "name": "개나리반",
+                  "status": "active",
+                  "price": 5000,
+                  "activated": "2025-07-17T17:02:10.491Z",
+                  "expired": "2026-04-17T17:02:10.491Z"
+                }
+              ],
+              "transactions": [
+                {
+                  "round": 9,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2026-03-18T06:01:44.373Z"
+                },
+                {
+                  "round": 8,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2026-02-18T06:02:07.889Z"
+                },
+                {
+                  "round": 7,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2026-01-18T06:01:32.256Z"
+                },
+                {
+                  "round": 6,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2025-12-18T06:01:34.264Z"
+                },
+                {
+                  "round": 5,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2025-11-18T06:01:36.620Z"
+                },
+                {
+                  "round": 4,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2025-10-18T06:00:33.878Z"
+                },
+                {
+                  "round": 3,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "470349******7098",
+                  "date": "2025-09-18T06:00:29.578Z"
+                },
+                {
+                  "round": 2,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "513792******2812",
+                  "date": "2025-08-18T06:00:25.746Z"
+                },
+                {
+                  "round": 1,
+                  "state": "purchased_success",
+                  "amount": 5000,
+                  "method": "CA",
+                  "info": "513792******2812",
+                  "date": "2025-07-17T17:02:10.506Z"
+                }
+              ],
+              "usage": {
+                "accessed": true,
+                "count": 9
+              },
+              "memberships": [
+                {
+                  "productName": "서재형 Official club 개나리반",
+                  "paymentCycle": 9,
+                  "expiration": false,
+                  "membershipType": "subscription",
+                  "transactionHistories": [
+                    {
+                      "createdAt": "2026-03-18T06:01:44.373Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2026-02-18T06:02:07.889Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2026-01-18T06:01:32.256Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2025-12-18T06:01:34.264Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2025-11-18T06:01:36.620Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2025-10-18T06:00:33.878Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2025-09-18T06:00:29.578Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "470349******7098",
+                      "cardType": "KB국민"
+                    },
+                    {
+                      "createdAt": "2025-08-18T06:00:25.746Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "513792******2812",
+                      "cardType": "롯데"
+                    },
+                    {
+                      "createdAt": "2025-07-17T17:02:10.506Z",
+                      "state": "purchased_success",
+                      "method": "CA",
+                      "purchasedAmount": "5000",
+                      "purchasedMethod": "hecto",
+                      "cardNumber": "513792******2812",
+                      "cardType": "롯데카드"
+                    }
+                  ]
+                }
+              ],
+              "refunds": []
+            },
+            "expected": {
+              "template_id": "T8_카드변경_안내",
+              "applied_rule": "카드 변경 키워드 → T8",
+              "path_contains": "T8"
+            }
+          },
+          "actual_output": {
+            "template_id": "T8_카드변경_안내",
+            "refund_amount": null
+          },
+          "name": "T8_68b7a8cd_card_change",
+          "expected_output": "T8_카드변경_안내",
+          "expected_trajectory": null,
+          "actual_trajectory": [
+            "tool_result",
+            "classify",
+            "compose"
+          ],
+          "metadata": {
+            "source_chat_id": "68b7a8cd30036d61f257",
+            "expected_template_id": "T8_카드변경_안내",
+            "expected_refund_amount": null,
+            "applied_rule": "카드 변경 키워드 → T8",
+            "scenario": "T8 카드변경 안내 — 롯데→국민카드 변경 요청"
+          },
+          "actual_interactions": null,
+          "expected_interactions": null,
+          "actual_environment_state": null,
+          "expected_environment_state": null
+        }
+      ],
+      "scores": [
+        1.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "test_passes": [
+        true,
+        true,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true
+      ],
+      "reasons": [
+        "금액 체크 불요 (비-T2 유형)",
+        "금액 체크 불요 (비-T2 유형)",
+        "agent 금액 없음 (expected=360000)",
+        "expected=30000, actual=30015, diff=15",
+        "금액 체크 불요 (비-T2 유형)",
+        "금액 체크 불요 (비-T2 유형)",
+        "금액 체크 불요 (비-T2 유형)",
+        "금액 체크 불요 (비-T2 유형)"
+      ]
+    }
+  ]
+}

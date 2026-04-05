@@ -1,0 +1,59 @@
+{
+  "scenario": "T2→T3 멀티턴 — 견적 안내 후 환불 확정",
+  "description": "실 케이스 68c0de43. 유저 '해지+환불' → 매니저 T2 견적 → 유저 '네 진행해주세요' → 매니저 T3 접수완료. 1개월권 50,000원, 3일 경과, 열람 있음 → 30,000원 환불. 시점 복원: conversation_time=대화 시작일, refunds/refund_tx 제거.",
+  "source_chat_id": "68c0de43ee1b54a05d8b",
+  "conversation_time": "2025-09-09T22:00:00Z",
+  "user_messages": [
+    "구독해지, 환불 요청합니다."
+  ],
+  "conversation_turns": [
+    {"role": "user", "ts": 1757470325627, "text": "구독해지, 환불 요청합니다."},
+    {"role": "manager", "ts": 1757470807155, "text": "네 회원님, 환불 처리 도와드리겠습니다. 현재 어스플러스는 7일 이내 구독권 미개시 시 전액 환불 접수를 도와드리나 구독권 개시 시 환불 규정에 따른 금액으로 차감됩니다. ■ 환불 금액: 30,000원"},
+    {"role": "user", "ts": 1757470893949, "text": "콘텐츠가 너무 안올라오는 것 같습니다. 다음에 필요시 재신청하겠습니다. 환불 진행해주세요."},
+    {"role": "manager", "ts": 1757471090744, "text": "[환불 최종 확정 안내] 네 회원님, 환불 접수 완료되었습니다."}
+  ],
+  "admin_data": {
+    "us_user_id": "mock_68c0de43",
+    "phone": "01000000000",
+    "ch_name": "T2T3 멀티턴 테스트",
+    "products": [
+      {
+        "master": "돈깡 Official club",
+        "name": "캡틴 돈깡의 머니 크루 1개월반",
+        "status": "active",
+        "price": 50000,
+        "activated": "2025-09-07T05:14:00.907Z",
+        "expired": "2025-10-07T05:14:00.907Z"
+      }
+    ],
+    "transactions": [
+      {
+        "round": 1,
+        "state": "purchased_success",
+        "amount": 50000,
+        "method": "CA",
+        "info": "498761******5886",
+        "date": "2025-09-07T05:14:00.919Z"
+      }
+    ],
+    "usage": {"accessed": true, "count": 2},
+    "memberships": [
+      {
+        "productName": "돈깡 Official club 캡틴 돈깡의 머니 크루 1개월반",
+        "paymentCycle": 1,
+        "expiration": false,
+        "membershipType": "subscription",
+        "transactionHistories": [
+          {"createdAt": "2025-09-07T05:14:00.919Z", "state": "purchased_success", "method": "CA"}
+        ]
+      }
+    ],
+    "refunds": []
+  },
+  "expected": {
+    "template_id": "T3_환불_접수_완료",
+    "applied_rule": "멀티턴 최종 — 이전 턴 T2 견적 + 유저 환불 확정 → T3 접수완료",
+    "path_contains": "T3",
+    "note": "Turn 0 → T2, Turn 2 → T3. 평가는 **멀티턴 최종(=T3)** 기준. 매니저도 turn 3에서 T3 접수완료 응답. conversation_turns 전체 맥락으로 판단."
+  }
+}
