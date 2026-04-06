@@ -257,16 +257,35 @@ def handle_turn(agent: Agent, user_text: str) -> str:
     save_turn(mem, "user", user_text)
     turn_log.append({"role": "user", "text": user_text, "ts": len(turn_log) + 1})
 
-    # 2. context for workflow_tools (diagnose/calculate 용)
-    # admin_data 는 agent 가 lookup tool 로 조회 → tool 내부에서 _current_context 에 세팅
-    # 여기서는 빈 context 세팅 (lookup 전이므로)
-    _set_tool_context({
-        "user_text": user_text,
-        "ctx": {"us_user_id": "", "products": [], "success_txs": [], "refund_txs": [],
-                "active_products": [], "latest_refunded": False, "has_accessed": False,
-                "memberships": [], "refunds": [], "conversation_time": "", "prev_had_t2": False},
-        "success_txs": [], "products": [], "conversation_time": "", "has_accessed": False,
-    })
+    # 2. context 세팅 — 두 모드 지원
+    #    (a) 메시지에 <admin_data> 임베딩 → 파싱해서 context 세팅 (테스트/데모)
+    #    (b) 임베딩 없음 → 빈 context, agent 가 lookup_admin_data tool 호출 (프로덕션)
+    import re
+    admin_tag_match = re.search(r"<admin_data>(.*?)</admin_data>", user_text, re.DOTALL)
+    conv_time_match = re.search(r"<conversation_time>(.*?)</conversation_time>", user_text, re.DOTALL)
+    conv_time = (conv_time_match.group(1).strip() if conv_time_match else "")
+
+    if admin_tag_match:
+        try:
+            embedded_admin = json.loads(admin_tag_match.group(1).strip())
+        except (json.JSONDecodeError, ValueError):
+            embedded_admin = {}
+        ctx = build_engine_context(
+            user_text=re.sub(r"<\w+>.*?</\w+>", "", user_text, flags=re.DOTALL).strip(),
+            admin_data=embedded_admin,
+            turn_log=turn_log,
+            conversation_time=conv_time,
+        )
+        _set_tool_context(ctx)
+    else:
+        # 프로덕션: 빈 context → agent 가 lookup tool 로 채움
+        _set_tool_context({
+            "user_text": user_text,
+            "ctx": {"us_user_id": "", "products": [], "success_txs": [], "refund_txs": [],
+                    "active_products": [], "latest_refunded": False, "has_accessed": False,
+                    "memberships": [], "refunds": [], "conversation_time": "", "prev_had_t2": False},
+            "success_txs": [], "products": [], "conversation_time": "", "has_accessed": False,
+        })
 
     # 3. Memory context → system_prompt 보강
     memory_ctx = get_context_for_prompt(mem, user_text)
@@ -275,8 +294,30 @@ def handle_turn(agent: Agent, user_text: str) -> str:
     else:
         agent.system_prompt = SYSTEM_PROMPT
 
-    # 4. Agent 호출 (tool-loop: lookup → diagnose → calculate → compose)
-    result = agent(user_text)
+    # 4. Agent 호출 — admin_data 거대 JSON 대신 요약 힌트만 LLM 에 전달
+    #    admin_data 는 이미 _current_context 에 세팅됨 → tool 이 접근.
+    #    LLM 에 데이터 존재 힌트를 줘야 tool 호출 판단함 (힌트 없으면 "모호" 판단 → 미호출).
+    plain_text = re.sub(r"<\w+>.*?</\w+>", "", user_text, flags=re.DOTALL).strip()
+    if admin_tag_match:
+        ad = embedded_admin
+        hints = []
+        if ad.get("products"):
+            hints.append(f"상품 {len(ad['products'])}건")
+        txs = ad.get("transactions") or []
+        success = [t for t in txs if t.get("state") == "purchased_success"]
+        if success:
+            hints.append(f"결제 {len(success)}건 (최근 {success[-1].get('amount',0):,}원)")
+        if ad.get("usage", {}).get("accessed"):
+            hints.append("콘텐츠 열람있음")
+        refunds = ad.get("refunds") or []
+        if refunds:
+            hints.append(f"환불이력 {len(refunds)}건")
+        hint_str = ", ".join(hints) if hints else "유저 정보 없음 (결제/상품 없음)"
+        agent_input = f"{plain_text}\n\n[시스템: admin API 데이터 로드됨 — {hint_str}. diagnose_refund_case 로 진단하세요.]"
+    else:
+        agent_input = plain_text
+
+    result = agent(agent_input)
     answer = str(result)
 
     # 5. 결과 추출
