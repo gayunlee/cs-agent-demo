@@ -1,29 +1,21 @@
-"""Wrapper Strands Agent — 검증된 legacy workflow를 tool로 감싸서 노출.
+"""Wrapper Agent v2 — YAML DiagnoseEngine + 투명 tool 5개.
 
-설계 (2026-04-05 ~ 2026-04-06):
-- 단일 Strands Agent + 평탄한 tools + AgentCore Memory 멀티턴
-- `src/agents/consultant.py`는 Phase 3 그대로 + 검증 안 됨 → 사용 안 함
-- 이 wrapper는 **검증된 legacy `RefundAgentV2.process()`** 를 `@tool` 로 감싸고,
-  Strands Agent가 top 레이어로 앉아 멀티턴/Memory/AgentCore 훅을 제공.
+리팩토링 (2026-04-06):
+- RefundAgentV2 블랙박스 → 5개 투명 tool 조합
+- workflow.py if/else → YAML 21 체인 (domain/refund_chains.yaml)
+- closure monkey-patch → WrapperAgent 클래스 (typed)
 
-Memory 2-layer (2026-04-06):
-1. **AgentCore Memory** (persistence):
-   - `src/memory.py` 를 통해 `MemorySessionManager` 사용
-   - 매 턴마다 `save_turn` 으로 이벤트 저장
-   - Agent 호출 시작 시 `get_context_for_prompt` 로 short-term + long-term context 를
-     system_prompt 에 주입 → 세션/프로세스 넘어서 맥락 유지
-   - us-product-agent 패턴 그대로 (SlidingWindow 안 씀)
+3-layer 분리:
+- YAML (선언적): 세부 유형 라우팅 + 어떤 tool 필요한지 (tools_required)
+- Agent (LLM): YAML diagnose 결과 따라 tool 순서대로 호출
+- Code (@tool): API 응답값 기반 세부 계산/분기 (refund_engine, templates)
 
-2. **turn_log closure** (legacy 주입):
-   - legacy `RefundAgentV2.process()` 의 `conversation_turns` 인자용
-   - workflow.py 의 `prev_had_t2` / `last_user_ts` 필터링을 위해 ts 필드 포함
-   - AgentCore Memory 와 별개 역할 (legacy 가 자체 context 형식을 요구함)
-
-장점:
-- 기존 workflow.py / RefundAgentV2 / refund_engine.py / templates.py = 0 변경 (회귀 0)
-- Strands Agent tool-loop 실제 동작
-- AgentCore Memory 가 실제 persistence 제공 (해커톤 쇼케이스 가치)
-- Guardrail / Evaluation 훅 지점 확보
+Tools:
+1. diagnose_refund_case  → YAML chain → template_id + tools_required
+2. calculate_refund      → refund_engine → 금액 계산
+3. compose_template_answer → templates → 답변 텍스트
+4. ask_clarification     → 모호 재질문
+5. handoff_to_human      → 상담사 인계
 """
 from __future__ import annotations
 
@@ -34,35 +26,20 @@ from pathlib import Path
 from strands import Agent, tool
 from strands.models import BedrockModel
 
-from src.refund_agent_v2 import RefundAgentV2
 from src.memory import AgentMemory, create_memory_session, get_context_for_prompt, save_turn
 
 logger = logging.getLogger(__name__)
-
 
 MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 REGION = "us-west-2"
 GUARDRAIL_ID_PATH = Path(__file__).resolve().parents[2] / "guardrail_id.json"
 
-# 환불 도메인 gate — legacy intent classifier 결과 재사용 (중복 LLM 호출 없음).
-# `result.intent` 는 RefundAgentV2 자체 classifier 의 **한국어 7-enum** 결과를 담음
-# (`src/refund_agent_v2.py:28-43` CLASSIFY_PROMPT). workflow.py 가 쓰는 영어 intent
-# (`src/intent_classifier.py`)와는 별개. 여기 whitelist 는 한국어 enum 기준.
-# 장기적으로 모든 CS 유형 대응하면 이 whitelist 는 제거 예정.
-REFUND_DOMAIN_INTENTS: set[str] = {
-    "환불_요청",
-    "해지_방법",
-    "해지_확인",
-    "자동결제_불만",
-    "환불_규정_문의",
-    "카드변경",
-}
-# RefundAgentV2 한국어 classifier 에는 "기타" 만 비도메인. 경계 intent 없음.
-ALLOWED_INTENTS: set[str] = REFUND_DOMAIN_INTENTS
+# 환불 도메인 whitelist — YAML chain 의 on_pass_template 이 T 로 시작하면 도메인 통과
+# 나중에 도메인 확장 시 여기만 수정
+REFUND_TEMPLATE_PREFIX = "T"
 
 
 def _load_guardrail_kwargs() -> dict:
-    """guardrail_id.json 이 있으면 BedrockModel 용 kwargs 반환, 없으면 빈 dict."""
     if not GUARDRAIL_ID_PATH.exists():
         return {}
     try:
@@ -73,233 +50,341 @@ def _load_guardrail_kwargs() -> dict:
             "guardrail_version": str(gd["version"]),
         }
     except Exception as e:
-        logger.warning(f"guardrail_id.json 로드 실패 (guardrail 없이 동작): {e}")
+        logger.warning(f"guardrail 로드 실패: {e}")
         return {}
 
 
-SYSTEM_PROMPT = """당신은 어스플러스(한국 교육 SaaS)의 CS 상담 에이전트입니다.
+SYSTEM_PROMPT = """\
+당신은 어스플러스(한국 교육 SaaS)의 CS 상담 에이전트입니다.
 
-# 핵심 규칙 (절대 어기지 말 것)
+# 절대 규칙 (반드시 지킬 것)
 
-1. **환불/해지/취소/결제/구독/정기결제/카드/중복결제** 관련 메시지가 들어오면
-   **반드시 `run_refund_workflow` tool을 호출**해야 합니다.
-   - 첫 턴이든 후속 턴이든 상관없음. **매 턴마다 tool 재호출**.
-   - 절대 먼저 질문하지 마세요. 절대 이전 턴의 기억으로 답을 지어내지 마세요.
-   - Tool 결과만이 정확한 답입니다. 이전 tool 결과를 기억으로 합성하지 마세요.
+1. **환불/해지/취소/결제/구독/카드/자동결제/중복결제/상품변경** 키워드가 하나라도 있으면
+   **반드시 `diagnose_refund_case` tool 을 첫 번째로 호출**하세요.
+   - 절대 먼저 질문하지 마세요.
+   - 절대 직접 답변하지 마세요.
+   - 절대 "확인해드리겠습니다" 같은 공허한 답만 하지 마세요.
 
-2. **후속 확정/진행/철회 턴도 tool 호출 대상**입니다.
-   예: "네 진행해주세요", "환불 확정합니다", "취소할게요", "다시 이용할래요"
-   → 모두 `run_refund_workflow` 재호출. Legacy workflow가 이전 턴 맥락을 참고해
-     올바른 템플릿(T2 견적 → T3 접수완료 등)으로 라우팅합니다.
+2. **diagnose_refund_case 호출 시 intent 인자**를 반드시 채우세요.
+   유저 메시지를 읽고 아래 중 하나를 골라 intent 에 넣으세요:
+   - "환불_요청": 환불해주세요, 돈 돌려주세요, 환불 부탁
+   - "해지_방법": 해지하고 싶어요, 구독 취소, 구독해지
+   - "해지_확인": 해지 처리 됐나요?, 해지 확인
+   - "자동결제_불만": 자동결제 됐는데, 왜 결제됐나요
+   - "환불_규정_문의": 환불 가능한가요?, 환불 규정이 뭔가요
+   - "카드변경": 카드 변경, 결제 수단 변경
+   - "상품변경": 다른 상품으로 바꾸고 싶어요
+   - "중복결제": 두 번 결제됐어요, 중복 결제
+   - "환불지연": 환불 언제 돼요?, 아직 환불 안 됐어요
+   - "환불철회": 환불 취소할게요, 다시 이용할래요
+   - "예외환불": 건강 사유, 특별한 사정으로 예외 환불
+   - "감정폭발": 화나요, 사기, 소비자원 신고
+   - "시스템오류": 앱 오류, 로그인 안 돼요
+   - "복합이슈": 여러 문제 동시에
+   - "기타": 위 어느 것에도 해당 안 됨
 
-3. **admin_data_json 전달**:
-   유저 메시지에 `<admin_data>...</admin_data>` 블록이 있으면, 그 안의 JSON 문자열을
-   **그대로** `admin_data_json` 인자로 전달. 블록이 없으면 (후속 턴 등) 빈 문자열 `""`.
+3. **diagnose_refund_case 결과 처리**:
+   - `tools_required` 목록에 있는 tool 을 순서대로 호출하세요.
+   - `compose_template_answer` 가 있으면 template_id 와 필요한 variables 를 넘겨 답변 완성.
+   - `calculate_refund_amount` 가 있으면 먼저 금액 계산 후 결과를 variables 에 포함.
+   - 최종 `compose_template_answer` 결과를 **그대로** 출력. 임의 수정 금지.
 
-4. **chat_id 전달**:
-   가능하면 유저 메시지의 `<chat_id>...</chat_id>` 값을 `chat_id` 인자로 전달.
-   없으면 빈 문자열.
-
-5. **tool 결과 처리**:
-   tool이 반환하는 `draft_answer` 를 **그대로** 답변으로 사용. 임의 수정 금지.
-   절대 카드번호, 환불금액, 영업일 같은 세부사항을 지어내지 마세요.
-
-6. **모호한 첫 메시지 대응** (도메인 불문):
-   유저 메시지가 짧거나 모호해서 환불/해지/결제 등 **어느 도메인인지 판단 불가능**하면,
-   tool 호출 없이 **정중한 오픈 재질문**으로 직접 답변하세요.
-   예: "안녕하세요 문의드려요", "문의드립니다", "선물하기 문의", "안되네요" 등.
-   → "안녕하세요 회원님, 어스플러스입니다. 문의 주셔서 감사합니다. 어떤 부분을 도와드릴까요? 편하게 말씀 주시면 안내 도와드리겠습니다."
-   **tool 호출 하지 마세요**. 직접 답변만.
-
-7. **handoff 조건**:
-   환불 범위를 명백히 벗어난 케이스(시스템 오류, 앱 로그인 불가 등)만 `handoff_to_human`.
-   애매하면 `run_refund_workflow` 먼저 시도.
+4. **모호한 첫 메시지** (도메인 불문):
+   "안녕하세요 문의드려요", "문의드립니다" 같이 의도 불분명하면
+   tool 호출 없이 **"안녕하세요 회원님, 어스플러스입니다. 어떤 부분을 도와드릴까요?"** 로 직접 답변.
 
 # 예시
 
-## 첫 턴
-유저: "구독 해지 부탁드려요 <admin_data>{...}</admin_data>"
-✅ run_refund_workflow(user_message="구독 해지 부탁드려요", admin_data_json='{...}') → draft_answer 출력
+## 환불 요청
+유저: "환불해주세요 <admin_data>{...}</admin_data>"
+✅ diagnose_refund_case(intent="환불_요청") → template_id="T2_환불_규정_금액", tools_required=["calculate_refund_amount","compose_template_answer"]
+   → calculate_refund_amount() → 금액 결과
+   → compose_template_answer(template_id="T2_환불_규정_금액", slots_json='{"환불금액":"30,000"}')
+   → 출력
 
-## 후속 턴
-유저: "네 진행해주세요"
-✅ run_refund_workflow(user_message="네 진행해주세요", admin_data_json="") → draft_answer 출력
-   (legacy workflow가 이전 턴 T2 견적 맥락을 보고 T3 접수완료로 라우팅)
-❌ "감사합니다! 환불 확정을 받았습니다. 카드 끝자리 5886..." (창작 금지)
+## 해지 방법 (결제 없음)
+유저: "해지부탁드려요"
+✅ diagnose_refund_case(intent="해지_방법") → template_id="T1_구독해지_방법_앱", tools_required=["compose_template_answer"]
+   → compose_template_answer(template_id="T1_구독해지_방법_앱") → 출력
+
+## 모호
+유저: "안녕하세요 문의드려요"
+✅ "안녕하세요 회원님, 어스플러스입니다. 어떤 부분을 도와드릴까요?" (tool 호출 없이)
 """
 
 
-@tool
-def handoff_to_human(reason: str) -> dict:
-    """환불/해지 범위를 벗어난 문의를 상담사에게 인계합니다.
+# ─────────────────────────────────────────────────────────────
+# Context builder — admin_data → DiagnoseEngine 이 기대하는 dict
+# ─────────────────────────────────────────────────────────────
 
-    시스템 오류, 여러 도메인이 엮인 복합 이슈, 또는 AI가 확신할 수 없는
-    케이스에 사용하세요.
 
-    Args:
-        reason: 인계 사유 (예: "앱 로그인 오류로 기술지원 필요")
-    """
+def build_engine_context(
+    user_text: str,
+    admin_data: dict,
+    conversation_turns: list[dict] | None = None,
+    conversation_time: str = "",
+) -> dict:
+    """admin_data 를 DiagnoseEngine/tool 이 기대하는 context dict 로 변환."""
+    products = admin_data.get("products") or []
+    transactions = admin_data.get("transactions") or []
+    usage = admin_data.get("usage") or {}
+    memberships = admin_data.get("memberships") or []
+    refunds = admin_data.get("refunds") or []
+
+    active_products = [p for p in products if p.get("status") == "active"]
+    success_txs = [t for t in transactions if t.get("state") == "purchased_success"]
+    refund_txs = [t for t in transactions if t.get("state") == "purchased_refund"]
+
+    latest_refunded = False
+    if success_txs:
+        latest_round = success_txs[-1].get("round", 0)
+        latest_amount = success_txs[-1].get("amount", 0)
+        latest_refunded = any(
+            (t.get("round") == latest_round or t.get("amount") == latest_amount)
+            for t in refund_txs
+        )
+
+    turns = conversation_turns or []
+    # prev_had_t2: 이전 매니저 턴에 환불 규정/금액 키워드가 있었는지
+    prev_mgr_texts = [
+        (t.get("text") or "").lower()
+        for t in turns
+        if t.get("role") == "manager"
+    ]
+    prev_had_t2 = any(
+        kw in m for m in prev_mgr_texts
+        for kw in ["환불 규정", "7일 이내 구독권", "환불금", "환불 금액"]
+    )
+
+    # DSL 표현식이 `ctx.field` 형태로 접근하므로 "ctx" sub-dict 필수.
+    # `user_text` 는 최상위 (has_keyword(user_text, ...) 패턴).
     return {
-        "action": "handoff",
-        "reason": reason,
-        "message": f"해당 문의는 상담사가 직접 확인 후 답변 드리도록 전달드렸습니다. 사유: {reason}",
+        "user_text": user_text,
+        "ctx": {
+            "products": products,
+            "active_products": active_products,
+            "transactions": transactions,
+            "success_txs": success_txs,
+            "refund_txs": refund_txs,
+            "latest_refunded": latest_refunded,
+            "has_accessed": usage.get("accessed", False),
+            "us_user_id": admin_data.get("us_user_id", ""),
+            "memberships": memberships,
+            "refunds": refunds,
+            "conversation_turns": turns,
+            "conversation_time": conversation_time,
+            "prev_had_t2": prev_had_t2,
+        },
+        # calculate_refund_amount tool 도 ctx 에서 직접 읽음
+        "success_txs": success_txs,
+        "products": products,
+        "conversation_time": conversation_time,
+        "has_accessed": usage.get("accessed", False),
     }
 
 
-def _make_refund_tool(turn_log: list[dict], admin_cache: dict, session_id: str):
-    """Session 별 closure — turn_log + admin_data 를 capture 해서 legacy에 주입.
+# ─────────────────────────────────────────────────────────────
+# WrapperAgent 클래스
+# ─────────────────────────────────────────────────────────────
 
-    - `turn_log`: 이전 턴 목록 → legacy `conversation_turns` 로 전달
-    - `admin_cache`: 첫 턴 admin_data snapshot → 후속 턴에서 재사용
-      (LLM이 후속 턴에 admin_data_json="" 넘겨도 세션 캐시로 복구)
-    """
 
-    @tool
-    def run_refund_workflow(
-        user_message: str,
-        admin_data_json: str = "",
-        conversation_time: str = "",
-        chat_id: str = "",
-    ) -> dict:
-        """검증된 환불/해지 워크플로우를 실행합니다.
+class WrapperAgent:
+    """Strands Agent wrapper — YAML 라우팅 + 투명 tool 5개 + AgentCore Memory."""
 
-        유저 메시지와 admin API 조회 결과를 받아, 환불 정책에 따라 적절한
-        답변 템플릿과 변수를 결정합니다. 템플릿 16종 + 환불 금액 계산 포함.
-        이전 턴 맥락은 자동으로 주입됩니다 (wrapper session turn_log).
+    def __init__(
+        self,
+        session_id: str,
+        actor_id: str = "cs_agent_default",
+        model_id: str = MODEL_ID,
+        region: str = REGION,
+    ):
+        self.session_id = session_id
+        self.turn_log: list[dict] = []
+        self.admin_cache: dict = {}
+        self.last_intent: str = ""
+        self.last_template_id: str = ""
+        self.last_is_refund_domain: bool = False
 
-        Args:
-            user_message: 이번 턴 유저 메시지
-            admin_data_json: admin API 조회 결과 JSON string (후속 턴에서는 빈 문자열 OK)
-            conversation_time: 대화 시점 ISO 8601 (선택)
-            chat_id: 대화방 ID (로그용)
-
-        Returns:
-            dict: template_id, draft_answer, reasoning_path, refund_amount
-        """
-        try:
-            parsed = json.loads(admin_data_json) if admin_data_json else {}
-        except (json.JSONDecodeError, ValueError):
-            parsed = {}
-
-        # admin_data 세션 캐시: 새로 받은 게 있으면 캐시에 덮어쓰고, 없으면 캐시 사용
-        if parsed:
-            admin_cache.clear()
-            admin_cache.update(parsed)
-        admin_data = dict(admin_cache)
-
-        # turn_log snapshot — 이전 턴 맥락을 legacy에 넘김
-        prior_turns = list(turn_log)
-
-        v2_agent = RefundAgentV2(mock=False)
-        result = v2_agent.process(
-            user_messages=[user_message],
-            chat_id=chat_id or session_id,
-            admin_data=admin_data,
-            conversation_time=conversation_time,
-            conversation_turns=prior_turns,
+        # AgentCore Memory 세션
+        self.memory: AgentMemory | None = create_memory_session(
+            session_id=session_id, actor_id=actor_id
         )
 
-        # 환불 금액 추출
-        refund_amount = None
-        for step in (result.steps or []):
-            if step.step == "final":
-                vars_ = (step.detail or {}).get("variables") or {}
-                amt_str = vars_.get("환불금액")
-                if amt_str:
-                    try:
-                        refund_amount = int(str(amt_str).replace(",", ""))
-                    except (ValueError, TypeError):
-                        pass
-                break
+        # Strands Agent + tools
+        guardrail_kwargs = _load_guardrail_kwargs()
+        model = BedrockModel(model_id=model_id, region_name=region, **guardrail_kwargs)
+        tools = self._make_tools()
+        self._agent = Agent(model=model, tools=tools, system_prompt=SYSTEM_PROMPT)
 
-        # 판단 경로 요약
-        path_parts: list[str] = []
-        for step in (result.steps or []):
-            if step.step == "classify":
-                p = (step.detail or {}).get("path") or []
-                if p:
-                    path_parts.extend(p if isinstance(p, list) else [str(p)])
+    def _make_tools(self) -> list:
+        """Session 별 tool 생성 (self 캡처 closure)."""
+        # 기존 workflow_tools 의 3 tool 을 import + context 연동
+        from src.tools.workflow_tools import (
+            set_context,
+            diagnose_refund_case,
+            calculate_refund_amount,
+            compose_template_answer,
+        )
 
-        return {
-            "template_id": result.template_id or "",
-            "draft_answer": result.final_answer or "",
-            "reasoning_path": " → ".join(path_parts) if path_parts else "",
-            "refund_amount": refund_amount,
-            "intent": result.intent or "",
-            "is_refund_domain": (result.intent or "") in ALLOWED_INTENTS,
-        }
+        # context setter 를 handle_turn 에서 호출하므로 tool 자체는 그대로 사용
+        self._set_tool_context = set_context
 
-    return run_refund_workflow
+        @tool
+        def ask_clarification(reason: str = "") -> dict:
+            """유저 첫 메시지가 모호할 때 정중한 오픈 재질문을 생성합니다.
 
+            Args:
+                reason: 재질문 사유 (예: "의도 불분명", "상품 특정 필요")
+            """
+            return {
+                "draft_answer": (
+                    "안녕하세요 회원님, 어스플러스입니다. 문의 주셔서 감사합니다.\n"
+                    "어떤 부분을 도와드릴까요? 편하게 말씀 주시면 안내 도와드리겠습니다."
+                ),
+                "is_clarification": True,
+                "reason": reason,
+            }
 
-def create_wrapper_agent(
-    session_id: str = "default",
-    actor_id: str = "cs_agent_default",
-    model_id: str = MODEL_ID,
-    region: str = REGION,
-) -> Agent:
-    """Wrapper Strands Agent 생성 + AgentCore Memory 연결 + legacy turn_log closure.
+        @tool
+        def handoff_to_human(reason: str) -> dict:
+            """환불/해지 범위를 벗어난 문의를 상담사에게 인계합니다.
 
-    Returns:
-        Agent: legacy workflow 을 tool 로 감싸고, AgentCore Memory 로 세션 맥락 유지.
-               `agent.handle_turn(user_text)` 로 한 턴 처리 (Memory save/retrieve 자동).
-               또는 low-level: `log_user_turn` / `log_assistant_turn` + 직접 호출.
-    """
-    # legacy 주입용 turn_log + admin_data 세션 캐시
-    turn_log: list[dict] = []
-    admin_cache: dict = {}
-    refund_tool = _make_refund_tool(turn_log, admin_cache, session_id)
+            Args:
+                reason: 인계 사유
+            """
+            return {
+                "action": "handoff",
+                "reason": reason,
+                "message": f"해당 문의는 상담사가 직접 확인 후 답변 드리겠습니다. 사유: {reason}",
+            }
 
-    # AgentCore Memory 세션 생성 (실패 시 None → memory 없이 동작)
-    mem = create_memory_session(session_id=session_id, actor_id=actor_id)
+        return [
+            diagnose_refund_case,
+            calculate_refund_amount,
+            compose_template_answer,
+            ask_clarification,
+            handoff_to_human,
+        ]
 
-    guardrail_kwargs = _load_guardrail_kwargs()
-    model = BedrockModel(model_id=model_id, region_name=region, **guardrail_kwargs)
-    agent = Agent(
-        model=model,
-        tools=[refund_tool, handoff_to_human],
-        system_prompt=SYSTEM_PROMPT,
-        # conversation_manager 미지정 — Strands 기본 (in-process messages).
-        # 세션 간 persistence 는 AgentCore Memory 가 담당.
-    )
+    # ─── Public API ─────────────────────────────────
 
-    # legacy turn_log 로깅 훅 — ts 필드 증가 시퀀스로 할당
-    def _log_user(text: str) -> None:
-        turn_log.append({"role": "user", "text": text, "ts": len(turn_log) + 1})
+    def handle_turn(self, user_text: str) -> str:
+        """한 턴을 완전히 처리.
 
-    def _log_assistant(text: str) -> None:
-        turn_log.append({"role": "manager", "text": text, "ts": len(turn_log) + 1})
-
-    def _handle_turn(user_text: str) -> str:
-        """한 턴을 완전히 처리 — Memory save/retrieve + legacy log + Agent 호출.
-
-        1. user_text 를 AgentCore Memory + legacy turn_log 에 저장
-        2. Memory 에서 context 꺼내 system_prompt 에 주입
-        3. Agent 호출 (내부적으로 run_refund_workflow tool 호출)
-        4. tool result 에서 intent 추출 → agent.last_intent 저장 (caller 가 gate 판단용)
-        5. assistant 답변을 Memory + legacy turn_log 에 저장
+        1. Memory + turn_log 에 user 저장
+        2. admin_data 파싱 + cache 업데이트
+        3. tool context 세팅 (DiagnoseEngine 용)
+        4. Memory context → system_prompt 보강
+        5. Agent 호출 (tool-loop)
+        6. 결과 추출 (template_id, intent, should_respond)
+        7. Memory + turn_log 에 assistant 저장
         """
-        save_turn(mem, "user", user_text)
-        _log_user(user_text)
+        # 1. user turn 기록
+        save_turn(self.memory, "user", user_text)
+        self._log_turn("user", user_text)
 
-        base_prompt = SYSTEM_PROMPT
-        memory_context = get_context_for_prompt(mem, user_text)
-        if memory_context:
-            agent.system_prompt = (
-                base_prompt
-                + "\n\n# 이전 대화 맥락 (AgentCore Memory)\n"
-                + memory_context
+        # 2. admin_data 파싱
+        admin_json = self._extract_tag(user_text, "admin_data")
+        conv_time = self._extract_tag(user_text, "conversation_time")
+        if admin_json:
+            try:
+                parsed = json.loads(admin_json)
+                self.admin_cache.clear()
+                self.admin_cache.update(parsed)
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+        # 3. tool context 세팅
+        plain_text = self._strip_tags(user_text)
+        ctx = build_engine_context(
+            user_text=plain_text,
+            admin_data=self.admin_cache,
+            conversation_turns=self.turn_log,
+            conversation_time=conv_time,
+        )
+        self._set_tool_context(ctx)
+
+        # 4. Memory context → system_prompt 보강
+        memory_ctx = get_context_for_prompt(self.memory, plain_text)
+        if memory_ctx:
+            self._agent.system_prompt = (
+                SYSTEM_PROMPT + "\n\n# 이전 대화 맥락\n" + memory_ctx
             )
         else:
-            agent.system_prompt = base_prompt
+            self._agent.system_prompt = SYSTEM_PROMPT
 
-        result = agent(user_text)
+        # 5. Agent 호출
+        result = self._agent(user_text)
         answer = str(result)
 
-        # tool result 에서 가장 최근 intent 추출 (legacy 재사용 = 중복 LLM 호출 없음)
-        last_intent = ""
-        is_refund_domain = False
-        for m in agent.messages:
+        # 6. 결과 추출
+        self._extract_agent_results()
+
+        # 7. assistant turn 기록
+        save_turn(self.memory, "assistant", answer[:2000])
+        self._log_turn("manager", answer)
+        return answer
+
+    def should_respond(self) -> bool:
+        """draft 전달 여부 판단.
+
+        True:
+        - 환불 도메인 (template 이 T 로 시작)
+        - 모호 재질문 (tool 미호출, agent 직접 답변)
+        False:
+        - handoff 또는 비도메인 skip
+        """
+        if self.last_is_refund_domain:
+            return True
+        # tool 미호출 = clarification
+        has_tool_call = any(
+            isinstance(b, dict) and "toolUse" in b
+            for m in self._agent.messages
+            for b in (m.get("content") or [])
+            if isinstance(b, dict)
+        )
+        if not has_tool_call:
+            return True
+        return False
+
+    @property
+    def messages(self):
+        """Strands agent.messages 접근 (테스트/스모크용)."""
+        return self._agent.messages
+
+    # ─── Internal helpers ───────────────────────────
+
+    def _log_turn(self, role: str, text: str) -> None:
+        self.turn_log.append({
+            "role": role,
+            "text": text,
+            "ts": len(self.turn_log) + 1,
+        })
+
+    def _extract_tag(self, text: str, tag: str) -> str:
+        """<tag>...</tag> 에서 내용 추출."""
+        start = f"<{tag}>"
+        end = f"</{tag}>"
+        i = text.find(start)
+        if i < 0:
+            return ""
+        j = text.find(end, i + len(start))
+        if j < 0:
+            return ""
+        return text[i + len(start):j].strip()
+
+    def _strip_tags(self, text: str) -> str:
+        """<admin_data>...</admin_data> 등 태그 블록 제거 → 순수 유저 텍스트."""
+        import re
+        return re.sub(r"<\w+>.*?</\w+>", "", text, flags=re.DOTALL).strip()
+
+    def _extract_agent_results(self) -> None:
+        """agent.messages 에서 마지막 tool result 파싱 → self 속성 업데이트."""
+        self.last_template_id = ""
+        self.last_intent = ""
+        self.last_is_refund_domain = False
+
+        for m in self._agent.messages:
             content = m.get("content", [])
             if not isinstance(content, list):
                 continue
@@ -312,73 +397,32 @@ def create_wrapper_agent(
                             j = json.loads(c["text"])
                         except Exception:
                             continue
-                        if j.get("intent"):
-                            last_intent = j["intent"]
-                        if "is_refund_domain" in j:
-                            is_refund_domain = bool(j["is_refund_domain"])
-        agent.last_intent = last_intent  # type: ignore[attr-defined]
-        agent.last_is_refund_domain = is_refund_domain  # type: ignore[attr-defined]
-
-        save_turn(mem, "assistant", answer[:2000])
-        _log_assistant(answer)
-        return answer
-
-    def _should_respond() -> bool:
-        """마지막 handle_turn 결과가 응답 대상인지 — caller 의 draft skip 판단용.
-
-        True 케이스:
-        1. 환불 도메인 (tool 호출됨, intent in whitelist)
-        2. 모호 재질문 (tool 미호출, agent 가 직접 clarification 답변 생성)
-        False 케이스:
-        - handoff_to_human 호출됨 (명백한 비도메인 인계)
-        """
-        # 환불 도메인 tool 결과가 있으면 True
-        if getattr(agent, "last_is_refund_domain", False):
-            return True
-        # tool 미호출이지만 agent 가 답변 생성 → clarification (모호 재질문)
-        # tool 호출 여부: agent.messages 에 toolUse 블록이 있는지
-        has_tool_call = False
-        for m in agent.messages:
-            for b in (m.get("content") or []):
-                if isinstance(b, dict) and ("toolUse" in b):
-                    has_tool_call = True
-                    break
-        if not has_tool_call:
-            return True  # tool 없이 직접 답변 = clarification = 응답 대상
-        return False
-
-    agent.log_user_turn = _log_user  # type: ignore[attr-defined]
-    agent.log_assistant_turn = _log_assistant  # type: ignore[attr-defined]
-    agent.handle_turn = _handle_turn  # type: ignore[attr-defined]
-    agent.should_respond = _should_respond  # type: ignore[attr-defined]
-    agent.turn_log = turn_log  # type: ignore[attr-defined]
-    agent.admin_cache = admin_cache  # type: ignore[attr-defined]
-    agent.memory = mem  # type: ignore[attr-defined]
-    agent.last_intent = ""  # type: ignore[attr-defined]
-    agent.last_is_refund_domain = False  # type: ignore[attr-defined]
-    return agent
+                        tid = j.get("template_id", "")
+                        if tid:
+                            self.last_template_id = tid
+                            self.last_is_refund_domain = tid.startswith(
+                                REFUND_TEMPLATE_PREFIX
+                            )
+                        if j.get("matched_chain"):
+                            self.last_intent = j["matched_chain"]
 
 
 # ─────────────────────────────────────────────────────────────
 # Session 관리
 # ─────────────────────────────────────────────────────────────
 
-_SESSION_AGENTS: dict[str, Agent] = {}
+_SESSIONS: dict[str, WrapperAgent] = {}
 
 
-def get_agent_for_session(session_id: str) -> Agent:
-    """Session별 wrapper agent 인스턴스 반환.
-
-    같은 session_id → 같은 agent → 같은 turn_log closure → legacy에 이전 턴 주입.
-    """
-    if session_id not in _SESSION_AGENTS:
-        _SESSION_AGENTS[session_id] = create_wrapper_agent(session_id=session_id)
-    return _SESSION_AGENTS[session_id]
+def get_agent_for_session(session_id: str) -> WrapperAgent:
+    if session_id not in _SESSIONS:
+        _SESSIONS[session_id] = WrapperAgent(session_id=session_id)
+    return _SESSIONS[session_id]
 
 
 def clear_session(session_id: str) -> None:
-    _SESSION_AGENTS.pop(session_id, None)
+    _SESSIONS.pop(session_id, None)
 
 
 def clear_all_sessions() -> None:
-    _SESSION_AGENTS.clear()
+    _SESSIONS.clear()

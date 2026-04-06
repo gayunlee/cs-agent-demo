@@ -1,526 +1,217 @@
-# 환불/해지 조건 체인 Single Source of Truth
+# 환불/해지 조건 체인 Single Source of Truth (v2 — LLM intent 기반)
 #
-# ⚠️⚠️⚠️ 현재 사용 상태 (2026-04-05) ⚠️⚠️⚠️
-# 이 YAML은 `src/domain/diagnose_engine.py` + `src/tools/workflow_tools.py::diagnose_refund_case`
-# 가 참조하는 구조로 설계됐지만, 실제 대시보드/평가 경로는
-# legacy `src/workflow.py` (Python if/else) 를 사용 중.
-# 오늘(2026-04-05) 세션에서 T4/T7/T8/auto_payment/cancel_check 체인과 키워드를 추가했으나,
-# 이것들은 **현재 실제로는 호출되지 않음** (src/agents/wrapper_agent.py 는 RefundAgentV2 래핑).
-# → 4/6 이후 wrapper agent 가 diagnose_refund_case tool 을 쓰도록 전환되면 활성화됨.
-# → 지금 상태에서 수정해도 동작에는 영향 없음 (dead code 상태).
+# 2026-04-06 리팩토링:
+# - has_keyword 전부 제거. 키워드 매칭은 실패 확률 높음 (false positive/negative).
+# - **LLM 이 intent 를 판단** (SYSTEM_PROMPT 로 가이드), 결과를 ctx.intent 에 주입.
+# - YAML 은 **ctx.intent + ctx.데이터_필드** 조합으로 라우팅만 담당.
+# - 복잡한 계산 (환불금, 날짜) 은 tool 내부에서 처리 (DSL 표현 불가).
 #
-# 설계 원칙 (Gayoon visibility_chain.yaml 패턴):
-# - 진단(DiagnoseEngine), Harness, Knowledge handler가 전부 이 파일을 참조
-# - 규칙 변경 시 이 파일만 수정
-# - check 표현식 = Turing-incomplete DSL (field.path == 'VALUE', has_keyword(text, 'kw'), AND/OR)
-# - 순서가 체크 순서 — 첫 실패에서 멈추고 first_failure 반환
-# - fail_template 있으면 → 실패 시 해당 템플릿으로 답변
-# - fail_message의 {placeholder}는 context 값으로 치환됨
+# intent enum (LLM 이 판단해서 넘기는 값):
+#   환불_요청, 해지_방법, 해지_확인, 자동결제_불만, 환불_규정_문의,
+#   카드변경, 상품변경, 중복결제, 환불지연, 환불철회, 예외환불,
+#   감정폭발, 시스템오류, 복합이슈, 기타
 #
-# ⚠️ paymentCycle은 "결제 회차(카운트)"지 주기(개월) 아님
-#    → 주기는 상품명 파싱으로 얻음. YAML에서 이 필드 참조 금지.
-#
-# ⚠️ 복잡한 계산(환불 금액, 주기 추정)은 DSL로 표현 불가 → tool 내부에서 처리
-#    YAML chain은 "라우팅 조건"과 "단순 가드"만 담당
+# check 표현식 = Turing-incomplete DSL:
+#   ctx.field == 'VALUE', is_empty(), is_not_empty(), len(), in 등
+#   has_keyword 는 사용하지 않음.
 
 chains:
 
-  # ─────────────────────────────────────────────────────────
-  # 라우팅 체인 — 어느 템플릿을 쓸지 결정
-  # 각 체인은 "이 시나리오에 매칭되는가?"를 평가
-  # ─────────────────────────────────────────────────────────
-
-  is_card_change_inquiry:
-    label: "카드 변경 문의"
-    description: "유저 메시지에 카드 변경 키워드가 있으면 T8"
+  # ─── 카드변경 ───
+  route_card_change:
+    label: "카드 변경 문의 → T8"
     requires:
-      - id: CARD1
-        check: "has_keyword(user_text, 'card_change_keywords')"
-        fail_message: "카드 변경 키워드 없음"
+      - id: CC1
+        check: "ctx.intent == '카드변경'"
+        fail_message: "intent 가 카드변경 아님"
     on_pass_template: T8_카드변경_안내
+    tools_required: ["compose_template_answer"]
 
-  is_auto_payment_complaint:
-    label: "자동결제 불만 (T4 리텐션)"
-    description: "유저 메시지에 자동/정기결제 키워드 + 이전 턴 T2 아님 → T4 리텐션 설명"
+  # ─── 시스템오류 → handoff ───
+  route_system_error:
+    label: "시스템/기술 오류 → LLM fallback + handoff"
     requires:
-      - id: APC1
-        check: "has_keyword(user_text, 'auto_payment_keywords')"
-        fail_message: "자동결제 시그널 없음"
-      - id: APC2
-        check: "ctx.prev_had_t2 == False"
-        fail_message: "이전 턴 T2 있음 (T3로 가야 함)"
-    on_pass_template: T4_자동결제_설명
+      - id: SE1
+        check: "ctx.intent == '시스템오류'"
+        fail_message: "intent 가 시스템오류 아님"
+    on_pass_template: T_LLM_FALLBACK
+    tools_required: ["handoff_to_human"]
 
-  is_cancel_check_inquiry:
-    label: "해지 신청 처리 확인 (T7)"
-    description: "유저가 '해지 신청했는데 처리됐나요?' 묻는 경우 → T7. 해지 단어 필수 + 확인 의도 키워드"
+  # ─── 감정 폭발 → LLM ───
+  route_emotional:
+    label: "감정 폭발/강한 불만 → LLM fallback"
     requires:
-      - id: CCI1
-        check: "has_keyword(user_text, 'cancellation_target_keywords')"
-        fail_message: "해지 단어 없음"
-      - id: CCI2
-        check: "has_keyword(user_text, 'cancel_check_keywords')"
-        fail_message: "확인 의도 키워드 없음"
-    on_pass_template: T7_해지_확인_완료
+      - id: EM1
+        check: "ctx.intent == '감정폭발'"
+        fail_message: "intent 가 감정폭발 아님"
+    on_pass_template: T_LLM_FALLBACK
+    tools_required: []
 
-  is_prev_turn_t2_followup:
-    label: "이전 턴 T2 → T3 전환"
-    description: "직전 턴에 T2 환불 규정 안내했고 매니저 응답 있으면 → T3"
+  # ─── 복합 이슈 → handoff ───
+  route_compound:
+    label: "복합 이슈 → LLM fallback + handoff"
     requires:
-      - id: PREV1
+      - id: CP1
+        check: "ctx.intent == '복합이슈'"
+        fail_message: "intent 가 복합이슈 아님"
+    on_pass_template: T_LLM_FALLBACK
+    tools_required: ["handoff_to_human"]
+
+  # ─── 환불 철회 → LLM ───
+  route_refund_withdrawal:
+    label: "환불 철회 (다시 이용할게요) → LLM fallback"
+    requires:
+      - id: RW1
+        check: "ctx.intent == '환불철회'"
+        fail_message: "intent 가 환불철회 아님"
+    on_pass_template: T_LLM_FALLBACK
+    tools_required: []
+
+  # ─── 예외환불 → LLM ───
+  route_exception_refund:
+    label: "예외 환불 (건강 사유 등) → LLM fallback"
+    requires:
+      - id: EX1
+        check: "ctx.intent == '예외환불'"
+        fail_message: "intent 가 예외환불 아님"
+    on_pass_template: T_LLM_FALLBACK
+    tools_required: []
+
+  # ─── 이전 턴 T2 → T3 전환 ───
+  route_t2_followup:
+    label: "이전 턴 T2 견적 후 확정 → T3 접수완료"
+    requires:
+      - id: T2F1
         check: "ctx.prev_had_t2 == True"
         fail_message: "이전 턴 T2 없음"
-      - id: PREV2
-        check: "ctx.prev_manager_count >= 1"
-        fail_message: "매니저 응답 없음"
     on_pass_template: T3_환불_접수_완료
+    tools_required: ["compose_template_answer"]
 
-  needs_user_identification:
-    label: "본인 확인 필요"
-    description: "us_user_id 없으면 T6 또는 T6b (이전 T6 있으면 재질문)"
+  # ─── 본인확인 필요 (유저 미식별) ───
+  route_identity_check:
+    label: "본인 확인 필요 → T6"
     requires:
-      - id: USER1
+      - id: ID1
         check: "ctx.us_user_id == ''"
         fail_message: "본인 확인 완료"
+    on_pass_template: T6_본인확인_요청
+    tools_required: ["compose_template_answer"]
 
-  is_other_person_number:
-    label: "가족/타인 번호 시그널"
-    description: "유저 메시지에 가족 번호 등 시그널 → T6b"
+  # ─── 해지 확인 ───
+  route_cancel_check:
+    label: "해지 처리 확인 → T7"
     requires:
-      - id: OTHER1
-        check: "has_keyword(user_text, 'other_person_number_keywords')"
-        fail_message: "타인 번호 시그널 없음"
-    on_pass_template: T6b_본인확인_재질문
+      - id: CK1
+        check: "ctx.intent == '해지_확인'"
+        fail_message: "intent 가 해지_확인 아님"
+    on_pass_template: T7_해지_확인_완료
+    tools_required: ["compose_template_answer"]
 
-  is_refund_urging:
-    label: "환불 지연 재촉"
-    description: "진행 중 환불 건이 있고 유저가 재촉 → T12"
+  # ─── 환불 지연 재촉 ───
+  route_refund_delay:
+    label: "환불 지연 재촉 → T12"
     requires:
-      - id: URGE1
+      - id: RD1
+        check: "ctx.intent == '환불지연'"
+        fail_message: "intent 가 환불지연 아님"
+      - id: RD2
         check: "is_not_empty(ctx.refunds)"
         fail_message: "환불 이력 없음"
-      - id: URGE2
-        check: "has_keyword(user_text, 'urging_keywords')"
-        fail_message: "재촉 시그널 없음"
     on_pass_template: T12_환불진행_상태안내
+    tools_required: ["compose_template_answer"]
 
-  has_no_payment:
-    label: "결제 이력 없음"
-    description: "success_txs 비어있으면 T1 (해지 방법 안내)"
+  # ─── 결제 없음 → 해지 방법 안내 ───
+  route_no_payment:
+    label: "결제 이력 없음 → T1 해지 방법"
     requires:
-      - id: PAY1
+      - id: NP1
+        check: "ctx.intent == '해지_방법' or ctx.intent == '환불_요청' or ctx.intent == '환불_규정_문의'"
+        fail_message: "intent 가 해지/환불 아님"
+      - id: NP2
         check: "is_empty(ctx.success_txs)"
         fail_message: "결제 이력 존재"
     on_pass_template: T1_구독해지_방법_앱
+    tools_required: ["compose_template_answer"]
 
-  is_all_refunded:
-    label: "전부 환불됨"
-    description: "모든 결제가 환불된 상태 → T3 또는 LLM fallback"
+  # ─── 전부 환불됨 ───
+  route_all_refunded:
+    label: "전부 환불 완료 → T3"
     requires:
-      - id: REF1
-        check: "ctx.all_refunded == True"
+      - id: AR1
+        check: "ctx.intent == '환불_요청' or ctx.intent == '환불_규정_문의'"
+        fail_message: "intent 가 환불 아님"
+      - id: AR2
+        check: "ctx.latest_refunded == True"
         fail_message: "미환불 결제 존재"
     on_pass_template: T3_환불_접수_완료
+    tools_required: ["compose_template_answer"]
 
-  is_all_refunded_with_new_question:
-    label: "전부 환불 후 추가 질문"
-    description: "전부 환불됐는데 재결제/재가입/예외 질문 → LLM fallback"
+  # ─── 자동결제 불만 ───
+  route_auto_payment:
+    label: "자동결제 불만 → T4 리텐션"
     requires:
-      - id: REFQ1
-        check: "ctx.all_refunded == True"
-        fail_message: "전부 환불 아님"
-      - id: REFQ2
-        check: "has_keyword(user_text, 'post_refund_question_keywords')"
-        fail_message: "추가 질문 시그널 없음"
-    on_pass_template: T_LLM_FALLBACK
+      - id: AP1
+        check: "ctx.intent == '자동결제_불만'"
+        fail_message: "intent 가 자동결제_불만 아님"
+    on_pass_template: T4_자동결제_설명
+    tools_required: ["compose_template_answer"]
 
-  is_refund_withdrawal:
-    label: "환불 철회/예외 요청"
-    description: "환불 취소하고 싶다거나 예외 전액환불 요청 → LLM fallback"
-    requires:
-      - id: WD1
-        check: "has_keyword(user_text, 'refund_withdrawal_or_exception_keywords')"
-        fail_message: "철회/예외 시그널 없음"
-    on_pass_template: T_LLM_FALLBACK
-
-  is_product_change:
-    label: "상품 변경 + 차액 환불"
-    description: "유저가 상품 변경 의도 표현 → T10"
+  # ─── 상품 변경 ───
+  route_product_change:
+    label: "상품 변경 → T10"
     requires:
       - id: PC1
-        check: "has_keyword(user_text, 'product_change_keywords')"
-        fail_message: "상품 변경 시그널 없음"
+        check: "ctx.intent == '상품변경'"
+        fail_message: "intent 가 상품변경 아님"
     on_pass_template: T10_상품변경_차액환불
+    tools_required: ["compose_template_answer"]
 
-  is_duplicate_payment:
-    label: "중복/이중 결제"
-    description: "미환불 결제 2건 이상이고 중복 의도 표현 → T11"
+  # ─── 중복 결제 ───
+  route_duplicate_payment:
+    label: "중복 결제 → T11"
     requires:
-      - id: DUP1
-        check: "unrefunded_count(ctx.success_txs, ctx.refund_txs) >= 2"
-        fail_message: "미환불 결제 2건 미만"
-      - id: DUP2
-        check: "has_keyword(user_text, 'duplicate_payment_keywords')"
-        fail_message: "중복 의도 시그널 없음"
+      - id: DP1
+        check: "ctx.intent == '중복결제'"
+        fail_message: "intent 가 중복결제 아님"
     on_pass_template: T11_중복결제_환불선택
+    tools_required: ["compose_template_answer"]
 
-  can_refund_normally:
-    label: "정상 환불 처리 (T2)"
-    description: "미환불 결제 있고 계산 가능 → T2"
+  # ─── 정상 환불 (T2 금액 계산) — 마지막 fallback ───
+  route_normal_refund:
+    label: "정상 환불 → T2 (금액 계산 필요)"
     requires:
-      - id: REFN1
+      - id: NR1
+        check: "ctx.intent == '환불_요청' or ctx.intent == '환불_규정_문의' or ctx.intent == '해지_방법'"
+        fail_message: "intent 가 환불/해지 아님"
+      - id: NR2
         check: "is_not_empty(ctx.success_txs)"
         fail_message: "결제 이력 없음"
-      - id: REFN2
-        check: "ctx.all_refunded == False"
-        fail_message: "전부 환불됨"
+      - id: NR3
+        check: "ctx.latest_refunded == False"
+        fail_message: "이미 환불됨"
     on_pass_template: T2_환불_규정_금액
+    tools_required: ["calculate_refund_amount", "compose_template_answer"]
 
-  # ─────────────────────────────────────────────────────────
-  # Phase 5-A — Edge 라우팅 체인 5개 (2026-04-05 추가)
-  # 2026-04-04 노트 18:30의 5패턴 매핑 기반.
-  # refund_edge_reclassified.json 48건 (A_워크플로우 38 + B_LLM 10).
-  # 새 텍스트 템플릿 0개, 새 tool 0개 — 기존 리소스 재사용.
-  # ─────────────────────────────────────────────────────────
-
-  is_system_error:
-    label: "시스템/기술 오류 (앱/로그인/라이브/다운로드)"
-    description: "기술 지원 필요 → LLM fallback → handoff_to_human 라우팅"
-    requires:
-      - id: SYS1
-        check: "has_keyword(user_text, 'system_error_keywords')"
-        fail_message: "시스템 오류 시그널 없음"
-    on_pass_template: T_LLM_FALLBACK
-
-  is_compound_issue:
-    label: "복합 이슈 (환불+기술+해지 등 2개 이상)"
-    description: "여러 도메인 엮인 이슈 → 상담사 인계"
-    requires:
-      - id: CMP1
-        check: "has_keyword(user_text, 'compound_issue_keywords')"
-        fail_message: "복합 시그널 없음"
-    on_pass_template: T_LLM_FALLBACK
-
-  is_emotional_escalation:
-    label: "감정 폭발/강한 불만"
-    description: "유저가 강한 감정 표현(욕설/분노/좌절) → LLM fallback + emotional opener"
-    requires:
-      - id: EMO1
-        check: "has_keyword(user_text, 'emotional_distress_keywords')"
-        fail_message: "감정 시그널 없음"
-    on_pass_template: T_LLM_FALLBACK
-
-  is_flow_cancellation:
-    label: "진행 중 flow 철회"
-    description: "환불/해지 요청 후 취소 의사 → handle_cancellation_of_flow"
-    requires:
-      - id: CNCL1
-        check: "has_keyword(user_text, 'flow_cancellation_keywords')"
-        fail_message: "철회 시그널 없음"
-    on_pass_template: T_LLM_FALLBACK
-
-  is_exception_refund_request:
-    label: "예외 환불 요청 (규정 외 사유)"
-    description: "건강 사유/특별 상황/규정 예외 요청 → 매니저 재량 판단 → LLM fallback"
-    requires:
-      - id: EXC1
-        check: "has_keyword(user_text, 'exception_refund_keywords')"
-        fail_message: "예외 시그널 없음"
-    on_pass_template: T_LLM_FALLBACK
 
 # ─────────────────────────────────────────────────────────
-# 라우팅 순서 (DiagnoseEngine이 first_passing_chain으로 순회)
-# workflow.py의 run_workflow() if/else 순서와 동일
+# 라우팅 순서 (DiagnoseEngine 이 first_passing_chain 으로 순회)
+# intent 기반이므로 키워드 충돌 없음. 순서는 우선순위.
 # ─────────────────────────────────────────────────────────
 
 routing_order:
-  - is_card_change_inquiry        # Node 0: 카드 문의 (최우선)
-  # ── Phase 5-A edge 라우팅 (조기 필터링, 비즈니스 체인보다 앞) ──
-  - is_system_error               # Edge: 기술 오류 → handoff
-  - is_compound_issue             # Edge: 복합 이슈 → handoff
-  - is_emotional_escalation       # Edge: 감정 폭발 → LLM + opener
-  - is_flow_cancellation          # Edge: 철회 → handle_cancellation
-  - is_exception_refund_request   # Edge: 예외 환불 사유 → LLM
-  # ── 기존 비즈니스 체인 ──
-  - is_prev_turn_t2_followup      # Node 1: 이전 턴 T2 → T3
-  - needs_user_identification     # Node 2: 본인 확인 (tool 내부에서 T6/T6b 분기)
-  - is_other_person_number        # Branch D: 타인 번호 시그널
-  - is_cancel_check_inquiry       # Node 3: 해지 신청 처리 확인 → T7 (2026-04-05 추가)
-  - is_refund_urging              # Branch C: 환불 지연 재촉
-  - has_no_payment                # Node 4: 결제 없음
-  - is_all_refunded_with_new_question  # Node 5 fallback
-  - is_all_refunded               # Node 5: 전부 환불됨
-  - is_refund_withdrawal          # Fallback: 철회/예외
-  - is_auto_payment_complaint     # Branch A0: 자동결제 불만 → T4 (T2보다 먼저, 2026-04-05 추가)
-  - is_product_change             # Branch A: 상품 변경
-  - is_duplicate_payment          # Branch B: 중복 결제
-  - can_refund_normally           # Node 6: 정상 환불 (T2)
-
-# ─────────────────────────────────────────────────────────
-# 키워드 그룹 (has_keyword 함수가 참조)
-# ─────────────────────────────────────────────────────────
-
-keyword_groups:
-  card_change_keywords:
-    - "카드 변경"
-    - "카드변경"
-    - "카드 분실"
-    - "카드 만료"
-    - "카드 재발급"
-    - "카드 바꾸"
-    - "새 카드"
-    - "다른 카드"
-    - "카드 해지"
-    - "카드 등록"
-    - "결제 방법 변경"
-    - "결제방법 변경"
-    - "결제 수단 변경"
-
-  auto_payment_keywords:
-    - "자동으로 결제"
-    - "자동결제"
-    - "자동결재"
-    - "자동으로 구독"
-    - "연장되어"
-    - "연장됐"
-    - "연장되었"
-    - "왜 결제"
-    - "결제된 줄 몰"
-    - "모르게 결제"
-    - "나도 모르게"
-    - "허락 없이"
-    - "취소 안 했는데"
-
-  cancel_check_keywords:
-    - "처리 되었"
-    - "처리됐"
-    - "처리 됐"
-    - "확인 차"
-    - "확인차"
-    - "확인 부탁"
-    - "확인 해주"
-    - "됐나"
-    - "됐는지"
-    - "되었는지"
-    - "되었나"
-    - "신청했는데"
-    - "신청해놨"
-    - "신청은 했"
-    - "잘 되었"
-    - "잘됐"
-    - "완료 됐"
-    - "완료됐"
-
-  cancellation_target_keywords:
-    - "해지"
-    - "해제"
-
-  other_person_number_keywords:
-    - "가족 번호"
-    - "가족번호"
-    - "엄마 번호"
-    - "아빠 번호"
-    - "남편 번호"
-    - "아내 번호"
-    - "제 번호 아니"
-    - "제 명의 아니"
-    - "다른 사람 번호"
-    - "본인 번호 아니"
-
-  urging_keywords:
-    - "왜 아직"
-    - "언제 환불"
-    - "언제쯤"
-    - "처리 안"
-    - "처리 안돼"
-    - "처리안"
-    - "아직도"
-    - "아직 환불"
-    - "환불 언제"
-    - "환불언제"
-    - "며칠 됐"
-    - "몇일 됐"
-    - "1달"
-    - "한달"
-    - "한 달"
-    - "일주일 지"
-    - "소식이 없"
-    - "답변이 없"
-    - "연락이 없"
-
-  post_refund_question_keywords:
-    - "재결제"
-    - "다시 결제"
-    - "재가입"
-    - "다시 가입"
-    - "새 카드"
-    - "추가 환불"
-    - "또 환불"
-    - "다른 건"
-    - "보안카드"
-
-  refund_withdrawal_or_exception_keywords:
-    - "환불 취소"
-    - "환불취소"
-    - "환불 안 할"
-    - "환불 안할"
-    - "환불 안 받"
-    - "다시 이용"
-    - "계속 이용"
-    - "환불 철회"
-    - "철회할게"
-    - "철회하고"
-    - "전액 환불"
-    - "전액환불"
-    - "특별 환불"
-    - "예외 환불"
-    - "100% 환불"
-    - "다 돌려"
-    - "전부 돌려"
-    - "규정 예외"
-
-  product_change_keywords:
-    - "상품 변경"
-    - "상품변경"
-    - "다른 상품"
-    - "다른상품"
-    - "상품 바꿔"
-    - "차액"
-    - "바꿔서"
-    - "바꾸고 싶"
-    - "으로 변경"
-    - "로 변경"
-
-  duplicate_payment_keywords:
-    - "중복"
-    - "이중"
-    - "두 번"
-    - "두번"
-    - "2번 결제"
-    - "두 개"
-    - "두개"
-    - "여러 번"
-    - "여러번"
-    - "또 결제"
-    - "또 빠져"
-    - "또 빠졌"
-
-  # ─────────────────────────────────────────────────────────
-  # Phase 5-A — Edge 키워드 그룹 5개 (2026-04-05 추가)
-  # 베이스라인 수준. 정확도 낮으면 후속에서 LLM classifier로 보강.
-  # ─────────────────────────────────────────────────────────
-
-  system_error_keywords:
-    - "앱 오류"
-    - "앱오류"
-    - "로그인 안"
-    - "로그인안"
-    - "로그인 오류"
-    - "로그인 실패"
-    - "로그인 불가"
-    - "접속 안"
-    - "접속 불가"
-    - "라이브"
-    - "입장 안"
-    - "입장 불가"
-    - "재생 안"
-    - "재생 불가"
-    - "다운로드 안"
-    - "다운로드 불가"
-    - "에러"
-    - "400 에러"
-    - "500 에러"
-    - "오류 메시지"
-    - "오류메시지"
-    - "앱 설치"
-    - "앱설치"
-    - "앱이 안"
-    - "안 열려"
-    - "안열려"
-    - "안 보여"
-    - "작동 안"
-
-  compound_issue_keywords:
-    - "그리고 또"
-    - "그런데 또"
-    - "추가로"
-    - "같이"
-    - "동시에"
-    - "더해서"
-    - "같은 계정"
-    - "다른 문제"
-    - "겸"
-    - "하면서"
-    - "그리고 환불"
-    - "그리고 해지"
-    - "그리고 카드"
-    - "배송"
-    - "이메일 재발송"
-    - "개인정보 삭제"
-
-  emotional_distress_keywords:
-    - "욕"
-    - "욕나오"
-    - "화가"
-    - "화나"
-    - "짜증"
-    - "열받"
-    - "미치"
-    - "답답"
-    - "실망"
-    - "배신"
-    - "사기"
-    - "말이 돼"
-    - "말이안"
-    - "말이 안"
-    - "어이없"
-    - "너무하"
-    - "소비자원"
-    - "법적"
-    - "고소"
-    - "불쾌"
-    - "황당"
-    - "기가 막"
-    - "이게 뭐"
-    - "진짜 너무"
-
-  flow_cancellation_keywords:
-    - "취소할게요"
-    - "취소할게"
-    - "안 할게"
-    - "안할게"
-    - "안 받을"
-    - "안받을"
-    - "그만둘게"
-    - "그만할"
-    - "없었던 걸로"
-    - "없던 걸로"
-    - "취소하고 싶"
-    - "보류"
-    - "잠시 멈"
-    - "다시 생각"
-    - "계속 이용할"
-    - "계속 쓸"
-
-  exception_refund_keywords:
-    - "건강"
-    - "아파서"
-    - "병원"
-    - "입원"
-    - "수술"
-    - "사망"
-    - "장례"
-    - "개인 사정"
-    - "개인사정"
-    - "특별한 사정"
-    - "특별히"
-    - "사정이 생겨"
-    - "예외적"
-    - "예외로"
-    - "규정 예외"
-    - "한 번만"
-    - "한번만"
-    - "부탁드려요"
-    - "선처"
-    - "녹내장"
-    - "진단"
+  - route_card_change           # 카드변경 (최우선)
+  - route_system_error          # 시스템오류 → handoff
+  - route_compound              # 복합이슈 → handoff
+  - route_emotional             # 감정폭발 → LLM
+  - route_refund_withdrawal     # 환불철회 → LLM
+  - route_exception_refund      # 예외환불 → LLM
+  - route_t2_followup           # 이전 턴 T2 → T3 (데이터 기반)
+  - route_identity_check        # 유저 미식별 → T6 (데이터 기반)
+  - route_cancel_check          # 해지 확인 → T7
+  - route_refund_delay          # 환불 지연 → T12
+  - route_no_payment            # 결제 없음 → T1
+  - route_all_refunded          # 전부 환불 → T3
+  - route_auto_payment          # 자동결제 불만 → T4
+  - route_product_change        # 상품변경 → T10
+  - route_duplicate_payment     # 중복결제 → T11
+  - route_normal_refund         # 정상 환불 → T2 (마지막)

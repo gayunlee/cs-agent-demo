@@ -58,17 +58,24 @@ def _get_harness() -> ActionHarness:
 
 
 @tool
-def diagnose_refund_case() -> dict:
-    """현재 유저 컨텍스트를 보고 어느 답변 템플릿을 써야 할지 진단합니다.
+def diagnose_refund_case(intent: str) -> dict:
+    """유저 의도(intent)와 데이터 상태를 보고 어느 답변 템플릿을 써야 할지 진단합니다.
 
-    YAML chain(domain/refund_chains.yaml)을 순회하며 routing_order 순서대로 평가합니다.
-    첫 매칭되는 체인의 on_pass_template을 반환합니다.
+    YAML chain(domain/refund_chains.yaml)을 routing_order 순서대로 평가합니다.
+    각 chain 은 ctx.intent + ctx.데이터_필드 조합으로 매칭 여부를 결정합니다.
+
+    Args:
+        intent: LLM이 판단한 유저 의도.
+                값: 환불_요청, 해지_방법, 해지_확인, 자동결제_불만, 환불_규정_문의,
+                    카드변경, 상품변경, 중복결제, 환불지연, 환불철회, 예외환불,
+                    감정폭발, 시스템오류, 복합이슈, 기타
 
     Returns:
         dict: {
-            "template_id": str,   # 사용할 템플릿 ID (예: "T2_환불_규정_금액")
-            "matched_chain": str, # 매칭된 체인 ID
-            "trace": list         # 평가 경로 (디버깅용)
+            "template_id": str,        # 사용할 템플릿 ID
+            "matched_chain": str,      # 매칭된 체인 ID
+            "tools_required": list,    # 이 유형 처리에 필요한 추가 tool 목록
+            "trace": list              # 평가 경로 (디버깅용)
         }
     """
     engine = _get_engine()
@@ -78,8 +85,13 @@ def diagnose_refund_case() -> dict:
     chains = chains_file.get("chains", {})
 
     ctx = _current_context
-    trace = []
+    # LLM 이 판단한 intent 를 context 에 주입 (YAML 에서 ctx.intent 로 참조)
+    if isinstance(ctx.get("ctx"), dict):
+        ctx["ctx"]["intent"] = intent
+    else:
+        ctx["intent"] = intent
 
+    trace = []
     for chain_id in routing_order:
         r = engine.evaluate_chain(chain_id, ctx)
         trace.append({
@@ -90,19 +102,20 @@ def diagnose_refund_case() -> dict:
         if r.passed:
             chain = chains.get(chain_id, {})
             template_id = chain.get("on_pass_template")
+            tools_required = chain.get("tools_required", [])
             if template_id:
                 return {
                     "template_id": template_id,
                     "matched_chain": chain_id,
+                    "tools_required": tools_required,
                     "trace": trace,
                 }
-            # on_pass_template 없는 체인 (예: needs_user_identification)은 계속 진행
-            # 대신 special handling 필요
 
     # 매칭 없음 → T6 본인확인 요청 (안전한 fallback)
     return {
         "template_id": "T6_본인확인_요청",
         "matched_chain": "<no_match>",
+        "tools_required": ["compose_template_answer"],
         "trace": trace,
     }
 
