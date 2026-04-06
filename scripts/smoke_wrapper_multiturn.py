@@ -72,11 +72,13 @@ def main():
                             j = json.loads(c["text"])
                         except Exception:
                             continue
-                        tid = j.get("template_id", "?")
-                        template_ids.append(tid)
-                        print(f"  msg[{i}] template_id={tid!r}  "
-                              f"refund={j.get('refund_amount')}  "
-                              f"path={j.get('reasoning_path','')!r}")
+                        # diagnose_refund_case 결과만 (matched_chain 필드가 있는 것)
+                        if j.get("matched_chain") or j.get("template_id", "").startswith("T"):
+                            tid = j.get("template_id", "?")
+                            template_ids.append(tid)
+                            print(f"  msg[{i}] template_id={tid!r}  "
+                                  f"chain={j.get('matched_chain','')!r}  "
+                                  f"tools_req={j.get('tools_required','')!r}")
 
     # 검증
     print("\n" + "=" * 70)
