@@ -100,7 +100,7 @@ def run_case(case_path: Path) -> dict:
     print(f"\n🔧 tool calls: {n_calls} — {names}")
     print(f"\n💬 agent answer (앞 500자):\n{text_out[:500]}")
 
-    tool_called = "run_refund_workflow" in names
+    tool_called = "diagnose_refund_case" in names or "run_refund_workflow" in names
     return {
         "case": case_path.name,
         "tool_called": tool_called,

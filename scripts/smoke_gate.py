@@ -22,16 +22,17 @@ from src.agents.wrapper_agent import clear_all_sessions, get_agent_for_session
 
 # (메시지, 기대 should_respond)
 CASES: list[tuple[str, bool]] = [
-    # 환불 도메인 — 모두 pass 기대
+    # 환불 도메인 — 모두 respond 기대
     ("환불 부탁드립니다", True),
     ("구독 해지하고 싶어요", True),
     ("자동결제 됐는데 취소해주세요", True),
     ("카드 변경하고 싶어요", True),
-    # 비도메인 — 모두 block 기대
-    ("안녕하세요", False),
-    ("배송 언제 오나요?", False),
-    ("쿠폰 받을 수 있나요?", False),
-    ("수업 질문이 있어요", False),
+    # 비도메인/모호 — 모두 respond 기대 (재질문 "무엇을 도와드릴까요?")
+    # Gayoon 정책: 모호하면 skip 아니라 재질문 (2026-04-06)
+    ("안녕하세요", True),
+    ("배송 언제 오나요?", True),
+    ("쿠폰 받을 수 있나요?", True),
+    ("수업 질문이 있어요", True),
 ]
 
 

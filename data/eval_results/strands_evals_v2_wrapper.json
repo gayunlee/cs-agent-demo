@@ -348,7 +348,7 @@
           },
           "actual_output": {
             "template_id": "T2_환불_규정_금액",
-            "refund_amount": 30015
+            "refund_amount": null
           },
           "name": "T2_68b9602_1month_50k",
           "expected_output": "T2_환불_규정_금액",
@@ -454,7 +454,7 @@
           },
           "actual_output": {
             "template_id": "T2_환불_규정_금액",
-            "refund_amount": 30015
+            "refund_amount": null
           },
           "name": "T2_T3_68c0de43_multiturn",
           "expected_output": "T3_환불_접수_완료",
@@ -1289,7 +1289,7 @@
           },
           "actual_output": {
             "template_id": "T2_환불_규정_금액",
-            "refund_amount": 30015
+            "refund_amount": null
           },
           "name": "T2_68b9602_1month_50k",
           "expected_output": "T2_환불_규정_금액",
@@ -1395,7 +1395,7 @@
           },
           "actual_output": {
             "template_id": "T2_환불_규정_금액",
-            "refund_amount": 30015
+            "refund_amount": null
           },
           "name": "T2_T3_68c0de43_multiturn",
           "expected_output": "T3_환불_접수_완료",
@@ -1877,7 +1877,7 @@
         "금액 체크 불요 (비-T2 유형)",
         "금액 체크 불요 (비-T2 유형)",
         "agent 금액 없음 (expected=360000)",
-        "expected=30000, actual=30015, diff=15",
+        "agent 금액 없음 (expected=30000)",
         "금액 체크 불요 (비-T2 유형)",
         "금액 체크 불요 (비-T2 유형)",
         "금액 체크 불요 (비-T2 유형)",
